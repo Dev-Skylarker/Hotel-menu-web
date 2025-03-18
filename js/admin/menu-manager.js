@@ -1,5 +1,5 @@
 /**
- * Menu Manager JavaScript for Kenyan Delights Restaurant
+ * Menu Manager JavaScript for Campus Cafe
  */
 
 // DOM Elements
@@ -21,6 +21,9 @@ const menuSearch = document.getElementById('menu-search');
 const searchBtn = document.getElementById('search-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const imageUrlInput = document.getElementById('item-image-url');
+const previewImage = document.getElementById('preview-image');
+const imagePlaceholder = document.querySelector('.preview-container .image-placeholder');
 
 // Current state
 let currentItemId = null;
@@ -62,6 +65,15 @@ function addEventListeners() {
     // Item form
     if (itemForm) {
         itemForm.addEventListener('submit', handleSaveItem);
+    }
+    
+    // Image URL input for preview
+    if (imageUrlInput) {
+        imageUrlInput.addEventListener('input', updateImagePreview);
+        imageUrlInput.addEventListener('paste', () => {
+            // Add slight delay to allow paste to complete
+            setTimeout(updateImagePreview, 100);
+        });
     }
     
     // Cancel button in modal
@@ -138,6 +150,42 @@ function addEventListeners() {
 }
 
 /**
+ * Update image preview when URL changes
+ */
+function updateImagePreview() {
+    if (!imageUrlInput || !previewImage || !imagePlaceholder) return;
+    
+    const imageUrl = imageUrlInput.value.trim();
+    
+    if (imageUrl) {
+        // Show loading state
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        imagePlaceholder.style.display = 'flex';
+        imagePlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Loading...</span>';
+        
+        // Check if image exists and load it
+        const img = new Image();
+        img.onload = function() {
+            previewImage.src = imageUrl;
+            previewImage.style.display = 'block';
+            imagePlaceholder.style.display = 'none';
+        };
+        img.onerror = function() {
+            previewImage.style.display = 'none';
+            imagePlaceholder.style.display = 'flex';
+            imagePlaceholder.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Invalid image URL</span>';
+        };
+        img.src = imageUrl;
+    } else {
+        // No URL, show placeholder
+        previewImage.style.display = 'none';
+        imagePlaceholder.style.display = 'flex';
+        imagePlaceholder.innerHTML = '<i class="fas fa-image"></i><span>No image</span>';
+    }
+}
+
+/**
  * Handle search functionality
  */
 function handleSearch() {
@@ -189,7 +237,7 @@ function loadMenuItems() {
         if (menuItemsBody) {
             menuItemsBody.innerHTML = `
                 <tr>
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="error-message">
                             Failed to load menu items. Please try refreshing the page.
                         </div>
@@ -264,10 +312,19 @@ function displayMenuItems(items) {
         
         const categoryLabel = formatCategoryLabel(item.category);
         
+        // Create image column content
+        let imageHtml = '';
+        if (item.imageUrl) {
+            imageHtml = `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="menu-item-thumbnail">`;
+        } else {
+            imageHtml = '<span class="no-image"><i class="fas fa-image"></i></span>';
+        }
+        
         row.innerHTML = `
             <td>${escapeHtml(item.name)}</td>
             <td>${categoryLabel}</td>
-            <td>${item.price.toFixed(2)}</td>
+            <td>$${item.price.toFixed(2)}</td>
+            <td class="image-cell">${imageHtml}</td>
             <td>${item.featured ? '<span class="featured-badge">Featured</span>' : 'No'}</td>
             <td>
                 <div class="action-buttons">
@@ -317,6 +374,12 @@ function openItemModal(item = null) {
         document.getElementById('item-featured').checked = item.featured;
         document.getElementById('item-description').value = item.description;
         
+        // Set image URL if exists
+        if (imageUrlInput) {
+            imageUrlInput.value = item.imageUrl || '';
+            updateImagePreview();
+        }
+        
         // Set ingredients
         if (item.ingredients && Array.isArray(item.ingredients)) {
             document.getElementById('item-ingredients').value = item.ingredients.join('\n');
@@ -330,6 +393,13 @@ function openItemModal(item = null) {
         // Reset form
         itemForm.reset();
         document.getElementById('item-id').value = '';
+        
+        // Reset image preview
+        if (previewImage && imagePlaceholder) {
+            previewImage.style.display = 'none';
+            imagePlaceholder.style.display = 'flex';
+            imagePlaceholder.innerHTML = '<i class="fas fa-image"></i><span>No image</span>';
+        }
     }
     
     // Show modal
@@ -394,6 +464,7 @@ function handleSaveItem(e) {
         const featured = document.getElementById('item-featured').checked;
         const description = document.getElementById('item-description').value.trim();
         const ingredientsText = document.getElementById('item-ingredients').value.trim();
+        const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
         
         // Validate inputs
         if (!name) {
@@ -433,7 +504,8 @@ function handleSaveItem(e) {
             price,
             featured,
             description,
-            ingredients
+            ingredients,
+            imageUrl: imageUrl || null
         };
         
         // Save to storage
@@ -549,7 +621,7 @@ function generateId() {
  */
 function formatCategoryLabel(category) {
     const categories = {
-        'appetizers': 'Appetizer',
+        'appetizers': 'Breakfast',
         'main-courses': 'Main Course',
         'desserts': 'Dessert',
         'drinks': 'Drink'

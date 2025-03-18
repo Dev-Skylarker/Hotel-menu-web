@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Manage Menu - Kenyan Delights Restaurant</title>
+    <title>Manage Menu - Campus Cafe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/admin.css">
@@ -14,7 +14,7 @@
     <div class="admin-wrapper">
         <nav class="admin-sidebar">
             <div class="sidebar-header">
-                <img src="../assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
+                <img src="../assets/logo.svg" alt="Campus Cafe Logo">
                 <h2>Admin Panel</h2>
             </div>
             
@@ -65,7 +65,7 @@
                     <div class="filter-options">
                         <select id="category-filter">
                             <option value="all">All Categories</option>
-                            <option value="appetizers">Appetizers</option>
+                            <option value="appetizers">Breakfast</option>
                             <option value="main-courses">Main Courses</option>
                             <option value="desserts">Desserts</option>
                             <option value="drinks">Drinks</option>
@@ -79,7 +79,8 @@
                             <tr>
                                 <th>Item Name</th>
                                 <th>Category</th>
-                                <th>Price (KSh)</th>
+                                <th>Price ($)</th>
+                                <th>Image</th>
                                 <th>Featured</th>
                                 <th>Actions</th>
                             </tr>
@@ -119,7 +120,7 @@
                     <label for="item-category">Category*</label>
                     <select id="item-category" name="category" required>
                         <option value="">Select a category</option>
-                        <option value="appetizers">Appetizers</option>
+                        <option value="appetizers">Breakfast</option>
                         <option value="main-courses">Main Courses</option>
                         <option value="desserts">Desserts</option>
                         <option value="drinks">Drinks</option>
@@ -128,7 +129,7 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="item-price">Price (KSh)*</label>
+                        <label for="item-price">Price ($)*</label>
                         <input type="number" id="item-price" name="price" min="0" step="0.01" required>
                     </div>
                     
@@ -141,6 +142,12 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="item-image-url">Image URL</label>
+                    <input type="url" id="item-image-url" name="imageUrl" placeholder="https://example.com/image.jpg">
+                    <small>Enter a URL to an image (leave empty to use default)</small>
+                </div>
+                
+                <div class="form-group">
                     <label for="item-description">Description*</label>
                     <textarea id="item-description" name="description" rows="3" required></textarea>
                 </div>
@@ -148,6 +155,17 @@
                 <div class="form-group">
                     <label for="item-ingredients">Ingredients (one per line)</label>
                     <textarea id="item-ingredients" name="ingredients" rows="4" placeholder="Enter each ingredient on a new line"></textarea>
+                </div>
+                
+                <div class="image-preview" id="image-preview">
+                    <h3>Image Preview</h3>
+                    <div class="preview-container">
+                        <div class="image-placeholder">
+                            <i class="fas fa-image"></i>
+                            <span>No image</span>
+                        </div>
+                        <img id="preview-image" src="" alt="Preview" style="display: none;">
+                    </div>
                 </div>
                 
                 <div class="form-actions">
