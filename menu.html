@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Browse our delicious menu featuring authentic Kenyan dishes. From appetizers to desserts, we have something for everyone.">
-    <meta name="keywords" content="Kenyan restaurant menu, African food, appetizers, main courses, desserts, drinks, Kenyan cuisine">
-    <meta name="author" content="Kenyan Delights Restaurant">
-    <title>Menu - Kenyan Delights Restaurant</title>
+    <meta name="description" content="Browse our delicious menu at Campus Cafe. From breakfast to dinner, we have options for every appetite.">
+    <meta name="keywords" content="campus cafe menu, student dining, college food, breakfast, lunch, dinner, snacks">
+    <meta name="author" content="Campus Cafe">
+    <title>Menu - Campus Cafe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
@@ -16,16 +16,16 @@
         <div class="container">
             <div class="logo">
                 <a href="index.html">
-                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
-                    <span>Kenyan Delights</span>
+                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
                 </a>
             </div>
             <nav>
                 <ul class="main-nav">
                     <li><a href="index.html">Home</a></li>
                     <li><a href="menu.html" class="active">Menu</a></li>
-                    <li><a href="index.html#about">About</a></li>
-                    <li><a href="index.html#contact">Contact</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
                 </ul>
                 <div class="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -41,7 +41,7 @@
         <section class="menu-header">
             <div class="container">
                 <h1>Our Menu</h1>
-                <p>Discover authentic Kenyan flavors crafted with passion and tradition</p>
+                <p>Delicious and affordable options to fuel your day on campus</p>
                 
                 <div class="search-container">
                     <input type="text" id="menu-search" placeholder="Search our menu...">
@@ -50,7 +50,7 @@
                 
                 <div class="menu-tabs">
                     <button class="menu-tab active" data-category="all">All</button>
-                    <button class="menu-tab" data-category="appetizers">Appetizers</button>
+                    <button class="menu-tab" data-category="appetizers">Breakfast</button>
                     <button class="menu-tab" data-category="main-courses">Main Courses</button>
                     <button class="menu-tab" data-category="desserts">Desserts</button>
                     <button class="menu-tab" data-category="drinks">Drinks</button>
@@ -75,9 +75,11 @@
 
         <section class="order-section">
             <div class="container">
-                <h2>Ready to Order?</h2>
-                <p>Call us at +254 123 456 789 or visit our restaurant at 123 Safari Avenue, Nairobi</p>
-                <a href="index.html#contact" class="btn btn-primary">Contact Us</a>
+                <h2>Current Orders</h2>
+                <p>Check your order status or call us at 0712345678</p>
+                <div id="current-orders" class="current-orders">
+                    <!-- Current orders will be loaded dynamically if available -->
+                </div>
             </div>
         </section>
     </main>
@@ -86,24 +88,24 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
-                    <span>Kenyan Delights</span>
+                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
                 </div>
                 <div class="footer-links">
                     <h3>Quick Links</h3>
                     <ul>
                         <li><a href="index.html">Home</a></li>
                         <li><a href="menu.html">Menu</a></li>
-                        <li><a href="index.html#about">About</a></li>
-                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-social">
                     <h3>Follow Us</h3>
                     <div class="social-icons">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
                 <div class="footer-admin">
@@ -111,7 +113,7 @@
                 </div>
             </div>
             <div class="copyright">
-                <p>&copy; 2023 Kenyan Delights Restaurant. All rights reserved.</p>
+                <p>&copy; 2025 Campus Cafe. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -136,8 +138,27 @@
                             <h3>Ingredients</h3>
                             <ul id="modal-item-ingredients"></ul>
                         </div>
+                        <div class="modal-item-actions">
+                            <button id="order-item-btn" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> Place Order
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div id="order-confirmation-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body text-center">
+                <i class="fas fa-check-circle success-icon"></i>
+                <h2>Order Placed Successfully!</h2>
+                <p>Your order has been placed and will be ready soon.</p>
+                <p>Order #: <span id="order-number"></span></p>
+                <button id="close-confirmation" class="btn btn-primary">Continue</button>
             </div>
         </div>
     </div>

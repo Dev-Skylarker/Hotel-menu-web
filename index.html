@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Experience authentic Kenyan cuisine at our restaurant. Browse our delicious menu options.">
-    <meta name="keywords" content="Kenyan restaurant, African cuisine, restaurant menu, food, appetizers, main course, desserts, drinks">
-    <meta name="author" content="Kenyan Delights Restaurant">
-    <title>Kenyan Delights Restaurant - Home</title>
+    <meta name="description" content="Campus Cafe - Your favorite campus dining experience with delicious food options for students and faculty.">
+    <meta name="keywords" content="campus cafe, university restaurant, student dining, college food, cafe menu">
+    <meta name="author" content="Campus Cafe">
+    <title>Campus Cafe - Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
@@ -16,16 +16,16 @@
         <div class="container">
             <div class="logo">
                 <a href="index.html">
-                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
-                    <span>Kenyan Delights</span>
+                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
                 </a>
             </div>
             <nav>
                 <ul class="main-nav">
                     <li><a href="index.html" class="active">Home</a></li>
                     <li><a href="menu.html">Menu</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
                 </ul>
                 <div class="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -41,8 +41,8 @@
         <section class="hero">
             <div class="container">
                 <div class="hero-content">
-                    <h1>Authentic Kenyan Cuisine</h1>
-                    <p>Experience the rich flavors and cultural heritage of Kenya through our carefully crafted dishes</p>
+                    <h1>Your Campus Dining Destination</h1>
+                    <p>Fresh, affordable, and delicious meals made specially for students and faculty</p>
                     <a href="menu.html" class="btn btn-primary">View Our Menu</a>
                 </div>
             </div>
@@ -58,74 +58,41 @@
             </div>
         </section>
 
-        <section class="about" id="about">
+        <section class="about-preview">
             <div class="container">
+                <h2>About Campus Cafe</h2>
                 <div class="about-content">
                     <div class="about-text">
-                        <h2>Our Story</h2>
-                        <p>Founded in 2010, Kenyan Delights Restaurant brings the authentic taste of Kenya to your table. Our chefs use traditional cooking methods and locally sourced ingredients to create an unforgettable dining experience.</p>
-                        <p>We believe in preserving Kenyan culinary traditions while adding our own creative touch to each dish we serve.</p>
+                        <p>Campus Cafe is your go-to dining spot on campus, serving fresh and affordable meals that fuel your academic success.</p>
+                        <p>Whether you need a quick breakfast before class, a hearty lunch between lectures, or a coffee break with friends, we've got you covered.</p>
+                        <a href="about.html" class="btn btn-secondary">Learn More About Us</a>
                     </div>
                     <div class="about-image">
                         <div class="image-placeholder">
                             <i class="fas fa-utensils"></i>
-                            <span>Our Restaurant</span>
+                            <span>Our Cafe</span>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="contact" id="contact">
+        <section class="hours-location">
             <div class="container">
-                <h2>Contact Us</h2>
-                <div class="contact-grid">
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <h3>Location</h3>
-                                <p>123 Safari Avenue, Nairobi, Kenya</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone"></i>
-                            <div>
-                                <h3>Phone</h3>
-                                <p>+254 123 456 789</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <h3>Email</h3>
-                                <p>info@kenyandelights.com</p>
-                            </div>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-clock"></i>
-                            <div>
-                                <h3>Hours</h3>
-                                <p>Mon-Fri: 10am - 10pm<br>Sat-Sun: 11am - 11pm</p>
-                            </div>
-                        </div>
+                <div class="hours-location-grid">
+                    <div class="hours-box">
+                        <h2>Hours</h2>
+                        <ul>
+                            <li><strong>Monday - Friday:</strong> 7:30am - 8:00pm</li>
+                            <li><strong>Saturday:</strong> 9:00am - 6:00pm</li>
+                            <li><strong>Sunday:</strong> 10:00am - 4:00pm</li>
+                        </ul>
                     </div>
-                    <div class="contact-form">
-                        <form id="contact-form">
-                            <div class="form-group">
-                                <label for="name">Name</label>
-                                <input type="text" id="name" name="name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" rows="5" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Send Message</button>
-                        </form>
+                    <div class="location-box">
+                        <h2>Find Us</h2>
+                        <p><i class="fas fa-map-marker-alt"></i> Student Center, Building B</p>
+                        <p><i class="fas fa-phone"></i> 0712345678</p>
+                        <a href="contact.html" class="btn btn-secondary">Contact Us</a>
                     </div>
                 </div>
             </div>
@@ -136,24 +103,24 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
-                    <span>Kenyan Delights</span>
+                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
                 </div>
                 <div class="footer-links">
                     <h3>Quick Links</h3>
                     <ul>
                         <li><a href="index.html">Home</a></li>
                         <li><a href="menu.html">Menu</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-social">
                     <h3>Follow Us</h3>
                     <div class="social-icons">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
                 <div class="footer-admin">
@@ -161,7 +128,7 @@
                 </div>
             </div>
             <div class="copyright">
-                <p>&copy; 2023 Kenyan Delights Restaurant. All rights reserved.</p>
+                <p>&copy; 2025 Campus Cafe. All rights reserved.</p>
             </div>
         </div>
     </footer>

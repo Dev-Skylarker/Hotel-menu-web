@@ -1,5 +1,5 @@
 /**
- * Menu Page JavaScript for Kenyan Delights Restaurant
+ * Menu Page JavaScript for Campus Cafe
  */
 
 // DOM Elements
@@ -9,11 +9,17 @@ const searchBtn = document.getElementById('search-btn');
 const menuTabs = document.querySelectorAll('.menu-tab');
 const noResults = document.querySelector('.no-results');
 const itemModal = document.getElementById('item-modal');
-const closeModal = document.querySelector('.close-modal');
+const closeModalBtns = document.querySelectorAll('.close-modal');
+const orderItemBtn = document.getElementById('order-item-btn');
+const orderConfirmationModal = document.getElementById('order-confirmation-modal');
+const closeConfirmationBtn = document.getElementById('close-confirmation');
+const orderNumberSpan = document.getElementById('order-number');
+const currentOrdersContainer = document.getElementById('current-orders');
 
 // Current filter state
 let currentCategory = 'all';
 let currentSearchTerm = '';
+let currentItem = null;
 
 /**
  * Initialize the menu page
@@ -21,6 +27,9 @@ let currentSearchTerm = '';
 function initMenu() {
     // Load menu items
     loadMenuItems();
+    
+    // Display current orders if any
+    displayCurrentOrders();
     
     // Add event listeners
     addEventListeners();
@@ -52,24 +61,44 @@ function addEventListeners() {
         });
     });
     
-    // Close modal
-    if (closeModal) {
-        closeModal.addEventListener('click', () => {
-            closeItemModal();
+    // Close modals
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (e.target.closest('#item-modal')) {
+                closeItemModal();
+            } else if (e.target.closest('#order-confirmation-modal')) {
+                closeConfirmationModal();
+            }
         });
+    });
+    
+    // Order button
+    if (orderItemBtn) {
+        orderItemBtn.addEventListener('click', placeOrder);
     }
     
-    // Close modal when clicking outside
+    // Close confirmation button
+    if (closeConfirmationBtn) {
+        closeConfirmationBtn.addEventListener('click', closeConfirmationModal);
+    }
+    
+    // Close modals when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === itemModal) {
             closeItemModal();
+        } else if (e.target === orderConfirmationModal) {
+            closeConfirmationModal();
         }
     });
     
-    // Close modal with Escape key
+    // Close modals with Escape key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && itemModal.style.display === 'block') {
-            closeItemModal();
+        if (e.key === 'Escape') {
+            if (itemModal && itemModal.style.display === 'block') {
+                closeItemModal();
+            } else if (orderConfirmationModal && orderConfirmationModal.style.display === 'block') {
+                closeConfirmationModal();
+            }
         }
     });
     
@@ -198,12 +227,19 @@ function createMenuItem(item) {
         <div class="menu-item-info">
             <div class="menu-item-category">${categoryLabel}</div>
             <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
-            <div class="menu-item-price">KSh ${item.price.toFixed(2)}</div>
+            <div class="menu-item-price">$${item.price.toFixed(2)}</div>
             <p class="menu-item-description">${escapeHtml(item.description)}</p>
+            <button class="order-btn btn btn-small">Order Now</button>
         </div>
     `;
     
     // Add click event to open modal
+    const orderBtn = menuItem.querySelector('.order-btn');
+    orderBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openItemModal(item);
+    });
+    
     menuItem.addEventListener('click', () => {
         openItemModal(item);
     });
@@ -218,10 +254,13 @@ function createMenuItem(item) {
 function openItemModal(item) {
     if (!itemModal) return;
     
+    // Store current item reference
+    currentItem = item;
+    
     // Set modal content
     document.getElementById('modal-item-name').textContent = item.name;
     document.getElementById('modal-item-description').textContent = item.description;
-    document.getElementById('modal-item-price').textContent = `KSh ${item.price.toFixed(2)}`;
+    document.getElementById('modal-item-price').textContent = `$${item.price.toFixed(2)}`;
     document.getElementById('modal-item-category').textContent = formatCategoryLabel(item.category);
     
     // Set ingredients list
@@ -280,6 +319,143 @@ function closeItemModal() {
 }
 
 /**
+ * Close the order confirmation modal
+ */
+function closeConfirmationModal() {
+    if (!orderConfirmationModal) return;
+    
+    // Apply exit animation
+    const modalContent = orderConfirmationModal.querySelector('.modal-content');
+    modalContent.style.opacity = '0';
+    modalContent.style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        orderConfirmationModal.style.display = 'none';
+        // Reset animation
+        modalContent.style.transition = '';
+    }, 300);
+    
+    // Update current orders display
+    displayCurrentOrders();
+}
+
+/**
+ * Place an order for the current item
+ */
+function placeOrder() {
+    if (!currentItem) return;
+    
+    // Create order object
+    const order = {
+        id: generateOrderId(),
+        item: currentItem,
+        quantity: 1,
+        status: 'pending',
+        orderTime: new Date().toISOString(),
+        estimatedPickupTime: getEstimatedPickupTime(),
+        customerName: 'Guest', // In a real app, this would be the logged-in user or input from form
+    };
+    
+    // Save order to storage
+    saveOrder(order);
+    
+    // Close item modal
+    closeItemModal();
+    
+    // Show confirmation
+    showOrderConfirmation(order);
+}
+
+/**
+ * Show order confirmation modal
+ * @param {Object} order - Order object
+ */
+function showOrderConfirmation(order) {
+    if (!orderConfirmationModal || !orderNumberSpan) return;
+    
+    // Set order number
+    orderNumberSpan.textContent = order.id;
+    
+    // Show modal
+    orderConfirmationModal.style.display = 'block';
+    
+    // Apply entrance animation
+    const modalContent = orderConfirmationModal.querySelector('.modal-content');
+    modalContent.style.opacity = '0';
+    modalContent.style.transform = 'translateY(-20px)';
+    
+    setTimeout(() => {
+        modalContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        modalContent.style.opacity = '1';
+        modalContent.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+/**
+ * Display current orders
+ */
+function displayCurrentOrders() {
+    if (!currentOrdersContainer) return;
+    
+    // Get current orders
+    const orders = getOrders();
+    
+    // Filter to only show recent pending orders (last 24 hours)
+    const recentOrders = orders.filter(order => {
+        const orderDate = new Date(order.orderTime);
+        const now = new Date();
+        const timeDiff = now - orderDate;
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+        
+        return hoursDiff < 24 && order.status === 'pending';
+    });
+    
+    // Clear container
+    currentOrdersContainer.innerHTML = '';
+    
+    if (recentOrders.length === 0) {
+        currentOrdersContainer.innerHTML = `
+            <div class="empty-state">
+                <p>No current orders. Order something delicious!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Create and display order cards
+    recentOrders.forEach(order => {
+        const orderCard = createOrderCard(order);
+        currentOrdersContainer.appendChild(orderCard);
+    });
+}
+
+/**
+ * Create an order card element
+ * @param {Object} order - Order object
+ * @returns {HTMLElement} - Order card element
+ */
+function createOrderCard(order) {
+    const orderCard = document.createElement('div');
+    orderCard.className = 'order-card';
+    
+    const pickupTime = new Date(order.estimatedPickupTime);
+    const formattedTime = pickupTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    orderCard.innerHTML = `
+        <div class="order-header">
+            <h3>Order #${order.id}</h3>
+            <span class="order-status">${order.status}</span>
+        </div>
+        <div class="order-details">
+            <p><strong>${order.item.name}</strong> x${order.quantity}</p>
+            <p>Est. Pickup: ${formattedTime}</p>
+        </div>
+    `;
+    
+    return orderCard;
+}
+
+/**
  * Handle hash change to open menu item from URL
  */
 function handleHashChange() {
@@ -303,6 +479,13 @@ function loadMenuItems() {
         // Get menu items
         const menuItems = storageManager.getMenuItems();
         
+        // Update category labels for Campus Cafe
+        menuItems.forEach(item => {
+            if (item.category === 'appetizers') {
+                item.category = 'appetizers'; // Keeping as is, but could change to 'breakfast'
+            }
+        });
+        
         // Display all items
         displayMenuItems(menuItems);
     } catch (error) {
@@ -325,13 +508,57 @@ function loadMenuItems() {
  */
 function formatCategoryLabel(category) {
     const categories = {
-        'appetizers': 'Appetizer',
+        'appetizers': 'Breakfast',
         'main-courses': 'Main Course',
         'desserts': 'Dessert',
         'drinks': 'Drink'
     };
     
     return categories[category] || 'Other';
+}
+
+/**
+ * Generate a unique order ID
+ * @returns {string} - Unique order ID
+ */
+function generateOrderId() {
+    // Simple order number format: current timestamp + random chars
+    return Math.floor(Math.random() * 900 + 100).toString();
+}
+
+/**
+ * Calculate estimated pickup time (15-30 minutes from now)
+ * @returns {string} - ISO string of estimated pickup time
+ */
+function getEstimatedPickupTime() {
+    const now = new Date();
+    // Random time between 15-30 minutes from now
+    const minutesToAdd = Math.floor(Math.random() * 16) + 15;
+    const pickupTime = new Date(now.getTime() + minutesToAdd * 60000);
+    return pickupTime.toISOString();
+}
+
+/**
+ * Save order to localStorage
+ * @param {Object} order - Order to save
+ */
+function saveOrder(order) {
+    // Get existing orders
+    const orders = getOrders();
+    
+    // Add new order
+    orders.push(order);
+    
+    // Save to localStorage
+    localStorage.setItem('campus_cafe_orders', JSON.stringify(orders));
+}
+
+/**
+ * Get all orders from localStorage
+ * @returns {Array} - Array of orders
+ */
+function getOrders() {
+    return JSON.parse(localStorage.getItem('campus_cafe_orders')) || [];
 }
 
 /**
