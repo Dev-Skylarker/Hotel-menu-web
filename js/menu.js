@@ -266,6 +266,16 @@ function openItemModal(item) {
     document.getElementById('modal-item-price').textContent = `$${item.price.toFixed(2)}`;
     document.getElementById('modal-item-category').textContent = formatCategoryLabel(item.category);
     
+    // Set the image
+    const imageContainer = document.getElementById('modal-item-image');
+    if (imageContainer) {
+        if (item.imageUrl) {
+            imageContainer.innerHTML = `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="modal-item-img">`;
+        } else {
+            imageContainer.innerHTML = `<div class="image-placeholder"><i class="fas fa-utensils"></i></div>`;
+        }
+    }
+    
     // Set ingredients list
     const ingredientsList = document.getElementById('modal-item-ingredients');
     ingredientsList.innerHTML = '';
