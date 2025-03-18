@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse our delicious menu featuring authentic Kenyan dishes. From appetizers to desserts, we have something for everyone.">
+    <meta name="keywords" content="Kenyan restaurant menu, African food, appetizers, main courses, desserts, drinks, Kenyan cuisine">
+    <meta name="author" content="Kenyan Delights Restaurant">
+    <title>Menu - Kenyan Delights Restaurant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+</head>
+<body class="light-mode">
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
+                    <span>Kenyan Delights</span>
+                </a>
+            </div>
+            <nav>
+                <ul class="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="menu.html" class="active">Menu</a></li>
+                    <li><a href="index.html#about">About</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="menu-header">
+            <div class="container">
+                <h1>Our Menu</h1>
+                <p>Discover authentic Kenyan flavors crafted with passion and tradition</p>
+                
+                <div class="search-container">
+                    <input type="text" id="menu-search" placeholder="Search our menu...">
+                    <button id="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="menu-tabs">
+                    <button class="menu-tab active" data-category="all">All</button>
+                    <button class="menu-tab" data-category="appetizers">Appetizers</button>
+                    <button class="menu-tab" data-category="main-courses">Main Courses</button>
+                    <button class="menu-tab" data-category="desserts">Desserts</button>
+                    <button class="menu-tab" data-category="drinks">Drinks</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="menu-items">
+            <div class="container">
+                <div class="no-results" style="display: none;">
+                    <i class="fas fa-search"></i>
+                    <h2>No menu items found</h2>
+                    <p>Please try a different search term or category</p>
+                </div>
+                
+                <div class="menu-grid" id="menu-container">
+                    <!-- Menu items will be loaded dynamically -->
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="order-section">
+            <div class="container">
+                <h2>Ready to Order?</h2>
+                <p>Call us at +254 123 456 789 or visit our restaurant at 123 Safari Avenue, Nairobi</p>
+                <a href="index.html#contact" class="btn btn-primary">Contact Us</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/logo.svg" alt="Kenyan Delights Restaurant Logo">
+                    <span>Kenyan Delights</span>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="index.html#about">About</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h3>Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-admin">
+                    <a href="admin/login.html" class="btn btn-small">Admin Login</a>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Kenyan Delights Restaurant. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Item Detail Modal -->
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <h2 id="modal-item-name"></h2>
+                <div class="modal-item-details">
+                    <div class="modal-item-image">
+                        <div class="image-placeholder">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                    </div>
+                    <div class="modal-item-info">
+                        <p id="modal-item-description"></p>
+                        <div class="modal-item-price" id="modal-item-price"></div>
+                        <div class="modal-item-category" id="modal-item-category"></div>
+                        <div class="modal-item-ingredients">
+                            <h3>Ingredients</h3>
+                            <ul id="modal-item-ingredients"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/theme.js"></script>
+    <script src="js/utils/storage.js"></script>
+    <script src="js/menu.js"></script>
+</body>
+</html>
