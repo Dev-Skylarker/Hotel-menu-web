@@ -1,12 +1,13 @@
 /**
- * Storage Manager for Kenyan Delights Restaurant
+ * Storage Manager for Campus Cafe
  * Handles localStorage operations for menu items and orders
  */
 
 const storageManager = (function() {
     // Storage keys
-    const MENU_ITEMS_KEY = 'kenyan_delights_menu_items';
-    const ORDERS_KEY = 'kenyan_delights_orders';
+    const MENU_ITEMS_KEY = 'campus_cafe_menu_items';
+    const ORDERS_KEY = 'campus_cafe_orders';
+    const MESSAGES_KEY = 'campus_cafe_messages';
     
     /**
      * Initialize storage with default data if empty
@@ -27,6 +28,14 @@ const storageManager = (function() {
         if (!orders) {
             // Initialize with empty orders array
             localStorage.setItem(ORDERS_KEY, JSON.stringify([]));
+        }
+        
+        // Check if messages exist
+        const messages = localStorage.getItem(MESSAGES_KEY);
+        
+        if (!messages) {
+            // Initialize with empty messages array
+            localStorage.setItem(MESSAGES_KEY, JSON.stringify([]));
         }
     }
     
@@ -108,21 +117,12 @@ const storageManager = (function() {
      */
     function saveOrder(order) {
         // Validate order
-        if (!order || !order.items || !Array.isArray(order.items) || order.items.length === 0) {
+        if (!order || !order.id || !order.item) {
             throw new Error('Invalid order data');
         }
         
         // Get current orders
         const orders = getOrders();
-        
-        // Add ID and date if not present
-        if (!order.id) {
-            order.id = generateOrderId();
-        }
-        
-        if (!order.date) {
-            order.date = new Date().toISOString();
-        }
         
         // Add order to list
         orders.push(order);
@@ -134,31 +134,86 @@ const storageManager = (function() {
     }
     
     /**
-     * Generate a unique order ID
-     * @returns {string} - Unique order ID
+     * Update order status
+     * @param {string} id - Order ID
+     * @param {string} status - New status
+     * @returns {Object|null} - Updated order or null if not found
      */
-    function generateOrderId() {
-        // Get existing orders
+    function updateOrderStatus(id, status) {
+        // Get all orders
         const orders = getOrders();
         
-        // Find highest order number
-        let highestNum = 0;
+        // Find order by ID
+        const orderIndex = orders.findIndex(order => order.id === id);
         
-        orders.forEach(order => {
-            if (order.id) {
-                // Extract number from order ID (format: ORDER-123)
-                const match = order.id.match(/ORDER-(\d+)/);
-                if (match && match[1]) {
-                    const num = parseInt(match[1], 10);
-                    if (num > highestNum) {
-                        highestNum = num;
-                    }
-                }
-            }
-        });
+        if (orderIndex === -1) {
+            return null;
+        }
         
-        // Generate new ID
-        return `ORDER-${highestNum + 1}`;
+        // Update status
+        orders[orderIndex].status = status;
+        
+        // Save to localStorage
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+        
+        return orders[orderIndex];
+    }
+    
+    /**
+     * Get all contact messages
+     * @returns {Array} - Array of messages
+     */
+    function getMessages() {
+        const messages = localStorage.getItem(MESSAGES_KEY);
+        return messages ? JSON.parse(messages) : [];
+    }
+    
+    /**
+     * Save a new contact message
+     * @param {Object} message - Message to save
+     * @returns {Object} - Saved message
+     */
+    function saveMessage(message) {
+        // Validate message
+        if (!message || !message.id || !message.name || !message.email || !message.message) {
+            throw new Error('Invalid message data');
+        }
+        
+        // Get current messages
+        const messages = getMessages();
+        
+        // Add message to list
+        messages.push(message);
+        
+        // Save to localStorage
+        localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+        
+        return message;
+    }
+    
+    /**
+     * Mark message as read
+     * @param {string} id - Message ID
+     * @returns {Object|null} - Updated message or null if not found
+     */
+    function markMessageAsRead(id) {
+        // Get all messages
+        const messages = getMessages();
+        
+        // Find message by ID
+        const messageIndex = messages.findIndex(message => message.id === id);
+        
+        if (messageIndex === -1) {
+            return null;
+        }
+        
+        // Update read status
+        messages[messageIndex].read = true;
+        
+        // Save to localStorage
+        localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+        
+        return messages[messageIndex];
     }
     
     /**
@@ -169,75 +224,75 @@ const storageManager = (function() {
         return [
             {
                 id: 'item_1',
-                name: 'Kenyan Samosas',
+                name: 'Breakfast Burrito',
                 category: 'appetizers',
-                price: 250,
+                price: 6.99,
                 featured: true,
-                description: 'Crispy triangular pastries filled with spiced beef or vegetables. A popular Kenyan street food with Indian influence.',
-                ingredients: ['Pastry dough', 'Beef or vegetables', 'Onions', 'Garlic', 'Kenyan spices', 'Coriander']
+                description: 'Start your day right with our hearty breakfast burrito packed with scrambled eggs, cheese, potatoes, and your choice of bacon or sausage.',
+                ingredients: ['Flour tortilla', 'Scrambled eggs', 'Cheddar cheese', 'Potatoes', 'Choice of bacon or sausage', 'Salsa']
             },
             {
                 id: 'item_2',
-                name: 'Ugali with Sukuma Wiki',
+                name: 'Classic Burger',
                 category: 'main-courses',
-                price: 450,
+                price: 8.50,
                 featured: true,
-                description: 'Kenya\'s staple dish of firm maize meal porridge served with stewed collard greens. The ultimate comfort food that fuels the nation.',
-                ingredients: ['Maize flour', 'Water', 'Collard greens', 'Onions', 'Tomatoes', 'Vegetable oil']
+                description: 'Juicy beef patty topped with lettuce, tomato, onion, and our special sauce on a toasted brioche bun. Served with fries.',
+                ingredients: ['Beef patty', 'Brioche bun', 'Lettuce', 'Tomato', 'Onion', 'Special sauce', 'French fries']
             },
             {
                 id: 'item_3',
-                name: 'Nyama Choma',
+                name: 'Grilled Chicken Salad',
                 category: 'main-courses',
-                price: 850,
+                price: 9.99,
                 featured: true,
-                description: 'Succulent grilled meat (usually goat or beef) seasoned with salt and served with kachumbari. The king of Kenyan cuisine.',
-                ingredients: ['Goat or beef', 'Salt', 'Black pepper', 'Served with tomato and onion salad']
+                description: 'Fresh mixed greens topped with grilled chicken breast, cherry tomatoes, cucumber, red onion, and balsamic vinaigrette.',
+                ingredients: ['Mixed greens', 'Grilled chicken breast', 'Cherry tomatoes', 'Cucumber', 'Red onion', 'Balsamic vinaigrette']
             },
             {
                 id: 'item_4',
-                name: 'Mandazi',
+                name: 'Double Chocolate Brownie',
                 category: 'desserts',
-                price: 150,
+                price: 3.50,
                 featured: false,
-                description: 'Lightly sweetened East African fried bread flavored with cardamom and coconut. Perfect with a cup of chai tea.',
-                ingredients: ['Flour', 'Sugar', 'Coconut milk', 'Cardamom', 'Vegetable oil']
+                description: 'Rich, fudgy brownie loaded with chocolate chips. The perfect sweet treat between classes.',
+                ingredients: ['Chocolate', 'Flour', 'Sugar', 'Eggs', 'Butter', 'Chocolate chips', 'Vanilla extract']
             },
             {
                 id: 'item_5',
-                name: 'Chai Masala',
+                name: 'Iced Coffee',
                 category: 'drinks',
-                price: 120,
+                price: 3.25,
                 featured: false,
-                description: 'Spiced Kenyan tea brewed with milk and aromatic spices. A comforting beverage enjoyed throughout the day.',
-                ingredients: ['Black tea', 'Milk', 'Cinnamon', 'Cardamom', 'Cloves', 'Sugar']
+                description: 'Smooth cold-brewed coffee served over ice. Add your choice of flavored syrup for an extra kick.',
+                ingredients: ['Cold-brewed coffee', 'Ice', 'Optional: flavored syrup', 'Optional: cream']
             },
             {
                 id: 'item_6',
-                name: 'Mbuzi Stew',
+                name: 'Veggie Wrap',
                 category: 'main-courses',
-                price: 650,
+                price: 7.50,
                 featured: false,
-                description: 'Slow-cooked goat stew with tomatoes, onions, and traditional Kenyan spices. A rich and flavorful dish.',
-                ingredients: ['Goat meat', 'Tomatoes', 'Onions', 'Garlic', 'Ginger', 'Kenyan spices']
+                description: 'Grilled vegetables, hummus, and feta cheese wrapped in a spinach tortilla. A healthy option for busy students.',
+                ingredients: ['Spinach tortilla', 'Grilled vegetables', 'Hummus', 'Feta cheese', 'Mixed greens']
             },
             {
                 id: 'item_7',
-                name: 'Kachumbari',
+                name: 'Avocado Toast',
                 category: 'appetizers',
-                price: 180,
+                price: 5.99,
                 featured: false,
-                description: 'Fresh tomato and onion salad with a squeeze of lime. A vibrant accompaniment to many Kenyan dishes.',
-                ingredients: ['Tomatoes', 'Onions', 'Lime juice', 'Coriander', 'Salt']
+                description: 'Smashed avocado on toasted sourdough bread with cherry tomatoes, red pepper flakes, and a drizzle of olive oil.',
+                ingredients: ['Sourdough bread', 'Avocado', 'Cherry tomatoes', 'Red pepper flakes', 'Olive oil', 'Salt and pepper']
             },
             {
                 id: 'item_8',
-                name: 'Mahamri',
+                name: 'Fruit Parfait',
                 category: 'desserts',
-                price: 180,
+                price: 4.50,
                 featured: false,
-                description: 'Triangle-shaped fried bread with coconut and cardamom flavors. A coastal Kenyan specialty.',
-                ingredients: ['Flour', 'Coconut milk', 'Yeast', 'Cardamom', 'Sugar', 'Vegetable oil']
+                description: 'Layers of yogurt, granola, and seasonal fresh fruits. A light and refreshing dessert option.',
+                ingredients: ['Greek yogurt', 'Granola', 'Seasonal fruits', 'Honey', 'Mint garnish']
             }
         ];
     }
@@ -250,7 +305,16 @@ const storageManager = (function() {
         saveMenuItem,
         deleteMenuItem,
         getOrders,
-        saveOrder
+        saveOrder,
+        updateOrderStatus,
+        getMessages,
+        saveMessage,
+        markMessageAsRead
     };
 })();
+
+// Initialize storage on page load
+document.addEventListener('DOMContentLoaded', function() {
+    storageManager.initStorage();
+});
 

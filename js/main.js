@@ -1,5 +1,5 @@
 /**
- * Main JavaScript for the Kenyan Delights Restaurant website
+ * Main JavaScript for the Campus Cafe website
  */
 
 // DOM Elements
@@ -25,33 +25,15 @@ if (mobileNavToggle) {
     });
 }
 
-// Handle Contact Form Submission
-if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        // Get form values
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const message = document.getElementById('message').value.trim();
-        
-        // Validate inputs
-        if (!name || !email || !message) {
-            showAlert('Please fill in all fields', 'error');
-            return;
-        }
-        
-        if (!isValidEmail(email)) {
-            showAlert('Please enter a valid email address', 'error');
-            return;
-        }
-        
-        // In a real application, you would send data to server
-        // Here we'll just show a success message and reset the form
-        showAlert('Thank you for your message! We will get back to you soon.', 'success');
-        contactForm.reset();
-    });
-}
+// Close mobile nav when clicking outside
+document.addEventListener('click', (e) => {
+    if (mainNav && mainNav.classList.contains('active') && !e.target.closest('.mobile-nav-toggle') && !e.target.closest('.main-nav')) {
+        mainNav.classList.remove('active');
+        const icon = mobileNavToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+    }
+});
 
 /**
  * Validate email format
@@ -68,19 +50,33 @@ function isValidEmail(email) {
  * @param {string} message - Message to display
  * @param {string} type - Alert type ('success' or 'error')
  */
-function showAlert(message, type = 'success') {
+function showAlert(message, type = 'success', container = null) {
     // Create alert element
     const alertEl = document.createElement('div');
     alertEl.className = `alert alert-${type}`;
     alertEl.textContent = message;
     
     // Find where to insert it
-    const formContainer = contactForm.parentElement;
-    formContainer.insertBefore(alertEl, contactForm);
+    if (container) {
+        container.insertBefore(alertEl, container.firstChild);
+    } else if (contactForm) {
+        const formContainer = contactForm.parentElement;
+        formContainer.insertBefore(alertEl, contactForm);
+    } else {
+        // If no container specified and no contact form, add to body
+        document.body.appendChild(alertEl);
+        alertEl.style.position = 'fixed';
+        alertEl.style.top = '20px';
+        alertEl.style.left = '50%';
+        alertEl.style.transform = 'translateX(-50%)';
+        alertEl.style.zIndex = '1000';
+    }
     
     // Remove after 5 seconds
     setTimeout(() => {
-        alertEl.remove();
+        if (alertEl.parentNode) {
+            alertEl.parentNode.removeChild(alertEl);
+        }
     }, 5000);
 }
 
@@ -107,6 +103,19 @@ async function loadFeaturedDishes() {
             displayDishes.forEach(dish => {
                 const dishCard = createDishCard(dish);
                 featuredDishesContainer.appendChild(dishCard);
+            });
+            
+            // Add animation effects with staggered delays
+            const dishCards = featuredDishesContainer.querySelectorAll('.dish-card');
+            dishCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
             });
         } else {
             featuredDishesContainer.innerHTML = `
@@ -148,13 +157,26 @@ function createDishCard(dish) {
         <div class="dish-info">
             <div class="dish-category">${categoryLabel}</div>
             <h3 class="dish-name">${escapeHtml(dish.name)}</h3>
-            <div class="dish-price">KSh ${dish.price.toFixed(2)}</div>
+            <div class="dish-price">$${dish.price.toFixed(2)}</div>
             <p class="dish-description">${escapeHtml(dish.description)}</p>
-            <div class="view-dish">
+            <div class="dish-actions">
                 <a href="menu.html#${dish.id}" class="btn btn-secondary btn-small">View Details</a>
+                <button class="btn btn-primary btn-small order-btn" data-id="${dish.id}">
+                    <i class="fas fa-shopping-cart"></i> Order
+                </button>
             </div>
         </div>
     `;
+    
+    // Add click event for order button
+    const orderBtn = card.querySelector('.order-btn');
+    if (orderBtn) {
+        orderBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Navigate to menu page with hash
+            window.location.href = `menu.html#${dish.id}`;
+        });
+    }
     
     return card;
 }
@@ -166,7 +188,7 @@ function createDishCard(dish) {
  */
 function formatCategoryLabel(category) {
     const categories = {
-        'appetizers': 'Appetizer',
+        'appetizers': 'Breakfast',
         'main-courses': 'Main Course',
         'desserts': 'Dessert',
         'drinks': 'Drink'
@@ -191,6 +213,16 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+/**
+ * Check if the device is a mobile device
+ * @returns {boolean} - Whether the device is mobile
+ */
+function isMobileDevice() {
+    return window.innerWidth < 768 || 
+           navigator.userAgent.match(/Android/i) || 
+           navigator.userAgent.match(/iPhone|iPad|iPod/i);
 }
 
 // Initialize page
