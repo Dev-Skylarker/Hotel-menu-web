@@ -218,11 +218,14 @@ function createMenuItem(item) {
     
     const categoryLabel = formatCategoryLabel(item.category);
     
+    // Determine if we should show image or placeholder
+    const imageHtml = item.imageUrl ? 
+        `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="menu-item-img">` :
+        `<div class="image-placeholder"><i class="fas fa-utensils"></i></div>`;
+        
     menuItem.innerHTML = `
         <div class="menu-item-image">
-            <div class="image-placeholder">
-                <i class="fas fa-utensils"></i>
-            </div>
+            ${imageHtml}
         </div>
         <div class="menu-item-info">
             <div class="menu-item-category">${categoryLabel}</div>

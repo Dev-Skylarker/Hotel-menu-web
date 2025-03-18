@@ -229,7 +229,8 @@ const storageManager = (function() {
                 price: 6.99,
                 featured: true,
                 description: 'Start your day right with our hearty breakfast burrito packed with scrambled eggs, cheese, potatoes, and your choice of bacon or sausage.',
-                ingredients: ['Flour tortilla', 'Scrambled eggs', 'Cheddar cheese', 'Potatoes', 'Choice of bacon or sausage', 'Salsa']
+                ingredients: ['Flour tortilla', 'Scrambled eggs', 'Cheddar cheese', 'Potatoes', 'Choice of bacon or sausage', 'Salsa'],
+                imageUrl: 'https://images.unsplash.com/photo-1584178639036-613ba57e5e37?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_2',
@@ -238,7 +239,8 @@ const storageManager = (function() {
                 price: 8.50,
                 featured: true,
                 description: 'Juicy beef patty topped with lettuce, tomato, onion, and our special sauce on a toasted brioche bun. Served with fries.',
-                ingredients: ['Beef patty', 'Brioche bun', 'Lettuce', 'Tomato', 'Onion', 'Special sauce', 'French fries']
+                ingredients: ['Beef patty', 'Brioche bun', 'Lettuce', 'Tomato', 'Onion', 'Special sauce', 'French fries'],
+                imageUrl: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_3',
@@ -247,7 +249,8 @@ const storageManager = (function() {
                 price: 9.99,
                 featured: true,
                 description: 'Fresh mixed greens topped with grilled chicken breast, cherry tomatoes, cucumber, red onion, and balsamic vinaigrette.',
-                ingredients: ['Mixed greens', 'Grilled chicken breast', 'Cherry tomatoes', 'Cucumber', 'Red onion', 'Balsamic vinaigrette']
+                ingredients: ['Mixed greens', 'Grilled chicken breast', 'Cherry tomatoes', 'Cucumber', 'Red onion', 'Balsamic vinaigrette'],
+                imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_4',
@@ -256,7 +259,8 @@ const storageManager = (function() {
                 price: 3.50,
                 featured: false,
                 description: 'Rich, fudgy brownie loaded with chocolate chips. The perfect sweet treat between classes.',
-                ingredients: ['Chocolate', 'Flour', 'Sugar', 'Eggs', 'Butter', 'Chocolate chips', 'Vanilla extract']
+                ingredients: ['Chocolate', 'Flour', 'Sugar', 'Eggs', 'Butter', 'Chocolate chips', 'Vanilla extract'],
+                imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_5',
@@ -265,7 +269,8 @@ const storageManager = (function() {
                 price: 3.25,
                 featured: false,
                 description: 'Smooth cold-brewed coffee served over ice. Add your choice of flavored syrup for an extra kick.',
-                ingredients: ['Cold-brewed coffee', 'Ice', 'Optional: flavored syrup', 'Optional: cream']
+                ingredients: ['Cold-brewed coffee', 'Ice', 'Optional: flavored syrup', 'Optional: cream'],
+                imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_6',
@@ -274,7 +279,8 @@ const storageManager = (function() {
                 price: 7.50,
                 featured: false,
                 description: 'Grilled vegetables, hummus, and feta cheese wrapped in a spinach tortilla. A healthy option for busy students.',
-                ingredients: ['Spinach tortilla', 'Grilled vegetables', 'Hummus', 'Feta cheese', 'Mixed greens']
+                ingredients: ['Spinach tortilla', 'Grilled vegetables', 'Hummus', 'Feta cheese', 'Mixed greens'],
+                imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_7',
@@ -283,7 +289,8 @@ const storageManager = (function() {
                 price: 5.99,
                 featured: false,
                 description: 'Smashed avocado on toasted sourdough bread with cherry tomatoes, red pepper flakes, and a drizzle of olive oil.',
-                ingredients: ['Sourdough bread', 'Avocado', 'Cherry tomatoes', 'Red pepper flakes', 'Olive oil', 'Salt and pepper']
+                ingredients: ['Sourdough bread', 'Avocado', 'Cherry tomatoes', 'Red pepper flakes', 'Olive oil', 'Salt and pepper'],
+                imageUrl: 'https://images.unsplash.com/photo-1588137378633-dea1168fc056?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             },
             {
                 id: 'item_8',
@@ -292,7 +299,8 @@ const storageManager = (function() {
                 price: 4.50,
                 featured: false,
                 description: 'Layers of yogurt, granola, and seasonal fresh fruits. A light and refreshing dessert option.',
-                ingredients: ['Greek yogurt', 'Granola', 'Seasonal fruits', 'Honey', 'Mint garnish']
+                ingredients: ['Greek yogurt', 'Granola', 'Seasonal fruits', 'Honey', 'Mint garnish'],
+                imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
             }
         ];
     }
