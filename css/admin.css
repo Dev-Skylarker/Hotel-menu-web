@@ -326,6 +326,33 @@
     font-size: 0.75rem;
 }
 
+/* Menu item thumbnail in admin table */
+.menu-item-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.image-cell {
+    width: 80px;
+    text-align: center;
+}
+
+.no-image {
+    display: inline-flex;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--border-radius-sm);
+    border: 1px dashed var(--border-color);
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color-light);
+    font-size: 1.5rem;
+    background-color: var(--background-secondary);
+}
+
 /* Menu Category Stats */
 .menu-stats {
     display: grid;
@@ -417,6 +444,53 @@
     width: auto;
 }
 
+/* Image Preview */
+.image-preview {
+    margin-top: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    background-color: var(--background-secondary);
+}
+
+.image-preview h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+}
+
+.preview-container {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--text-color-light);
+    font-size: 1rem;
+}
+
+.image-placeholder i {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+#preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -436,6 +510,51 @@
 
 #delete-item-name {
     font-weight: 700;
+}
+
+/* Image Management Section */
+.image-management {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.image-manager-link {
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.image-manager-link h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+}
+
+.image-manager-link p {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-color-secondary);
+}
+
+.image-info {
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+}
+
+.image-info h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+}
+
+.image-info ul {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+}
+
+.image-info li {
+    margin-bottom: var(--spacing-xs);
 }
 
 /* Media Queries for Admin */
@@ -477,6 +596,14 @@
     
     .form-row {
         grid-template-columns: 1fr;
+    }
+    
+    .image-management {
+        grid-template-columns: 1fr;
+    }
+    
+    .preview-container {
+        height: 150px;
     }
 }
 
