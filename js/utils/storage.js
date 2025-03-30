@@ -3,6 +3,7 @@
  * Handles localStorage operations for menu items and orders
  */
 
+// Storage manager for managing localStorage operations
 const storageManager = (function() {
     // Storage keys
     const MENU_ITEMS_KEY = 'campus_cafe_menu_items';
@@ -13,30 +14,22 @@ const storageManager = (function() {
      * Initialize storage with default data if empty
      */
     function initStorage() {
-        // Check if menu items exist
-        const menuItems = localStorage.getItem(MENU_ITEMS_KEY);
-        
-        if (!menuItems) {
+        // Check if menu items already exist
+        if (!localStorage.getItem(MENU_ITEMS_KEY)) {
             // Initialize with default menu items
-            const defaultMenuItems = getDefaultMenuItems();
-            localStorage.setItem(MENU_ITEMS_KEY, JSON.stringify(defaultMenuItems));
+            localStorage.setItem(MENU_ITEMS_KEY, JSON.stringify(getDefaultMenuItems()));
         }
-        
-        // Check if orders exist
-        const orders = localStorage.getItem(ORDERS_KEY);
-        
-        if (!orders) {
-            // Initialize with empty orders array
-            localStorage.setItem(ORDERS_KEY, JSON.stringify([]));
-        }
-        
-        // Check if messages exist
-        const messages = localStorage.getItem(MESSAGES_KEY);
-        
-        if (!messages) {
-            // Initialize with empty messages array
-            localStorage.setItem(MESSAGES_KEY, JSON.stringify([]));
-        }
+    }
+    
+    /**
+     * Clear all storage data
+     * Note: For development purposes only - don't call this automatically
+     */
+    function clearStorage() {
+        localStorage.removeItem(MENU_ITEMS_KEY);
+        localStorage.removeItem(ORDERS_KEY);
+        localStorage.removeItem(MESSAGES_KEY);
+        console.log('Storage cleared');
     }
     
     /**
@@ -63,15 +56,12 @@ const storageManager = (function() {
      * @param {Object} item - Menu item to save
      */
     function saveMenuItem(item) {
-        // Validate item
-        if (!item || !item.id || !item.name || !item.category || item.price === undefined) {
-            throw new Error('Invalid menu item data');
+        if (!item || !item.id || !item.name || !item.price) {
+            console.error('Invalid menu item data');
+            return null;
         }
         
-        // Get current menu items
         const menuItems = getMenuItems();
-        
-        // Check if item exists
         const existingIndex = menuItems.findIndex(i => i.id === item.id);
         
         if (existingIndex !== -1) {
@@ -82,8 +72,8 @@ const storageManager = (function() {
             menuItems.push(item);
         }
         
-        // Save to localStorage
         localStorage.setItem(MENU_ITEMS_KEY, JSON.stringify(menuItems));
+        return item;
     }
     
     /**
@@ -91,14 +81,15 @@ const storageManager = (function() {
      * @param {string} id - Item ID to delete
      */
     function deleteMenuItem(id) {
-        // Get current menu items
         const menuItems = getMenuItems();
-        
-        // Filter out the item to delete
         const updatedItems = menuItems.filter(item => item.id !== id);
         
-        // Save to localStorage
+        if (updatedItems.length === menuItems.length) {
+            return false; // No item was deleted
+        }
+        
         localStorage.setItem(MENU_ITEMS_KEY, JSON.stringify(updatedItems));
+        return true;
     }
     
     /**
@@ -111,52 +102,69 @@ const storageManager = (function() {
     }
     
     /**
-     * Save a new order
+     * Save order to storage
      * @param {Object} order - Order to save
-     * @returns {Object} - Saved order with ID
+     * @returns {Object} - Saved order
      */
     function saveOrder(order) {
-        // Validate order
-        if (!order || !order.id || !order.item) {
-            throw new Error('Invalid order data');
+        try {
+            // Get existing orders
+            const orders = getOrders();
+            
+            // Add order to orders array
+            orders.push(order);
+            
+            // Save to storage
+            localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+            
+            // Increment orders submitted stat
+            if (typeof statsManager !== 'undefined') {
+                statsManager.incrementOrderSubmitted();
+            }
+            
+            return order;
+        } catch (error) {
+            console.error('Error saving order:', error);
+            return null;
         }
-        
-        // Get current orders
-        const orders = getOrders();
-        
-        // Add order to list
-        orders.push(order);
-        
-        // Save to localStorage
-        localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-        
-        return order;
     }
     
     /**
      * Update order status
-     * @param {string} id - Order ID
-     * @param {string} status - New status
+     * @param {string} id - Order ID to update
+     * @param {string} status - New status (pending, ready, completed, cancelled)
      * @returns {Object|null} - Updated order or null if not found
      */
     function updateOrderStatus(id, status) {
-        // Get all orders
-        const orders = getOrders();
-        
-        // Find order by ID
-        const orderIndex = orders.findIndex(order => order.id === id);
-        
-        if (orderIndex === -1) {
+        try {
+            // Get orders from storage
+            const orders = getOrders();
+            
+            // Find order index
+            const orderIndex = orders.findIndex(order => order.id === id);
+            
+            // If order not found, return null
+            if (orderIndex === -1) {
+                return null;
+            }
+            
+            // Update order status
+            orders[orderIndex].status = status;
+            
+            // If status is completed, update customer stats
+            if (status === 'completed' && typeof statsManager !== 'undefined') {
+                statsManager.incrementCompleteOrder();
+            }
+            
+            // Save to storage
+            localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+            
+            // Return updated order
+            return orders[orderIndex];
+        } catch (error) {
+            console.error('Error updating order status:', error);
             return null;
         }
-        
-        // Update status
-        orders[orderIndex].status = status;
-        
-        // Save to localStorage
-        localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-        
-        return orders[orderIndex];
     }
     
     /**
@@ -174,21 +182,27 @@ const storageManager = (function() {
      * @returns {Object} - Saved message
      */
     function saveMessage(message) {
-        // Validate message
-        if (!message || !message.id || !message.name || !message.email || !message.message) {
-            throw new Error('Invalid message data');
+        if (!message || !message.name || !message.email || !message.message) {
+            return null;
         }
         
-        // Get current messages
         const messages = getMessages();
+        const now = new Date();
         
-        // Add message to list
-        messages.push(message);
+        const newMessage = {
+            id: 'msg_' + now.getTime(),
+            name: message.name,
+            email: message.email,
+            subject: message.subject || '',
+            message: message.message,
+            date: now.toISOString(),
+            read: false
+        };
         
-        // Save to localStorage
+        messages.push(newMessage);
         localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
         
-        return message;
+        return newMessage;
     }
     
     /**
@@ -197,23 +211,17 @@ const storageManager = (function() {
      * @returns {Object|null} - Updated message or null if not found
      */
     function markMessageAsRead(id) {
-        // Get all messages
         const messages = getMessages();
-        
-        // Find message by ID
-        const messageIndex = messages.findIndex(message => message.id === id);
+        const messageIndex = messages.findIndex(msg => msg.id === id);
         
         if (messageIndex === -1) {
-            return null;
+            return false;
         }
         
-        // Update read status
         messages[messageIndex].read = true;
-        
-        // Save to localStorage
         localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
         
-        return messages[messageIndex];
+        return true;
     }
     
     /**
@@ -223,84 +231,74 @@ const storageManager = (function() {
     function getDefaultMenuItems() {
         return [
             {
-                id: 'item_1',
-                name: 'Breakfast Burrito',
-                category: 'appetizers',
-                price: 6.99,
-                featured: true,
-                description: 'Start your day right with our hearty breakfast burrito packed with scrambled eggs, cheese, potatoes, and your choice of bacon or sausage.',
-                ingredients: ['Flour tortilla', 'Scrambled eggs', 'Cheddar cheese', 'Potatoes', 'Choice of bacon or sausage', 'Salsa'],
-                imageUrl: 'https://images.unsplash.com/photo-1584178639036-613ba57e5e37?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                id: 'breakfast1',
+                name: 'English Breakfast',
+                price: 450,
+                category: 'breakfast',
+                description: 'A hearty plate of eggs, bacon, sausage, beans, and toast to kickstart your day.',
+                ingredients: ['Eggs', 'Bacon', 'Sausage', 'Beans', 'Toast'],
+                imageUrl: 'https://images.unsplash.com/photo-1533089860892-a9b969df5d3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: true
             },
             {
-                id: 'item_2',
-                name: 'Classic Burger',
-                category: 'main-courses',
-                price: 8.50,
-                featured: true,
-                description: 'Juicy beef patty topped with lettuce, tomato, onion, and our special sauce on a toasted brioche bun. Served with fries.',
-                ingredients: ['Beef patty', 'Brioche bun', 'Lettuce', 'Tomato', 'Onion', 'Special sauce', 'French fries'],
-                imageUrl: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                id: 'breakfast2',
+                name: 'Pancake Stack',
+                price: 380,
+                category: 'breakfast',
+                description: 'Fluffy pancakes served with maple syrup and fresh berries.',
+                ingredients: ['Flour', 'Eggs', 'Milk', 'Butter', 'Maple Syrup', 'Mixed Berries'],
+                imageUrl: 'https://images.unsplash.com/photo-1554520735-0a6b8b6ce8b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: false
             },
             {
-                id: 'item_3',
-                name: 'Grilled Chicken Salad',
-                category: 'main-courses',
-                price: 9.99,
-                featured: true,
-                description: 'Fresh mixed greens topped with grilled chicken breast, cherry tomatoes, cucumber, red onion, and balsamic vinaigrette.',
-                ingredients: ['Mixed greens', 'Grilled chicken breast', 'Cherry tomatoes', 'Cucumber', 'Red onion', 'Balsamic vinaigrette'],
-                imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                id: 'lunch1',
+                name: 'Chapo Beans',
+                price: 60,
+                category: 'lunch',
+                description: 'Kenyan chapati served with tasty beans, salad, and soup on the side.',
+                ingredients: ['Chapati', 'Beans', 'Salad', 'Vegetable Soup'],
+                imageUrl: 'https://i.pinimg.com/736x/bb/6f/b9/bb6fb9982f49c6c3a91d6e20d8444be2.jpg',
+                featured: true
             },
             {
-                id: 'item_4',
-                name: 'Double Chocolate Brownie',
-                category: 'desserts',
-                price: 3.50,
-                featured: false,
-                description: 'Rich, fudgy brownie loaded with chocolate chips. The perfect sweet treat between classes.',
-                ingredients: ['Chocolate', 'Flour', 'Sugar', 'Eggs', 'Butter', 'Chocolate chips', 'Vanilla extract'],
-                imageUrl: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                id: 'lunch2',
+                name: 'Beef Stir Fry',
+                price: 550,
+                category: 'lunch',
+                description: 'Tender strips of beef stir-fried with vegetables, served with rice.',
+                ingredients: ['Beef', 'Mixed Vegetables', 'Soy Sauce', 'Rice'],
+                imageUrl: 'https://images.unsplash.com/photo-1572715376701-98568319fd0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: false
             },
             {
-                id: 'item_5',
-                name: 'Iced Coffee',
+                id: 'snack1',
+                name: 'Samosa',
+                price: 120,
+                category: 'snacks',
+                description: 'Crispy triangular pastry filled with spiced potatoes and peas.',
+                ingredients: ['Pastry', 'Potatoes', 'Peas', 'Spices'],
+                imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: true
+            },
+            {
+                id: 'drink1',
+                name: 'Kenyan Tea',
+                price: 100,
                 category: 'drinks',
-                price: 3.25,
-                featured: false,
-                description: 'Smooth cold-brewed coffee served over ice. Add your choice of flavored syrup for an extra kick.',
-                ingredients: ['Cold-brewed coffee', 'Ice', 'Optional: flavored syrup', 'Optional: cream'],
-                imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                description: 'Traditional Kenyan tea brewed with milk and spices.',
+                ingredients: ['Tea Leaves', 'Milk', 'Sugar', 'Spices'],
+                imageUrl: 'https://images.unsplash.com/photo-1565200003367-2a3ad7ee95cc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: false
             },
             {
-                id: 'item_6',
-                name: 'Veggie Wrap',
-                category: 'main-courses',
-                price: 7.50,
-                featured: false,
-                description: 'Grilled vegetables, hummus, and feta cheese wrapped in a spinach tortilla. A healthy option for busy students.',
-                ingredients: ['Spinach tortilla', 'Grilled vegetables', 'Hummus', 'Feta cheese', 'Mixed greens'],
-                imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                id: 'item_7',
-                name: 'Avocado Toast',
-                category: 'appetizers',
-                price: 5.99,
-                featured: false,
-                description: 'Smashed avocado on toasted sourdough bread with cherry tomatoes, red pepper flakes, and a drizzle of olive oil.',
-                ingredients: ['Sourdough bread', 'Avocado', 'Cherry tomatoes', 'Red pepper flakes', 'Olive oil', 'Salt and pepper'],
-                imageUrl: 'https://images.unsplash.com/photo-1588137378633-dea1168fc056?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            },
-            {
-                id: 'item_8',
-                name: 'Fruit Parfait',
-                category: 'desserts',
-                price: 4.50,
-                featured: false,
-                description: 'Layers of yogurt, granola, and seasonal fresh fruits. A light and refreshing dessert option.',
-                ingredients: ['Greek yogurt', 'Granola', 'Seasonal fruits', 'Honey', 'Mint garnish'],
-                imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                id: 'drink2',
+                name: 'Fresh Fruit Juice',
+                price: 180,
+                category: 'drinks',
+                description: 'Freshly squeezed seasonal fruit juice.',
+                ingredients: ['Seasonal Fruits', 'Ice'],
+                imageUrl: 'https://images.unsplash.com/photo-1563677716816-48158a8e59eaf?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                featured: true
             }
         ];
     }
@@ -325,4 +323,152 @@ const storageManager = (function() {
 document.addEventListener('DOMContentLoaded', function() {
     storageManager.initStorage();
 });
+
+// Cart manager for managing cart operations
+const cartManager = (function() {
+    // Storage key
+    const CART_KEY = 'campus_cafe_cart';
+    
+    /**
+     * Get cart items
+     * @returns {Array} - Array of cart items
+     */
+    function getCart() {
+        const cart = localStorage.getItem(CART_KEY);
+        return cart ? JSON.parse(cart) : [];
+    }
+    
+    /**
+     * Add item to cart
+     * @param {Object} item - Menu item to add
+     * @param {number} quantity - Quantity to add
+     * @returns {Array} - Updated cart
+     */
+    function addToCart(item, quantity = 1) {
+        // Validate item
+        if (!item || !item.id || !item.name || !item.price) {
+            throw new Error('Invalid menu item');
+        }
+        
+        // Validate quantity
+        if (quantity < 1) {
+            throw new Error('Quantity must be at least 1');
+        }
+        
+        // Get current cart
+        const cart = getCart();
+        
+        // Check if item already exists in cart
+        const existingItemIndex = cart.findIndex(cartItem => cartItem.item.id === item.id);
+        
+        if (existingItemIndex !== -1) {
+            // Update quantity
+            cart[existingItemIndex].quantity += quantity;
+        } else {
+            // Add new item
+            cart.push({
+                item: item,
+                quantity: quantity
+            });
+        }
+        
+        // Save to localStorage
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        
+        return cart;
+    }
+    
+    /**
+     * Remove item from cart
+     * @param {string} itemId - Item ID to remove
+     * @returns {Array} - Updated cart
+     */
+    function removeFromCart(itemId) {
+        // Get current cart
+        const cart = getCart();
+        
+        // Remove item
+        const updatedCart = cart.filter(cartItem => cartItem.item.id !== itemId);
+        
+        // Save to localStorage
+        localStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
+        
+        return updatedCart;
+    }
+    
+    /**
+     * Update item quantity
+     * @param {string} itemId - Item ID to update
+     * @param {number} quantity - New quantity
+     * @returns {Array} - Updated cart
+     */
+    function updateQuantity(itemId, quantity) {
+        // Validate quantity
+        if (quantity < 1) {
+            throw new Error('Quantity must be at least 1');
+        }
+        
+        // Get current cart
+        const cart = getCart();
+        
+        // Find item
+        const itemIndex = cart.findIndex(cartItem => cartItem.item.id === itemId);
+        
+        if (itemIndex === -1) {
+            throw new Error('Item not found in cart');
+        }
+        
+        // Update quantity
+        cart[itemIndex].quantity = quantity;
+        
+        // Save to localStorage
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        
+        return cart;
+    }
+    
+    /**
+     * Clear cart
+     * @returns {Array} - Empty cart
+     */
+    function clearCart() {
+        localStorage.removeItem(CART_KEY);
+        return [];
+    }
+    
+    /**
+     * Get total price of cart
+     * @returns {number} - Total price
+     */
+    function getTotalPrice() {
+        const cart = getCart();
+        
+        return cart.reduce((total, cartItem) => {
+            return total + (cartItem.item.price * cartItem.quantity);
+        }, 0);
+    }
+    
+    /**
+     * Get total number of items in cart
+     * @returns {number} - Total items
+     */
+    function getTotalItems() {
+        const cart = getCart();
+        
+        return cart.reduce((total, cartItem) => {
+            return total + cartItem.quantity;
+        }, 0);
+    }
+    
+    // Public API
+    return {
+        getCart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getTotalPrice,
+        getTotalItems
+    };
+})();
 

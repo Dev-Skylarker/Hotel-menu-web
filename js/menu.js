@@ -20,6 +20,9 @@ const currentOrdersContainer = document.getElementById('current-orders');
 let currentCategory = 'all';
 let currentSearchTerm = '';
 let currentItem = null;
+// Auto-refresh interval (in milliseconds)
+const REFRESH_INTERVAL = 30000; // 30 seconds
+let refreshTimerId = null;
 
 /**
  * Initialize the menu page
@@ -33,6 +36,38 @@ function initMenu() {
     
     // Add event listeners
     addEventListeners();
+    
+    // Start auto-refresh timer
+    startAutoRefresh();
+}
+
+/**
+ * Start auto-refresh timer
+ */
+function startAutoRefresh() {
+    // Clear any existing timer
+    if (refreshTimerId) {
+        clearInterval(refreshTimerId);
+    }
+    
+    // Set up auto-refresh timer
+    refreshTimerId = setInterval(() => {
+        console.log('Auto-refreshing menu data...');
+        // Refresh menu items while preserving current filters
+        filterMenuItems(currentCategory, currentSearchTerm);
+        // Refresh current orders
+        displayCurrentOrders();
+    }, REFRESH_INTERVAL);
+}
+
+/**
+ * Stop auto-refresh timer
+ */
+function stopAutoRefresh() {
+    if (refreshTimerId) {
+        clearInterval(refreshTimerId);
+        refreshTimerId = null;
+    }
 }
 
 /**
@@ -107,6 +142,15 @@ function addEventListeners() {
     if (window.location.hash) {
         handleHashChange();
     }
+    
+    // Stop auto-refresh when page is hidden to save resources
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
 }
 
 /**
@@ -230,7 +274,7 @@ function createMenuItem(item) {
         <div class="menu-item-info">
             <div class="menu-item-category">${categoryLabel}</div>
             <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
-            <div class="menu-item-price">$${item.price.toFixed(2)}</div>
+            <div class="menu-item-price">Ksh ${item.price}</div>
             <p class="menu-item-description">${escapeHtml(item.description)}</p>
             <button class="order-btn btn btn-small">Order Now</button>
         </div>
@@ -263,7 +307,7 @@ function openItemModal(item) {
     // Set modal content
     document.getElementById('modal-item-name').textContent = item.name;
     document.getElementById('modal-item-description').textContent = item.description;
-    document.getElementById('modal-item-price').textContent = `$${item.price.toFixed(2)}`;
+    document.getElementById('modal-item-price').textContent = `Ksh ${item.price}`;
     document.getElementById('modal-item-category').textContent = formatCategoryLabel(item.category);
     
     // Set the image
@@ -290,6 +334,70 @@ function openItemModal(item) {
         const li = document.createElement('li');
         li.textContent = 'No ingredients listed';
         ingredientsList.appendChild(li);
+    }
+    
+    // Add quantity controls
+    const actionsContainer = document.querySelector('.modal-item-actions');
+    if (actionsContainer) {
+        actionsContainer.innerHTML = `
+            <div class="quantity-control">
+                <button class="quantity-btn decrease-btn" id="decrease-quantity">-</button>
+                <input type="number" id="item-quantity" class="quantity-input" value="1" min="1" max="99">
+                <button class="quantity-btn increase-btn" id="increase-quantity">+</button>
+            </div>
+            <div class="action-buttons">
+                <button id="add-to-cart-btn" class="btn btn-secondary">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+                <button id="order-item-btn" class="btn btn-primary">
+                    <i class="fas fa-shopping-cart"></i> Order Now
+                </button>
+            </div>
+        `;
+        
+        // Add event listeners for quantity buttons
+        const decreaseBtn = document.getElementById('decrease-quantity');
+        const increaseBtn = document.getElementById('increase-quantity');
+        const quantityInput = document.getElementById('item-quantity');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const orderBtn = document.getElementById('order-item-btn');
+        
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', () => {
+                let quantity = parseInt(quantityInput.value) - 1;
+                if (quantity < 1) quantity = 1;
+                quantityInput.value = quantity;
+            });
+        }
+        
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', () => {
+                let quantity = parseInt(quantityInput.value) + 1;
+                if (quantity > 99) quantity = 99;
+                quantityInput.value = quantity;
+            });
+        }
+        
+        if (quantityInput) {
+            quantityInput.addEventListener('change', () => {
+                let quantity = parseInt(quantityInput.value);
+                if (isNaN(quantity) || quantity < 1) {
+                    quantity = 1;
+                    quantityInput.value = 1;
+                } else if (quantity > 99) {
+                    quantity = 99;
+                    quantityInput.value = 99;
+                }
+            });
+        }
+        
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', addToCart);
+        }
+        
+        if (orderBtn) {
+            orderBtn.addEventListener('click', placeOrder);
+        }
     }
     
     // Update URL hash
@@ -353,16 +461,56 @@ function closeConfirmationModal() {
 }
 
 /**
+ * Add current item to cart
+ */
+function addToCart() {
+    if (!currentItem) return;
+    
+    // Get quantity
+    const quantityInput = document.getElementById('item-quantity');
+    const quantity = parseInt(quantityInput ? quantityInput.value : 1);
+    
+    // Add to cart
+    cartManager.addToCart(currentItem, quantity);
+    
+    // Show confirmation
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = `${currentItem.name} added to cart!`;
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // Hide toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+    
+    // Close modal
+    closeItemModal();
+}
+
+/**
  * Place an order for the current item
  */
 function placeOrder() {
     if (!currentItem) return;
     
+    // Get quantity
+    const quantityInput = document.getElementById('item-quantity');
+    const quantity = parseInt(quantityInput ? quantityInput.value : 1);
+    
     // Create order object
     const order = {
         id: generateOrderId(),
         item: currentItem,
-        quantity: 1,
+        quantity: quantity,
         status: 'pending',
         orderTime: new Date().toISOString(),
         estimatedPickupTime: getEstimatedPickupTime(),
@@ -462,6 +610,7 @@ function createOrderCard(order) {
         <div class="order-details">
             <p><strong>${order.item.name}</strong> x${order.quantity}</p>
             <p>Est. Pickup: ${formattedTime}</p>
+            <a href="order-details.html?id=${order.id}" class="btn btn-small btn-primary">View Details</a>
         </div>
     `;
     
@@ -592,5 +741,98 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Clean up resources when page is unloaded
+ */
+window.addEventListener('beforeunload', () => {
+    stopAutoRefresh();
+});
+
 // Initialize menu page
-document.addEventListener('DOMContentLoaded', initMenu);
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize menu
+    initMenu();
+    
+    // Update cart badge
+    updateCartBadge();
+    
+    // Update customer stats
+    updateCustomerStats();
+});
+
+/**
+ * Update cart badge
+ */
+function updateCartBadge() {
+    const cartBadge = document.getElementById('cart-badge');
+    if (!cartBadge) return;
+    
+    // Get the total number of items in the cart
+    const totalItems = cartManager.getTotalItems();
+    
+    // Update the badge
+    cartBadge.textContent = totalItems;
+    
+    // Show or hide badge based on cart contents
+    if (totalItems > 0) {
+        cartBadge.style.display = 'flex';
+    } else {
+        cartBadge.style.display = 'none';
+    }
+}
+
+/**
+ * Update customer stats in footer
+ */
+function updateCustomerStats() {
+    // Get stats elements
+    const customersToday = document.getElementById('customers-today');
+    const customersTotal = document.getElementById('customers-total');
+    const ordersCount = document.getElementById('orders-count');
+    
+    if (!customersToday || !customersTotal || !ordersCount) return;
+    
+    // Get stats from storage
+    const stats = JSON.parse(localStorage.getItem('campus_cafe_stats')) || {
+        customersServedToday: 0,
+        customersEverServed: 0,
+        ordersSubmitted: 0
+    };
+    
+    // Get orders to count total submissions
+    const orders = storageManager.getOrders() || [];
+    stats.ordersSubmitted = orders.length;
+    
+    // Update elements with animation
+    animateCounter(customersToday, 0, stats.customersServedToday);
+    animateCounter(customersTotal, 0, stats.customersEverServed);
+    animateCounter(ordersCount, 0, stats.ordersSubmitted);
+}
+
+/**
+ * Animate a counter from start to end value
+ * @param {HTMLElement} element - Element to update
+ * @param {number} start - Start value
+ * @param {number} end - End value
+ * @param {number} duration - Animation duration in ms
+ */
+function animateCounter(element, start, end, duration = 1000) {
+    if (!element) return;
+    
+    // Ensure minimum values for visual effect
+    end = Math.max(end, 5);
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const value = Math.floor(progress * (end - start) + start);
+        element.textContent = value;
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            element.textContent = end;
+        }
+    };
+    window.requestAnimationFrame(step);
+}

@@ -8,6 +8,10 @@ const mainNav = document.querySelector('.main-nav');
 const contactForm = document.getElementById('contact-form');
 const featuredDishesContainer = document.getElementById('featured-dishes-container');
 
+// Auto-refresh configuration
+const REFRESH_INTERVAL = 60000; // 60 seconds
+let refreshTimerId = null;
+
 // Toggle mobile navigation
 if (mobileNavToggle) {
     mobileNavToggle.addEventListener('click', () => {
@@ -36,6 +40,29 @@ document.addEventListener('click', (e) => {
 });
 
 /**
+ * Start auto-refresh timer
+ */
+function startAutoRefresh() {
+    if (refreshTimerId) {
+        clearInterval(refreshTimerId);
+    }
+    
+    refreshTimerId = setInterval(() => {
+        loadFeaturedDishes();
+    }, REFRESH_INTERVAL);
+}
+
+/**
+ * Stop auto-refresh timer
+ */
+function stopAutoRefresh() {
+    if (refreshTimerId) {
+        clearInterval(refreshTimerId);
+        refreshTimerId = null;
+    }
+}
+
+/**
  * Validate email format
  * @param {string} email - Email to validate
  * @returns {boolean} - Whether email is valid
@@ -51,19 +78,16 @@ function isValidEmail(email) {
  * @param {string} type - Alert type ('success' or 'error')
  */
 function showAlert(message, type = 'success', container = null) {
-    // Create alert element
     const alertEl = document.createElement('div');
     alertEl.className = `alert alert-${type}`;
     alertEl.textContent = message;
     
-    // Find where to insert it
     if (container) {
         container.insertBefore(alertEl, container.firstChild);
     } else if (contactForm) {
         const formContainer = contactForm.parentElement;
         formContainer.insertBefore(alertEl, contactForm);
     } else {
-        // If no container specified and no contact form, add to body
         document.body.appendChild(alertEl);
         alertEl.style.position = 'fixed';
         alertEl.style.top = '20px';
@@ -72,7 +96,6 @@ function showAlert(message, type = 'success', container = null) {
         alertEl.style.zIndex = '1000';
     }
     
-    // Remove after 5 seconds
     setTimeout(() => {
         if (alertEl.parentNode) {
             alertEl.parentNode.removeChild(alertEl);
@@ -87,13 +110,9 @@ async function loadFeaturedDishes() {
     if (!featuredDishesContainer) return;
     
     try {
-        // Get menu items from storage
         const menuItems = storageManager.getMenuItems();
-        
-        // Filter featured dishes
         const featuredDishes = menuItems.filter(item => item.featured);
         
-        // Display featured dishes
         if (featuredDishes.length > 0) {
             featuredDishesContainer.innerHTML = '';
             
@@ -147,17 +166,19 @@ function createDishCard(dish) {
     
     const categoryLabel = formatCategoryLabel(dish.category);
     
+    // Determine if we should show image or placeholder
+    const imageHtml = dish.imageUrl ? 
+        `<img src="${escapeHtml(dish.imageUrl)}" alt="${escapeHtml(dish.name)}" class="dish-img">` :
+        `<div class="image-placeholder"><i class="fas fa-utensils"></i><span>${dish.name}</span></div>`;
+    
     card.innerHTML = `
         <div class="dish-image">
-            <div class="image-placeholder">
-                <i class="fas fa-utensils"></i>
-                <span>${dish.name}</span>
-            </div>
+            ${imageHtml}
         </div>
         <div class="dish-info">
             <div class="dish-category">${categoryLabel}</div>
             <h3 class="dish-name">${escapeHtml(dish.name)}</h3>
-            <div class="dish-price">$${dish.price.toFixed(2)}</div>
+            <div class="dish-price">Ksh ${dish.price}</div>
             <p class="dish-description">${escapeHtml(dish.description)}</p>
             <div class="dish-actions">
                 <a href="menu.html#${dish.id}" class="btn btn-secondary btn-small">View Details</a>
@@ -227,9 +248,22 @@ function isMobileDevice() {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize storage if needed
     storageManager.initStorage();
-    
-    // Load featured dishes
     loadFeaturedDishes();
+    startAutoRefresh();
+    
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            loadFeaturedDishes();
+            startAutoRefresh();
+        }
+    });
+});
+
+// Clean up resources when page is unloaded
+window.addEventListener('beforeunload', () => {
+    stopAutoRefresh();
 });

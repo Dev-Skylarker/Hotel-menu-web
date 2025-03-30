@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Configuration - Campus Cafe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="icon" href="../icon1.png" type="image/png">
+</head>
+<body class="admin-body light-mode">
+    <div class="admin-wrapper">
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/logo.svg" alt="Campus Cafe Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="menu-manager.html"><i class="fas fa-utensils"></i> Menu Manager</a></li>
+                    <li><a href="orders.html"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                    <li><a href="messages.html"><i class="fas fa-envelope"></i> Messages</a></li>
+                    <li><a href="config.html" class="active"><i class="fas fa-cog"></i> Configuration</a></li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-small"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <div class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="admin-content">
+            <header class="admin-header">
+                <h1><i class="fas fa-cog"></i> Admin Configuration</h1>
+                <div class="breadcrumbs">
+                    <a href="dashboard.html">Dashboard</a> / 
+                    <span>Configuration</span>
+                </div>
+            </header>
+            
+            <section class="admin-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Manage Admin Credentials</h2>
+                        <p>Add, edit, or remove admin users (Development Environment Only)</p>
+                    </div>
+                    
+                    <div id="config-error" class="error-message" style="display: none;"></div>
+                    <div id="config-success" class="success-message" style="display: none;"></div>
+                    
+                    <div class="card-body">
+                        <form id="admin-form" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="admin-email">Email</label>
+                                    <input type="email" id="admin-email" name="email" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="admin-password">Password</label>
+                                    <input type="password" id="admin-password" name="password" required minlength="8">
+                                    <small>Minimum 8 characters</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-confirm-password">Confirm Password</label>
+                                    <input type="password" id="admin-confirm-password" name="confirmPassword" required minlength="8">
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Add Admin</button>
+                            </div>
+                        </form>
+                        
+                        <div class="table-container">
+                            <table id="admin-table" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-list">
+                                    <!-- Admin list will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../js/utils/theme.js"></script>
+    <script src="../js/utils/storage.js"></script>
+    <script src="../js/utils/config.js"></script>
+    <script src="../js/utils/auth.js"></script>
+    <script src="../js/admin/config-manager.js"></script>
+</body>
+</html> 

@@ -1,5 +1,5 @@
 /**
- * Admin Login JavaScript for Kenyan Delights Restaurant
+ * Admin Login JavaScript for Campus Cafe
  */
 
 // DOM Elements
@@ -35,7 +35,7 @@ function handleLogin(e) {
     e.preventDefault();
     
     // Get form values
-    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
     
     // Clear previous error
@@ -44,20 +44,26 @@ function handleLogin(e) {
     }
     
     // Validate inputs
-    if (!username || !password) {
-        showError('Please enter both username and password');
+    if (!email || !password) {
+        showError('Please enter both email and password');
+        return;
+    }
+    
+    // Validate email format
+    if (!/\S+@\S+\.\S+/.test(email)) {
+        showError('Please enter a valid email address');
         return;
     }
     
     // Try to login
     try {
-        const success = authManager.login(username, password);
+        const success = authManager.login(email, password);
         
         if (success) {
             // Redirect to dashboard
             window.location.href = 'dashboard.html';
         } else {
-            showError('Invalid username or password');
+            showError('Invalid email or password');
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -81,15 +87,16 @@ function showError(message) {
  */
 function togglePasswordVisibility() {
     const passwordInput = document.getElementById('password');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        togglePassword.classList.remove('fa-eye');
-        togglePassword.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        togglePassword.classList.remove('fa-eye-slash');
-        togglePassword.classList.add('fa-eye');
+    if (passwordInput) {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            togglePassword.classList.remove('fa-eye');
+            togglePassword.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            togglePassword.classList.remove('fa-eye-slash');
+            togglePassword.classList.add('fa-eye');
+        }
     }
 }
 

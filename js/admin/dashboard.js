@@ -150,7 +150,7 @@ function loadOrdersData() {
         // Calculate total revenue
         let totalRevenue = 0;
         orders.forEach(order => {
-            totalRevenue += order.total;
+            totalRevenue += order.total || (order.item ? order.item.price * order.quantity : 0);
         });
         
         // Update total revenue
@@ -163,7 +163,7 @@ function loadOrdersData() {
             if (orders.length > 0) {
                 // Sort orders by date (newest first)
                 const sortedOrders = [...orders].sort((a, b) => 
-                    new Date(b.date) - new Date(a.date)
+                    new Date(b.orderTime || b.date) - new Date(a.orderTime || a.date)
                 );
                 
                 // Display only the 5 most recent orders
@@ -180,23 +180,48 @@ function loadOrdersData() {
                     const row = document.createElement('tr');
                     
                     // Format date
-                    const orderDate = new Date(order.date);
+                    const orderDate = new Date(order.orderTime || order.date);
                     const formattedDate = orderDate.toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                     });
                     
+                    // Get item name and price
+                    const itemName = order.item ? order.item.name : (order.items ? `${order.items.length} items` : 'Unknown');
+                    const price = order.total || (order.item ? order.item.price * order.quantity : 0);
+                    
                     row.innerHTML = `
                         <td>#${order.id}</td>
-                        <td>${escapeHtml(order.customer)}</td>
-                        <td>${order.items.length} item${order.items.length !== 1 ? 's' : ''}</td>
-                        <td>KSh ${order.total.toFixed(2)}</td>
+                        <td>${order.customer ? escapeHtml(order.customer) : 'Customer'}</td>
+                        <td>${escapeHtml(itemName)}</td>
+                        <td>KSh ${price.toFixed(2)}</td>
+                        <td>
+                            <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span>
+                        </td>
                         <td>${formattedDate}</td>
+                        <td class="actions">
+                            <div class="order-actions">
+                                ${order.status !== 'cancelled' && order.status !== 'completed' ? `
+                                <button class="btn-icon cancel-order" data-order-id="${order.id}" title="Cancel Order">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn-icon complete-order" data-order-id="${order.id}" title="Mark as Completed">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                ` : ''}
+                                <a href="../order-details.html?id=${order.id}" class="btn-icon" title="View Details" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
                     `;
                     
                     recentOrdersBody.appendChild(row);
                 });
+                
+                // Add event listeners for action buttons
+                attachOrderActionListeners();
             } else {
                 // Show empty message
                 if (noOrdersMessage) {
@@ -206,6 +231,81 @@ function loadOrdersData() {
         }
     } catch (error) {
         console.error('Error loading orders data:', error);
+    }
+}
+
+/**
+ * Attach event listeners to order action buttons
+ */
+function attachOrderActionListeners() {
+    // Cancel order buttons
+    const cancelButtons = document.querySelectorAll('.cancel-order');
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const orderId = e.currentTarget.dataset.orderId;
+            if (orderId) {
+                cancelOrder(orderId);
+            }
+        });
+    });
+    
+    // Complete order buttons
+    const completeButtons = document.querySelectorAll('.complete-order');
+    completeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const orderId = e.currentTarget.dataset.orderId;
+            if (orderId) {
+                completeOrder(orderId);
+            }
+        });
+    });
+}
+
+/**
+ * Cancel an order
+ * @param {string} orderId - Order ID to cancel
+ */
+function cancelOrder(orderId) {
+    try {
+        // Call storage manager to update order status
+        const updatedOrder = storageManager.updateOrderStatus(orderId, 'cancelled');
+        
+        if (updatedOrder) {
+            // Reload orders data
+            loadOrdersData();
+            
+            // Show success message
+            alert('Order cancelled successfully.');
+        } else {
+            alert('Failed to cancel order. Order not found.');
+        }
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        alert('An error occurred while cancelling the order.');
+    }
+}
+
+/**
+ * Mark an order as completed
+ * @param {string} orderId - Order ID to complete
+ */
+function completeOrder(orderId) {
+    try {
+        // Call storage manager to update order status
+        const updatedOrder = storageManager.updateOrderStatus(orderId, 'completed');
+        
+        if (updatedOrder) {
+            // Reload orders data
+            loadOrdersData();
+            
+            // Show success message
+            alert('Order marked as completed successfully.');
+        } else {
+            alert('Failed to complete order. Order not found.');
+        }
+    } catch (error) {
+        console.error('Error completing order:', error);
+        alert('An error occurred while marking the order as completed.');
     }
 }
 

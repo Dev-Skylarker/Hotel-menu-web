@@ -1,29 +1,23 @@
 /**
- * Authentication Manager for Kenyan Delights Restaurant Admin
+ * Authentication Manager for Campus Cafe Admin
  */
 
 const authManager = (function() {
     // Storage keys
-    const USER_KEY = 'kenyan_delights_user';
-    const TOKEN_KEY = 'kenyan_delights_token';
-    
-    // Default admin credentials (in a real app, this would be on the server)
-    const DEFAULT_ADMIN = {
-        username: 'admin',
-        // Password: "admin123" (hashed)
-        passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
-    };
+    const USER_KEY = 'campus_cafe_user';
+    const TOKEN_KEY = 'campus_cafe_token';
     
     /**
      * Initialize authentication
      */
     function init() {
         // Check if admin user exists in storage
-        const users = JSON.parse(localStorage.getItem('kenyan_delights_users')) || [];
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
         
-        // If no admin exists, create default admin
-        if (users.length === 0) {
-            localStorage.setItem('kenyan_delights_users', JSON.stringify([DEFAULT_ADMIN]));
+        // If no admin exists, create default admins from config
+        if (users.length === 0 && configManager) {
+            const defaultAdmins = configManager.getAdminCredentials();
+            localStorage.setItem('campus_cafe_users', JSON.stringify(defaultAdmins));
         }
     }
     
@@ -74,16 +68,16 @@ const authManager = (function() {
     
     /**
      * Attempt to login a user
-     * @param {string} username - Username
+     * @param {string} email - Email address
      * @param {string} password - Password
      * @returns {boolean} - Whether login was successful
      */
-    function login(username, password) {
+    function login(email, password) {
         // Get users from storage
-        const users = JSON.parse(localStorage.getItem('kenyan_delights_users')) || [];
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
         
-        // Find user with matching username
-        const user = users.find(u => u.username === username);
+        // Find user with matching email
+        const user = users.find(u => u.email === email);
         
         if (!user) {
             return false;
@@ -92,11 +86,14 @@ const authManager = (function() {
         // Check password
         const passwordHash = hashPassword(password);
         
-        // For demo purposes, also allow the unhashed default password
-        if (user.passwordHash === passwordHash || (username === 'admin' && password === 'admin123')) {
+        // For demo purposes, also allow default admin credentials
+        const isDefaultAdmin = (email === 'admin@campuscafe.com' && password === 'admin123') || 
+                              (email === 'manager@campuscafe.com' && password === 'manager456');
+        
+        if (user.passwordHash === passwordHash || isDefaultAdmin) {
             // Create session
             const sessionUser = {
-                username: user.username
+                email: user.email
             };
             
             // Generate simple token (in real app, this would be JWT or similar)
@@ -143,14 +140,76 @@ const authManager = (function() {
         localStorage.removeItem(TOKEN_KEY);
     }
     
+    /**
+     * Add a new admin (development only)
+     * @param {string} email - Admin email
+     * @param {string} password - Admin password (unhashed)
+     * @returns {boolean} - Whether admin was added successfully
+     */
+    function addAdmin(email, password) {
+        // Only allow in development environment
+        if (!configManager || !configManager.isDevelopment()) {
+            console.error('Adding admins is only allowed in development environment');
+            return false;
+        }
+        
+        // Validate email format
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            console.error('Invalid email format');
+            return false;
+        }
+        
+        // Validate password
+        if (!password || password.length < 8) {
+            console.error('Password must be at least 8 characters long');
+            return false;
+        }
+        
+        // Hash password
+        const passwordHash = hashPassword(password);
+        
+        // Get users from storage
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
+        
+        // Check if user already exists
+        const existingUser = users.find(u => u.email === email);
+        
+        if (existingUser) {
+            // Update existing user
+            existingUser.passwordHash = passwordHash;
+        } else {
+            // Add new user
+            users.push({
+                email: email,
+                passwordHash: passwordHash
+            });
+        }
+        
+        // Save to storage
+        localStorage.setItem('campus_cafe_users', JSON.stringify(users));
+        
+        // Also update the config if we're in development
+        if (configManager && configManager.updateAdminCredential) {
+            configManager.updateAdminCredential(email, passwordHash);
+        }
+        
+        return true;
+    }
+    
     // Initialize on load
-    init();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
     
     // Public API
     return {
         login,
         logout,
         isLoggedIn,
-        getCurrentUser
+        getCurrentUser,
+        hashPassword,
+        addAdmin
     };
 })();

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/admin.css">
-    <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+    <link rel="icon" href="../icon1.png" type="image/png">
 </head>
 <body class="admin-body light-mode">
     <div class="admin-wrapper">
@@ -24,6 +24,9 @@
                 </li>
                 <li>
                     <a href="manage-menu.html"><i class="fas fa-utensils"></i> Manage Menu</a>
+                </li>
+                <li>
+                    <a href="config.html"><i class="fas fa-cog"></i> Configuration</a>
                 </li>
                 <li>
                     <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -109,6 +112,7 @@
                                         <th>Price</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="recent-orders-body">
@@ -191,6 +195,7 @@
 
     <script src="../js/utils/theme.js"></script>
     <script src="../js/utils/storage.js"></script>
+    <script src="../js/utils/config.js"></script>
     <script src="../js/utils/auth.js"></script>
     <script src="../js/admin/dashboard.js"></script>
 </body>
