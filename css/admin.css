@@ -975,3 +975,20 @@
     background-color: #f8d7da;
     color: #721c24;
 }
+
+/* Order code styles */
+.order-code {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.recent-orders-container {
+    overflow-x: auto;
+}
+
+.admin-table .btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+}

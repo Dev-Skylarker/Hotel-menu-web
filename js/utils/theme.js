@@ -1,5 +1,5 @@
 /**
- * Theme Manager for Kenyan Delights Restaurant
+ * Theme Manager for Campus Cafe
  * Handles switching between light and dark modes
  */
 
@@ -8,7 +8,7 @@ const themeManager = (function() {
     const themeToggles = document.querySelectorAll('.theme-toggle');
     
     // Theme settings
-    const THEME_KEY = 'kenyan_delights_theme';
+    const THEME_KEY = 'campus_cafe_theme';
     const DARK_CLASS = 'dark-mode';
     const LIGHT_CLASS = 'light-mode';
     
@@ -54,8 +54,30 @@ const themeManager = (function() {
         // Add the selected theme class
         document.body.classList.add(theme);
         
+        // Update theme icons
+        updateThemeIcons(theme);
+        
         // Save preference to localStorage
         localStorage.setItem(THEME_KEY, theme);
+    }
+    
+    /**
+     * Update theme icons based on current theme
+     * @param {string} theme - Current theme
+     */
+    function updateThemeIcons(theme) {
+        themeToggles.forEach(toggle => {
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                if (theme === DARK_CLASS) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                }
+            }
+        });
     }
     
     /**
@@ -95,7 +117,8 @@ const themeManager = (function() {
     // Public API
     return {
         toggleTheme,
-        setTheme
+        setTheme,
+        loadTheme
     };
 })();
 

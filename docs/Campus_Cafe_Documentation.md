@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-The Campus Cafe System is a responsive web application designed for a university eatery. It provides digital menu management, online ordering capabilities, and customer engagement features with gamified statistics. The system is built with modern web technologies (HTML5, CSS3, JavaScript) and uses local storage for data persistence. The application features a user-friendly interface with Kenyan currency integration, theme customization options, and multiple administrator support.
+The Campus Cafe System is a web application for university food services. It delivers digital menu management, ordering capabilities, and customer engagement through dynamic statistics. Built with modern web technologies and local storage for data persistence, the system features a responsive interface with Kenyan currency integration, theme options, and administrative tools.
 
 ## 2. Project Overview
 
@@ -14,87 +14,87 @@ The Campus Cafe System is a responsive web application designed for a university
 5. BARASA JUMA JAMIL - B135/25617/2023
 
 ### 2.2 Purpose
-The Campus Cafe System aims to digitize the ordering experience at university eateries, providing students and faculty with a convenient way to browse menu items, place orders, and track order status. The system enhances operational efficiency while providing a modern user experience with engaging features.
+The Campus Cafe System digitizes ordering processes at university eateries, providing students and faculty with a convenient platform for browsing menus, placing orders, and tracking order status. The system improves operational efficiency through a modern interface and intuitive features.
 
 ### 2.3 Scope
-This documentation covers the web-based Campus Cafe System implementation, including all features, architecture, requirements, and technical specifications. The system is designed for deployment at university cafes in Kenya but can be adapted for similar food service contexts.
+This documentation covers the complete Campus Cafe System implementation, including features, architecture, requirements, and technical specifications. The system is designed for Kenyan university cafes but can be adapted for similar contexts.
 
 ### 2.4 Target Audience
-- Students and faculty members at universities
-- Campus cafe staff and management
-- System administrators and technical support personnel
+- Students and faculty members
+- Cafe staff and management
+- System administrators
 
 ## 3. System Requirements
 
 ### 3.1 Functional Requirements
 
 1. **User Interface Requirements**
-   - FR1.1: The system shall display a responsive interface compatible with desktop, tablet, and mobile devices.
-   - FR1.2: The system shall provide navigation to Home, Menu, About, Contact, and My Orders pages.
-   - FR1.3: The system shall allow users to toggle between light and dark mode themes.
-   - FR1.4: The system shall display gamified statistics showing customer metrics.
+   - FR1.1: Responsive interface compatible with multiple device types
+   - FR1.2: Navigation to all core pages (Home, Menu, About, Contact, Orders)
+   - FR1.3: Theme switching between light and dark modes
+   - FR1.4: Display of dynamic customer statistics
 
 2. **Menu Display Requirements**
-   - FR2.1: The system shall display a categorized menu of food items with name, description, price, and image.
-   - FR2.2: The system shall allow users to filter menu items by category.
-   - FR2.3: The system shall allow users to search for menu items by keyword.
-   - FR2.4: The system shall display featured dishes on the home page.
+   - FR2.1: Categorized menu with item details and images
+   - FR2.2: Category-based filtering
+   - FR2.3: Keyword search functionality
+   - FR2.4: Featured dishes on the home page
 
 3. **Order Processing Requirements**
-   - FR3.1: The system shall allow users to select menu items and place orders.
-   - FR3.2: The system shall generate a unique order number for each order.
-   - FR3.3: The system shall provide order confirmation with estimated pickup time.
-   - FR3.4: The system shall display current orders with status information.
-   - FR3.5: The system shall provide payment instructions for the "pay on pickup" option.
-   - FR3.6: The system shall allow users to track their order history.
+   - FR3.1: Item selection and order placement
+   - FR3.2: Unique order number generation
+   - FR3.3: Order confirmation with pickup time estimation
+   - FR3.4: Order status tracking
+   - FR3.5: Payment instructions for pickup
+   - FR3.6: Order history access
 
 4. **Data Management Requirements**
-   - FR4.1: The system shall store menu items, orders, user messages, and admin credentials in localStorage.
-   - FR4.2: The system shall maintain statistical data on customers served and orders submitted.
-   - FR4.3: The system shall allow configuration of multiple admin credentials.
+   - FR4.1: Local storage for menu items, orders, and credentials
+   - FR4.2: Statistical data tracking
+   - FR4.3: Multi-admin credential configuration
 
 5. **Administration Requirements**
-   - FR5.1: The system shall provide a secure login for administrators.
-   - FR5.2: The system shall support multiple admin users with different credentials.
-   - FR5.3: The system shall allow admins to manage menu items and view orders.
-   - FR5.4: The system shall provide configuration options for admin credentials.
+   - FR5.1: Secure admin authentication
+   - FR5.2: Support for multiple admin users
+   - FR5.3: Menu and order management
+   - FR5.4: Admin credential configuration
 
 ### 3.2 Non-Functional Requirements
 
 1. **Performance Requirements**
-   - NFR1.1: The system shall load pages within 3 seconds on standard broadband connections.
-   - NFR1.2: The system shall support at least 100 concurrent users.
-   - NFR1.3: The system shall update gamified statistics at varied intervals for a more natural feel.
+   - NFR1.1: Page load under 3 seconds on standard connections
+   - NFR1.2: Support for 100+ concurrent users
+   - NFR1.3: Variable refresh rates for statistics counters
 
 2. **Usability Requirements**
-   - NFR2.1: The system shall be usable by first-time visitors without training.
-   - NFR2.2: The system shall follow web accessibility guidelines (WCAG 2.1 Level AA).
-   - NFR2.3: The system shall maintain consistent navigation patterns across all pages.
+   - NFR2.1: Intuitive interface for new users
+   - NFR2.2: Compliance with WCAG 2.1 Level AA
+   - NFR2.3: Consistent navigation across pages
 
 3. **Reliability Requirements**
-   - NFR3.1: The system shall function in all major browsers (Chrome, Firefox, Safari, Edge).
-   - NFR3.2: The system shall gracefully handle network interruptions by storing data locally.
-   - NFR3.3: The system shall provide error messages for failed operations.
+   - NFR3.1: Cross-browser compatibility
+   - NFR3.2: Offline functionality with local data storage
+   - NFR3.3: Clear error handling
 
 4. **Security Requirements**
-   - NFR4.1: The system shall sanitize all user inputs to prevent XSS attacks.
-   - NFR4.2: The system shall implement password hashing for administrator accounts.
-   - NFR4.3: The system shall not store sensitive customer information.
+   - NFR4.1: Input sanitization to prevent XSS
+   - NFR4.2: Password hashing for admin accounts
+   - NFR4.3: Minimal sensitive data storage
 
 5. **Maintainability Requirements**
-   - NFR5.1: The system shall use modular code structure for easy updates.
-   - NFR5.2: The system shall be well-documented for future development.
-   - NFR5.3: The system shall support easy customization of menu items and styling.
+   - NFR5.1: Modular code structure
+   - NFR5.2: Comprehensive documentation
+   - NFR5.3: Customization options for menus and styling
 
 ## 4. System Architecture
 
 ### 4.1 Architecture Overview
 
-The Campus Cafe System uses a client-side architecture with the following components:
+The Campus Cafe System uses a client-side architecture with:
 
-1. **Presentation Layer**: HTML and CSS responsible for UI rendering
-2. **Application Layer**: JavaScript modules handling business logic
-3. **Data Layer**: LocalStorage-based data persistence
+1. **Presentation Layer**: HTML and CSS for UI rendering
+2. **Application Layer**: JavaScript modules for business logic
+3. **Data Layer**: LocalStorage-based persistence
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -215,20 +215,20 @@ The Campus Cafe System uses a client-side architecture with the following compon
 
 | Component | File(s) | Description |
 |-----------|---------|-------------|
-| Home Page | index.html, js/main.js | Main landing page displaying featured dishes |
-| Menu Page | menu.html, js/menu.js | Browse, search, and filter food items |
-| About Page | about.html | Information about the cafe history and team |
-| Contact Page | contact.html, js/contact.js | Contact form and information |
-| My Orders Page | my-orders.html, js/my-orders.js | View and manage order history |
-| Order Details Page | order-details.html, js/order-details.js | View detailed order information |
-| Cart Page | cart.html, js/cart.js | View cart and checkout |
-| Storage Manager | js/utils/storage.js | Data persistence using localStorage |
-| Auth Manager | js/utils/auth.js | Authentication and user management |
+| Home Page | index.html, js/main.js | Landing page with featured dishes |
+| Menu Page | menu.html, js/menu.js | Browse and filter food items |
+| About Page | about.html | Cafe information |
+| Contact Page | contact.html, js/contact.js | Contact form and info |
+| My Orders Page | my-orders.html, js/my-orders.js | Order history and tracking |
+| Order Details Page | order-details.html, js/order-details.js | Detailed order view |
+| Cart Page | cart.html, js/cart.js | Shopping cart and checkout |
+| Storage Manager | js/utils/storage.js | LocalStorage data handling |
+| Auth Manager | js/utils/auth.js | Authentication |
 | Cart Manager | js/utils/storage.js | Cart operations |
-| Stats Manager | js/utils/stats.js | Manages statistical counters |
-| Config Manager | js/utils/config.js | Configuration settings and admin credentials |
-| Theme Manager | js/utils/theme.js | Handles light/dark mode switching |
-| Stylesheets | css/styles.css, css/admin.css | Styling for the application |
+| Stats Manager | js/utils/stats.js | Statistical counters |
+| Config Manager | js/utils/config.js | System configuration |
+| Theme Manager | js/utils/theme.js | Theme switching |
+| Stylesheets | css/styles.css, css/admin.css | UI styling |
 
 ### 5.2 Data Models
 
@@ -237,34 +237,34 @@ The Campus Cafe System uses a client-side architecture with the following compon
 {
     id: String,               // Unique identifier
     name: String,             // Item name
-    price: Number,            // Price in Kenyan Shillings
-    category: String,         // Category (breakfast, lunch, snacks, drinks)
-    description: String,      // Description text
-    ingredients: Array,       // List of ingredients
-    imageUrl: String,         // URL to item image
-    featured: Boolean         // Whether item is featured on home page
+    price: Number,            // Price in KSh
+    category: String,         // Category
+    description: String,      // Description
+    ingredients: Array,       // Ingredients list
+    imageUrl: String,         // Image URL
+    featured: Boolean         // Featured status
 }
 ```
 
 #### 5.2.2 Order Model
 ```javascript
 {
-    id: String,               // Unique order number
-    item: Object,             // Menu item object
-    quantity: Number,         // Quantity ordered
-    status: String,           // Order status (pending, ready, completed, cancelled)
-    orderTime: String,        // ISO date string of order time
-    estimatedPickupTime: String, // ISO date string of estimated pickup
-    paymentMethod: String,    // Payment method (cash, mpesa, card, etc.)
-    paymentStatus: String,    // Payment status (pending, processed, failed)
-    notes: String             // Customer notes for the order
+    id: String,               // Order number
+    item: Object,             // Menu item
+    quantity: Number,         // Quantity
+    status: String,           // Status
+    orderTime: String,        // Order time
+    estimatedPickupTime: String, // Pickup time
+    paymentMethod: String,    // Payment method
+    paymentStatus: String,    // Payment status
+    notes: String             // Order notes
 }
 ```
 
 #### 5.2.3 User Model (Admin)
 ```javascript
 {
-    email: String,            // Admin email address
+    email: String,            // Email
     passwordHash: String      // Hashed password
 }
 ```
@@ -272,11 +272,11 @@ The Campus Cafe System uses a client-side architecture with the following compon
 #### 5.2.4 Stats Model
 ```javascript
 {
-    customersServedToday: Number,  // Customers served today counter
-    customersEverServed: Number,   // Total customers served counter
-    ordersSubmitted: Number,       // Total orders submitted counter
-    lastResetDate: String,         // Date when daily counter was last reset
-    lastUpdateTime: Number         // Timestamp of last update
+    customersServedToday: Number,  // Daily customers
+    customersEverServed: Number,   // Total customers
+    ordersSubmitted: Number,       // Total orders
+    lastResetDate: String,         // Last reset date
+    lastUpdateTime: Number         // Last update time
 }
 ```
 
@@ -394,64 +394,61 @@ The Campus Cafe System uses a client-side architecture with the following compon
 
 ## 7. Key Features Explained
 
-### 7.1 Gamified Statistics System
+### 7.1 Dynamic Statistics System
 
-The Campus Cafe System implements a gamified statistics feature that displays dynamic counters for:
+The statistics feature displays counters for:
 - Customers served today
-- Total customers served since opening
-- Total orders submitted
+- Total customers served
+- Orders submitted
 
-Key implementation details:
-- Statistics start with predetermined baseline values (38, 18540, 22098)
-- Counters automatically increase at different intervals to create a more engaging experience
-- Daily counter resets at the start of each new day
-- Increment rates slow down as values approach maximum thresholds
-- Animations add visual appeal when values change
-- System tracks statistics across user sessions using localStorage
-- Both automatic increments and real order completion events affect counters
+Implementation details:
+- Baseline starting values (38, 18540, 22098)
+- Variable increment intervals
+- Daily counter reset
+- Threshold-based rate adjustment
+- Animated value changes
+- LocalStorage persistence
+- Order-triggered updates
 
-The statistics system enhances user engagement by providing a sense of community and popularity, showing that the cafe is actively serving customers.
+The statistics enhance user engagement by showcasing cafe activity.
 
-### 7.2 Multiple Admin Credentials System
+### 7.2 Admin Credentials System
 
-The Campus Cafe System supports multiple admin users with:
+The multi-admin system provides:
+- Secure credential storage
+- Multiple admin account support
+- Password security
+- Development mode toggle
+- Credential management interface
 
-- Admin credential storage in a secure configuration
-- Environment variables control system behavior
-- Password hashing for enhanced security
-- Development mode toggle for easier configuration during development
-- Configuration page for adding, updating, and removing admin credentials
-
-The multi-admin system allows different cafe staff members to have their own login credentials with the same level of access to the administrative functions.
+This allows multiple staff members to access administrative functions.
 
 ### 7.3 Payment Instructions System
 
 The payment system includes:
+- Clear paybill instructions
+- Order number generation
+- Payment reference tracking
+- Payment status management
 
-- Clear instructions for the "pay on pickup" option
-- Integration with the Campus Cafe paybill system
-- Display of auto-generated order numbers for payment reference
-- Support for different payment methods (cash, M-Pesa, card, etc.)
-- Payment status tracking in the order management system
-
-This feature enhances the user experience by providing clear instructions on how to complete payment for their orders.
+These features guide users through the payment process.
 
 ## 8. Database Schema
 
-Since the application uses localStorage for data persistence instead of a traditional database, the schema is represented by the JavaScript objects stored in localStorage:
+The application uses localStorage for data persistence:
 
 ### 8.1 Storage Keys
 
 | Key | Description |
 |-----|-------------|
-| campus_cafe_menu_items | Array of menu items |
-| campus_cafe_orders | Array of customer orders |
-| campus_cafe_users | Array of admin users |
-| campus_cafe_stats | Statistics object |
-| campus_cafe_cart | Current user's cart |
-| campus_cafe_user | Currently logged-in admin |
-| campus_cafe_token | Authentication token |
-| campus_cafe_last_visit | Timestamp of last visit |
+| campus_cafe_menu_items | Menu items |
+| campus_cafe_orders | Orders |
+| campus_cafe_users | Admin users |
+| campus_cafe_stats | Statistics |
+| campus_cafe_cart | User's cart |
+| campus_cafe_user | Current admin |
+| campus_cafe_token | Auth token |
+| campus_cafe_last_visit | Last visit timestamp |
 
 ### 8.2 Local Storage Schema Diagram
 
@@ -496,61 +493,47 @@ Since the application uses localStorage for data persistence instead of a tradit
 ## 9. Deployment
 
 ### 9.1 System Requirements
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- JavaScript enabled
+- Internet connection for initial load
+- WebStorage API support
 
-- Web server (Apache, Nginx, or any static file server)
-- No database required (uses localStorage)
-- No server-side language required
-- Modern browsers (Chrome, Firefox, Safari, Edge)
+### 9.2 Deployment Steps
+1. Copy all files to a web server or local directory
+2. Access index.html to launch the application
+3. For admin access, navigate to admin/login.html
 
-### 9.2 Installation Steps
+### 9.3 Testing
+The system should be tested across multiple browsers and devices to ensure compatibility and responsive design functionality.
 
-1. Copy all files to the web server's public directory
-2. No configuration files or environment setup needed
-3. Access the application through a web browser
+## 10. Maintenance and Support
 
-### 9.3 Browser Compatibility
+### 10.1 Menu Updates
+To update menu items, modify the `getDefaultMenuItems()` function in `js/utils/storage.js`.
 
-| Browser | Minimum Version | Notes |
-|---------|----------------|-------|
-| Chrome | 80+ | Full compatibility |
-| Firefox | 75+ | Full compatibility |
-| Safari | 13.1+ | Full compatibility |
-| Edge | 80+ | Full compatibility |
-| Opera | 67+ | Full compatibility |
-| Mobile Chrome | 80+ | Fully responsive |
-| Mobile Safari | 13.4+ | Fully responsive |
+### 10.2 Admin Credential Management
+Admin credentials can be managed through:
+1. Direct modification of `js/utils/config.js`
+2. Using the admin configuration interface
 
-## 10. Future Improvements
+### 10.3 Troubleshooting
+Common issues:
+- LocalStorage cleared: System will reset to defaults
+- Theme not saving: Check browser cookie permissions
+- Statistics reset: May occur when changing browsers
 
-### 10.1 Short-term Improvements
+## 11. Appendices
 
-- Push notifications for order status updates
-- Email confirmations for orders
-- More detailed admin analytics dashboard
-- Additional payment gateway integrations
-- QR code generation for orders
+### 11.1 Default Admin Credentials
+- Email: admin@campuscafe.com
+- Password: admin123
 
-### 10.2 Long-term Vision
+### 11.2 Glossary
+- **KSh**: Kenyan Shilling
+- **LocalStorage**: Browser-based data storage mechanism
+- **Paybill**: Kenyan mobile payment system identifier
 
-- Backend server implementation for true persistence
-- User account system with login and order history
-- Real-time order tracking with WebSocket integration
-- Mobile application for both customers and administrators
-- Integration with university ID/payment systems
-
-## 11. Appendix
-
-### 11.1 Glossary
-
-| Term | Definition |
-|------|------------|
-| KSh | Kenyan Shilling, the local currency |
-| Paybill | Payment system commonly used in Kenya for mobile money transfers |
-| M-Pesa | Popular mobile money transfer service in Kenya |
-| localStorage | Web API that allows storage of key-value pairs in a web browser |
-
-### 11.2 References
-
-- HTML5 Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API
-- CSS Flexbox Layout: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout
-- JavaScript Modules: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules 
+### 11.3 Reference Documents
+- Modern JavaScript specifications
+- HTML5 and CSS3 standards
+- Web Content Accessibility Guidelines (WCAG) 2.1 

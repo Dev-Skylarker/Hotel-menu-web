@@ -19,6 +19,10 @@ const configManager = (function() {
             { 
                 email: 'manager@campuscafe.com', 
                 passwordHash: '08544c587c2ddeef7b87c72c6110637ef7c3693c490d376f69d49516e1c7ddb6' // manager456
+            },
+            {
+                email: 'cafe_admin@campus.com',
+                passwordHash: '12f8c5a76c1637a54d0d2aa3b2e7104e7dc6e6a2a1bbe7a77bd75eb0fb373947' // campus2023
             }
         ]
     };

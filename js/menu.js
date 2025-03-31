@@ -84,6 +84,11 @@ function addEventListeners() {
             if (e.key === 'Enter') {
                 handleSearch();
             }
+            // Show all items when search field is cleared
+            if (searchInput.value.trim() === '') {
+                currentSearchTerm = '';
+                filterMenuItems(currentCategory, '');
+            }
         });
     }
     
@@ -473,6 +478,9 @@ function addToCart() {
     // Add to cart
     cartManager.addToCart(currentItem, quantity);
     
+    // Update cart badge count immediately
+    updateCartBadge();
+    
     // Show confirmation
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -506,25 +514,14 @@ function placeOrder() {
     const quantityInput = document.getElementById('item-quantity');
     const quantity = parseInt(quantityInput ? quantityInput.value : 1);
     
-    // Create order object
-    const order = {
-        id: generateOrderId(),
-        item: currentItem,
-        quantity: quantity,
-        status: 'pending',
-        orderTime: new Date().toISOString(),
-        estimatedPickupTime: getEstimatedPickupTime(),
-        customerName: 'Guest', // In a real app, this would be the logged-in user or input from form
-    };
-    
-    // Save order to storage
-    saveOrder(order);
+    // Add to cart first
+    cartManager.addToCart(currentItem, quantity);
     
     // Close item modal
     closeItemModal();
     
-    // Show confirmation
-    showOrderConfirmation(order);
+    // Redirect to cart page
+    window.location.href = "cart.html?checkout=true";
 }
 
 /**

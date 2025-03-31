@@ -8,16 +8,15 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="icon1.png" type="image/png">
     <style>
-        /* Order Details specific styles */
-        .order-details-section {
-            padding: 2rem 0;
-            min-height: 60vh;
+        /* Order Details Styles */
+        .order-details-container {
+            margin: 2rem 0;
         }
         
         .order-details-card {
-            background-color: var(--bg-card);
+            background-color: var(--background-color);
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -27,47 +26,57 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
             padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .order-header h2 {
+            margin: 0;
         }
         
         .order-status {
-            padding: 6px 12px;
-            border-radius: 99px;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
             font-size: 0.875rem;
             font-weight: 600;
         }
         
         .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
+            background-color: #fcf8e3;
+            color: #8a6d3b;
         }
         
         .status-ready {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #d9edf7;
+            color: #31708f;
         }
         
         .status-completed {
-            background-color: #cce5ff;
-            color: #004085;
+            background-color: #dff0d8;
+            color: #3c763d;
         }
         
         .status-cancelled {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #f2dede;
+            color: #a94442;
         }
         
         .order-info {
-            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .order-info {
+                grid-template-columns: 1fr;
+            }
         }
         
         .order-item {
             display: flex;
+            align-items: flex-start;
             margin-bottom: 1.5rem;
-            background-color: var(--bg-input);
-            border-radius: 8px;
-            padding: 1rem;
         }
         
         .order-item-image {
@@ -79,14 +88,47 @@
         }
         
         .order-item-details h3 {
-            margin-top: 0;
+            margin: 0 0 0.5rem;
+        }
+        
+        .order-meta h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .order-meta p {
             margin-bottom: 0.5rem;
         }
         
-        .order-meta {
-            background-color: var(--bg-input);
-            border-radius: 8px;
+        .customer-info, .payment-info, .order-timing, .order-notes {
+            margin-bottom: 1.5rem;
             padding: 1rem;
+            background-color: var(--background-secondary);
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .payment-info {
+            border-left-color: var(--kenya-green);
+        }
+        
+        .order-timing {
+            border-left-color: var(--kenya-orange);
+        }
+        
+        .order-notes {
+            border-left-color: var(--secondary-color);
+        }
+        
+        .customer-info h3, .payment-info h3, .order-timing h3, .order-notes h3 {
+            margin-top: 0;
+            color: var(--text-color);
+            border-bottom: none;
+            padding-bottom: 0;
         }
         
         .order-actions {
@@ -94,24 +136,15 @@
             justify-content: flex-end;
             gap: 1rem;
             margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
         }
         
-        .btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-        
-        .btn-success {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background-color: #218838;
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
         }
         
         /* Thank you modal */
@@ -148,7 +181,7 @@
         <div class="container">
             <div class="logo">
                 <a href="index.html">
-                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
                     <span>Campus Cafe</span>
                 </a>
             </div>
@@ -220,7 +253,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
                     <span>Campus Cafe</span>
                 </div>
                 <div class="footer-links">
@@ -259,6 +292,42 @@
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/stats.js"></script>
+    <script>
+        // Update the cart badge on page load and periodically
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update cart badge immediately
+            updateCartBadgeGlobal();
+            
+            // Update cart badge periodically to ensure it stays updated
+            setInterval(updateCartBadgeGlobal, 2000);
+            
+            // Function to update the cart badge
+            function updateCartBadgeGlobal() {
+                const cartBadge = document.getElementById('cart-badge');
+                if (!cartBadge) return;
+                
+                // Get the total items from cartManager
+                const totalItems = cartManager.getTotalItems();
+                
+                // Update the badge
+                cartBadge.textContent = totalItems;
+                
+                // Show or hide badge based on cart contents
+                if (totalItems > 0) {
+                    cartBadge.style.display = 'flex';
+                } else {
+                    cartBadge.style.display = 'none';
+                }
+            }
+            
+            // Also update the badge when the storage changes (helps with syncing across tabs)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'campus_cafe_cart') {
+                    updateCartBadgeGlobal();
+                }
+            });
+        });
+    </script>
     <script src="js/order-details.js"></script>
 </body>
 </html> 

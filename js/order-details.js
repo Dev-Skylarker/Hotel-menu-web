@@ -144,22 +144,22 @@ function displayOrderDetails(order) {
     
     switch (paymentMethod) {
         case 'cash':
-            formattedPaymentMethod = 'Cash on Pickup';
+            formattedPaymentMethod = 'On Pickup';
             break;
         case 'mpesa':
-            formattedPaymentMethod = 'M-Pesa';
+            formattedPaymentMethod = 'On Pickup';
             break;
         case 'card':
-            formattedPaymentMethod = 'Card (Visa/Mastercard)';
+            formattedPaymentMethod = 'On Pickup';
             break;
         case 'paypal':
-            formattedPaymentMethod = 'PayPal';
+            formattedPaymentMethod = 'On Pickup';
             break;
         case 'bitcoin':
-            formattedPaymentMethod = 'Bitcoin';
+            formattedPaymentMethod = 'On Pickup';
             break;
         default:
-            formattedPaymentMethod = paymentMethod;
+            formattedPaymentMethod = 'On Pickup';
     }
     
     // Format payment status
@@ -180,6 +180,9 @@ function displayOrderDetails(order) {
             paymentStatusClass = 'status-pending';
     }
     
+    // Get the total amount or calculate it
+    const totalAmount = order.totalAmount || (order.item.price * order.quantity).toFixed(2);
+    
     orderDetailsContainer.innerHTML = `
         <div class="order-details-card">
             <div class="order-header">
@@ -198,22 +201,43 @@ function displayOrderDetails(order) {
                 </div>
                 
                 <div class="order-meta">
-                    <p><strong>Order Time:</strong> ${formattedOrderTime}</p>
-                    <p><strong>Est. Pickup Time:</strong> ${formattedTime}</p>
-                    <p><strong>Payment Method:</strong> ${formattedPaymentMethod}</p>
-                    <p><strong>Payment Status:</strong> <span class="${paymentStatusClass}">${paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}</span></p>
-                    ${order.notes ? `<p><strong>Notes:</strong> ${order.notes}</p>` : ''}
+                    <div class="customer-info">
+                        <h3>Customer Information</h3>
+                        <p><strong>Name:</strong> ${order.customerName || 'Guest'}</p>
+                        <p><strong>Admission #:</strong> ${order.admissionNumber || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <h3>Payment Information</h3>
+                        <p><strong>Payment Code:</strong> ${order.orderCode || 'N/A'}</p>
+                        <p><strong>Total Amount:</strong> KSh ${totalAmount}</p>
+                        <p><strong>Payment Method:</strong> ${formattedPaymentMethod}</p>
+                        <p><strong>Payment Status:</strong> <span class="status-badge ${paymentStatusClass}">${paymentStatus}</span></p>
+                    </div>
+                    
+                    <div class="order-timing">
+                        <h3>Order Timing</h3>
+                        <p><strong>Order Time:</strong> ${formattedOrderTime}</p>
+                        <p><strong>Estimated Pickup:</strong> ${formattedTime}</p>
+                    </div>
+                    
+                    ${order.notes ? `
+                    <div class="order-notes">
+                        <h3>Notes</h3>
+                        <p>${order.notes}</p>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
             
             ${showButtons ? `
             <div class="order-actions">
-                <button id="cancel-order" class="btn btn-danger">
-                    <i class="fas fa-times"></i> Cancel Order
-                </button>
-                <button id="confirm-pickup" class="btn btn-success">
-                    <i class="fas fa-check"></i> Confirm Picked Up
-                </button>
+                ${order.status === 'pending' ? `
+                <button id="cancel-order" class="btn btn-danger">Cancel Order</button>
+                ` : ''}
+                ${order.status === 'ready' ? `
+                <button id="confirm-pickup" class="btn btn-primary">Confirm Pickup</button>
+                ` : ''}
             </div>
             ` : ''}
         </div>

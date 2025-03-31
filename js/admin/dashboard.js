@@ -150,7 +150,9 @@ function loadOrdersData() {
         // Calculate total revenue
         let totalRevenue = 0;
         orders.forEach(order => {
-            totalRevenue += order.total || (order.item ? order.item.price * order.quantity : 0);
+            const orderTotal = order.totalAmount ? parseFloat(order.totalAmount) : 
+                (order.item ? order.item.price * order.quantity : 0);
+            totalRevenue += orderTotal;
         });
         
         // Update total revenue
@@ -166,8 +168,8 @@ function loadOrdersData() {
                     new Date(b.orderTime || b.date) - new Date(a.orderTime || a.date)
                 );
                 
-                // Display only the 5 most recent orders
-                const recentOrders = sortedOrders.slice(0, 5);
+                // Display only the 10 most recent orders
+                const recentOrders = sortedOrders.slice(0, 10);
                 
                 // Clear table and hide empty message
                 recentOrdersBody.innerHTML = '';
@@ -189,41 +191,52 @@ function loadOrdersData() {
                     
                     // Get item name and price
                     const itemName = order.item ? order.item.name : (order.items ? `${order.items.length} items` : 'Unknown');
-                    const price = order.total || (order.item ? order.item.price * order.quantity : 0);
+                    const orderTotal = order.totalAmount ? parseFloat(order.totalAmount) : 
+                        (order.item ? order.item.price * order.quantity : 0);
+                    
+                    // Get customer information
+                    const customerName = order.customerName || 'Guest';
+                    const admissionNumber = order.admissionNumber ? `(${order.admissionNumber})` : '';
+                    const customerDisplay = `${escapeHtml(customerName)} ${admissionNumber}`;
+                    
+                    // Add payment code if available
+                    const orderIdDisplay = order.orderCode ? 
+                        `#${order.id.substring(0, 6)}... <span class="order-code">(${order.orderCode})</span>` : 
+                        `#${order.id}`;
                     
                     row.innerHTML = `
-                        <td>#${order.id}</td>
-                        <td>${order.customer ? escapeHtml(order.customer) : 'Customer'}</td>
+                        <td>${orderIdDisplay}</td>
+                        <td>${customerDisplay}</td>
                         <td>${escapeHtml(itemName)}</td>
-                        <td>KSh ${price.toFixed(2)}</td>
+                        <td>KSh ${orderTotal.toFixed(2)}</td>
                         <td>
                             <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span>
                         </td>
                         <td>${formattedDate}</td>
                         <td class="actions">
-                            <div class="order-actions">
-                                ${order.status !== 'cancelled' && order.status !== 'completed' ? `
-                                <button class="btn-icon cancel-order" data-order-id="${order.id}" title="Cancel Order">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button class="btn-icon complete-order" data-order-id="${order.id}" title="Mark as Completed">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                                ` : ''}
-                                <a href="../order-details.html?id=${order.id}" class="btn-icon" title="View Details" target="_blank">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
+                            <button class="btn btn-small btn-primary view-order" data-id="${order.id}" title="View Order">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${order.status === 'pending' ? `
+                            <button class="btn btn-small btn-success complete-order" data-id="${order.id}" title="Mark as Ready">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            ` : ''}
+                            ${order.status === 'pending' ? `
+                            <button class="btn btn-small btn-danger cancel-order" data-id="${order.id}" title="Cancel Order">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            ` : ''}
                         </td>
                     `;
                     
                     recentOrdersBody.appendChild(row);
                 });
                 
-                // Add event listeners for action buttons
+                // Attach event listeners to the order action buttons
                 attachOrderActionListeners();
             } else {
-                // Show empty message
+                // Show empty message if no orders
                 if (noOrdersMessage) {
                     noOrdersMessage.style.display = 'block';
                 }
@@ -238,27 +251,68 @@ function loadOrdersData() {
  * Attach event listeners to order action buttons
  */
 function attachOrderActionListeners() {
-    // Cancel order buttons
-    const cancelButtons = document.querySelectorAll('.cancel-order');
-    cancelButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const orderId = e.currentTarget.dataset.orderId;
-            if (orderId) {
-                cancelOrder(orderId);
-            }
+    // View order buttons
+    const viewButtons = document.querySelectorAll('.view-order');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const orderId = button.getAttribute('data-id');
+            viewOrderDetails(orderId);
         });
     });
     
     // Complete order buttons
     const completeButtons = document.querySelectorAll('.complete-order');
     completeButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const orderId = e.currentTarget.dataset.orderId;
-            if (orderId) {
+        button.addEventListener('click', () => {
+            const orderId = button.getAttribute('data-id');
+            if (confirm('Mark this order as ready for pickup?')) {
                 completeOrder(orderId);
             }
         });
     });
+    
+    // Cancel order buttons
+    const cancelButtons = document.querySelectorAll('.cancel-order');
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const orderId = button.getAttribute('data-id');
+            if (confirm('Are you sure you want to cancel this order?')) {
+                cancelOrder(orderId);
+            }
+        });
+    });
+}
+
+/**
+ * Open order details in a new tab
+ * @param {string} orderId - Order ID
+ */
+function viewOrderDetails(orderId) {
+    window.open(`../order-details.html?id=${orderId}`, '_blank');
+}
+
+/**
+ * Mark an order as completed
+ * @param {string} orderId - Order ID
+ */
+function completeOrder(orderId) {
+    try {
+        // Update order status
+        const updatedOrder = storageManager.updateOrderStatus(orderId, 'ready');
+        
+        if (updatedOrder) {
+            // Reload orders data
+            loadOrdersData();
+            
+            // Show success message
+            alert('Order marked as ready for pickup!');
+        } else {
+            alert('Order not found!');
+        }
+    } catch (error) {
+        console.error('Error completing order:', error);
+        alert('An error occurred while completing the order.');
+    }
 }
 
 /**
@@ -282,30 +336,6 @@ function cancelOrder(orderId) {
     } catch (error) {
         console.error('Error cancelling order:', error);
         alert('An error occurred while cancelling the order.');
-    }
-}
-
-/**
- * Mark an order as completed
- * @param {string} orderId - Order ID to complete
- */
-function completeOrder(orderId) {
-    try {
-        // Call storage manager to update order status
-        const updatedOrder = storageManager.updateOrderStatus(orderId, 'completed');
-        
-        if (updatedOrder) {
-            // Reload orders data
-            loadOrdersData();
-            
-            // Show success message
-            alert('Order marked as completed successfully.');
-        } else {
-            alert('Failed to complete order. Order not found.');
-        }
-    } catch (error) {
-        console.error('Error completing order:', error);
-        alert('An error occurred while marking the order as completed.');
     }
 }
 

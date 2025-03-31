@@ -102,31 +102,46 @@ const storageManager = (function() {
     }
     
     /**
-     * Save order to storage
-     * @param {Object} order - Order to save
+     * Save an order
+     * @param {Object} order - Order object to save
      * @returns {Object} - Saved order
      */
     function saveOrder(order) {
-        try {
-            // Get existing orders
-            const orders = getOrders();
-            
-            // Add order to orders array
-            orders.push(order);
-            
-            // Save to storage
-            localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-            
-            // Increment orders submitted stat
-            if (typeof statsManager !== 'undefined') {
-                statsManager.incrementOrderSubmitted();
-            }
-            
-            return order;
-        } catch (error) {
-            console.error('Error saving order:', error);
-            return null;
+        // Validate order
+        if (!order || !order.id || !order.item || !order.quantity) {
+            throw new Error('Invalid order');
         }
+        
+        // Get current orders
+        const orders = getOrders();
+        
+        // Calculate total price
+        let totalPrice = order.item.price * order.quantity;
+        
+        // Apply discount if eligible
+        if (totalPrice > 500) {
+            totalPrice -= 300; // Apply 300 bob discount
+        }
+        
+        // Add additional fields if needed
+        const newOrder = {
+            ...order,
+            totalPrice: totalPrice.toFixed(2),
+            status: order.status || 'pending',
+            orderTime: order.orderTime || new Date().toISOString(),
+            estimatedPickupTime: order.estimatedPickupTime || new Date(Date.now() + 20 * 60000).toISOString()
+        };
+        
+        // Add order to the orders list
+        orders.push(newOrder);
+        
+        // Save to localStorage
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+        
+        // Update customer stats
+        updateCustomerStats();
+        
+        return newOrder;
     }
     
     /**
@@ -232,12 +247,12 @@ const storageManager = (function() {
         return [
             {
                 id: 'breakfast1',
-                name: 'English Breakfast',
+                name: 'Smocha',
                 price: 450,
                 category: 'breakfast',
-                description: 'A hearty plate of eggs, bacon, sausage, beans, and toast to kickstart your day.',
-                ingredients: ['Eggs', 'Bacon', 'Sausage', 'Beans', 'Toast'],
-                imageUrl: 'https://images.unsplash.com/photo-1533089860892-a9b969df5d3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+                description: 'A delicious combination of chapati, smokies, and kachumbari - a perfect campus breakfast.',
+                ingredients: ['Chapati', 'Smokies', 'Kachumbari', 'Tomato Sauce'],
+                imageUrl: 'https://cdn.standardmedia.co.ke/images/wysiwyg/images/TwRzggyrLJCEh7gwzsLlPZ90VHf4imSUigQh5aiv.jpg',
                 featured: true
             },
             {
@@ -253,11 +268,11 @@ const storageManager = (function() {
             {
                 id: 'lunch1',
                 name: 'Chapo Beans',
-                price: 60,
+                price: 80,
                 category: 'lunch',
                 description: 'Kenyan chapati served with tasty beans, salad, and soup on the side.',
                 ingredients: ['Chapati', 'Beans', 'Salad', 'Vegetable Soup'],
-                imageUrl: 'https://i.pinimg.com/736x/bb/6f/b9/bb6fb9982f49c6c3a91d6e20d8444be2.jpg',
+                imageUrl: 'https://www.shutterstock.com/image-photo/chapati-bean-curry-made-beans-600nw-2162323019.jpg',
                 featured: true
             },
             {
@@ -273,7 +288,7 @@ const storageManager = (function() {
             {
                 id: 'snack1',
                 name: 'Samosa',
-                price: 120,
+                price: 40,
                 category: 'snacks',
                 description: 'Crispy triangular pastry filled with spiced potatoes and peas.',
                 ingredients: ['Pastry', 'Potatoes', 'Peas', 'Spices'],
@@ -301,6 +316,16 @@ const storageManager = (function() {
                 featured: true
             }
         ];
+    }
+    
+    /**
+     * Update customer stats when an order is placed
+     */
+    function updateCustomerStats() {
+        // Check if statsManager exists
+        if (typeof statsManager !== 'undefined') {
+            statsManager.incrementOrderSubmitted();
+        }
     }
     
     // Public API
@@ -375,6 +400,9 @@ const cartManager = (function() {
         // Save to localStorage
         localStorage.setItem(CART_KEY, JSON.stringify(cart));
         
+        // Update cart badge immediately
+        updateCartBadge();
+        
         return cart;
     }
     
@@ -392,6 +420,9 @@ const cartManager = (function() {
         
         // Save to localStorage
         localStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
+        
+        // Update cart badge immediately
+        updateCartBadge();
         
         return updatedCart;
     }
@@ -424,6 +455,9 @@ const cartManager = (function() {
         // Save to localStorage
         localStorage.setItem(CART_KEY, JSON.stringify(cart));
         
+        // Update cart badge immediately
+        updateCartBadge();
+        
         return cart;
     }
     
@@ -433,32 +467,72 @@ const cartManager = (function() {
      */
     function clearCart() {
         localStorage.removeItem(CART_KEY);
+        
+        // Update cart badge immediately
+        updateCartBadge();
+        
         return [];
     }
     
     /**
-     * Get total price of cart
+     * Calculate the total price of items in the cart
      * @returns {number} - Total price
      */
     function getTotalPrice() {
         const cart = getCart();
-        
         return cart.reduce((total, cartItem) => {
             return total + (cartItem.item.price * cartItem.quantity);
         }, 0);
     }
     
     /**
-     * Get total number of items in cart
-     * @returns {number} - Total items
+     * Apply discount to orders above a certain amount
+     * @param {number} total - The total order amount
+     * @returns {number} - Discounted total
+     */
+    function applyDiscount(total) {
+        // Apply 300 bob discount for orders above 500 bob
+        if (total > 500) {
+            return total - 300;
+        }
+        return total;
+    }
+    
+    /**
+     * Calculate the total number of items in the cart
+     * @returns {number} - Total number of items
      */
     function getTotalItems() {
         const cart = getCart();
-        
         return cart.reduce((total, cartItem) => {
             return total + cartItem.quantity;
         }, 0);
     }
+    
+    /**
+     * Update the cart badge to show total items
+     * This function can be called from any page to update the cart count
+     */
+    function updateCartBadge() {
+        const cartBadge = document.getElementById('cart-badge');
+        if (!cartBadge) return;
+        
+        // Get the total number of items in the cart
+        const totalItems = getTotalItems();
+        
+        // Update the badge
+        cartBadge.textContent = totalItems;
+        
+        // Show or hide badge based on cart contents
+        if (totalItems > 0) {
+            cartBadge.style.display = 'flex';
+        } else {
+            cartBadge.style.display = 'none';
+        }
+    }
+    
+    // Initialize cart badge on page load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
     
     // Public API
     return {
@@ -468,7 +542,9 @@ const cartManager = (function() {
         updateQuantity,
         clearCart,
         getTotalPrice,
-        getTotalItems
+        getTotalItems,
+        applyDiscount,
+        updateCartBadge
     };
 })();
 

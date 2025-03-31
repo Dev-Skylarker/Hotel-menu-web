@@ -16,7 +16,7 @@
         <div class="container">
             <div class="logo">
                 <a href="index.html">
-                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
                     <span>Campus Cafe</span>
                 </a>
             </div>
@@ -95,7 +95,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="assets/logo.svg" alt="Campus Cafe Logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
                     <span>Campus Cafe</span>
                 </div>
                 <div class="footer-links">
@@ -182,6 +182,42 @@
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/stats.js"></script>
+    <script>
+        // Update the cart badge on page load and periodically
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update cart badge immediately
+            updateCartBadgeGlobal();
+            
+            // Update cart badge periodically to ensure it stays updated
+            setInterval(updateCartBadgeGlobal, 2000);
+            
+            // Function to update the cart badge
+            function updateCartBadgeGlobal() {
+                const cartBadge = document.getElementById('cart-badge');
+                if (!cartBadge) return;
+                
+                // Get the total items from cartManager
+                const totalItems = cartManager.getTotalItems();
+                
+                // Update the badge
+                cartBadge.textContent = totalItems;
+                
+                // Show or hide badge based on cart contents
+                if (totalItems > 0) {
+                    cartBadge.style.display = 'flex';
+                } else {
+                    cartBadge.style.display = 'none';
+                }
+            }
+            
+            // Also update the badge when the storage changes (helps with syncing across tabs)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'campus_cafe_cart') {
+                    updateCartBadgeGlobal();
+                }
+            });
+        });
+    </script>
     <script src="js/menu.js"></script>
 </body>
 </html>

@@ -1508,3 +1508,18 @@ footer .footer-nav ul li a::after {
 footer .footer-nav ul li a:hover::after {
     width: 100%;
 }
+
+/* Discount Styles */
+.discount-line {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.discount-savings {
+    color: #28a745;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
