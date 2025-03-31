@@ -1,166 +1,473 @@
 # Campus Cafe System
 
-A modern, responsive web application for a university eatery, showcasing a digital menu, online ordering system, and customer engagement features with gamified statistics.
+<div align="center">
+  <img src="assets/logo.png" alt="Campus Cafe Logo" width="200">
+  <p><em>A comprehensive digital ordering platform for university food services</em></p>
+</div>
 
-![Campus Cafe Screenshot](icon1.png)
+## 📋 Table of Contents
+- [Overview](#-overview)
+- [Authors](#-authors)
+- [Features](#-features)
+- [System Architecture](#-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Key Components](#-key-components)
+- [Usage Guide](#-usage-guide)
+- [Customization](#-customization)
+- [Future Development](#-future-development)
+- [License](#-license)
 
-## Authors
-1. ERIC MAINA - B135/25514/2023  
-2. ROY MBECHE - B135/25628/2023 
-3. DERRICK MAINA - B135/25499/2023 
-4. KIPKOGEI FORTUNE - B135/25608/2023 
-5. BARASA JUMA JAMIL - B135/25617/2023
+## 📝 Overview
 
-## Features
+The Campus Cafe System is a responsive web application designed for university food services. It provides digital menu management, online ordering capabilities, and customer engagement tools with real-time statistics. Built with modern web technologies, the system offers an intuitive interface with theme options and comprehensive administration features.
 
-- **Responsive Design**: Works seamlessly on desktops, tablets, and mobile devices
-- **Interactive Menu**: Browse, search, and filter menu items by category
-- **Online Ordering**: Place and track orders directly through the interface
-- **Gamified Statistics**: Real-time counters showing customer metrics
-- **Order Management**: Track order status and history
-- **Multi-Admin System**: Support for multiple admin credentials with secure login
-- **Dark/Light Mode**: Toggle between themes for optimal viewing experience
-- **Kenyan Currency Support**: Pricing displayed in Kenyan Shillings (KSh)
-- **Mobile-Friendly Payment Instructions**: Clear paybill information for "pay on pickup" option
+## 👥 Authors
 
-## Latest Updates
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Student ID</th>
+  </tr>
+  <tr>
+    <td>ERIC MAINA</td>
+    <td>B135/25514/2023</td>
+  </tr>
+  <tr>
+    <td>ROY MBECHE</td>
+    <td>B135/25628/2023</td>
+  </tr>
+  <tr>
+    <td>DERRICK MAINA</td>
+    <td>B135/25499/2023</td>
+  </tr>
+  <tr>
+    <td>KIPKOGEI FORTUNE</td>
+    <td>B135/25608/2023</td>
+  </tr>
+  <tr>
+    <td>BARASA JUMA JAMIL</td>
+    <td>B135/25617/2023</td>
+  </tr>
+</table>
 
-- **Gamified Impact Statistics**: Dynamic counters showing customers served today, total customers, and orders submitted
-- **Multiple Admin Support**: Configuration system for managing multiple admin credentials
-- **Payment System Enhancement**: Added paybill instructions for the "pay on pickup" option
-- **UI Modernization**: Updated interface with smoother animations and transitions
-- **Menu Updates**: Added new authentic Kenyan dishes including "Chapo Beans"
+## ✨ Features
 
-## Technology Stack
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/responsive.png" width="50" height="50" alt="Responsive"><br>
+      <b>Responsive Design</b><br>
+      <small>Optimized for all device sizes</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/restaurant-menu.png" width="50" height="50" alt="Menu"><br>
+      <b>Interactive Menu</b><br>
+      <small>Browse and filter by category</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/shopping-cart.png" width="50" height="50" alt="Cart"><br>
+      <b>Online Ordering</b><br>
+      <small>Place orders with tracking</small>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/combo-chart.png" width="50" height="50" alt="Statistics"><br>
+      <b>Live Statistics</b><br>
+      <small>Customer and order metrics</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/admin-settings-male.png" width="50" height="50" alt="Admin"><br>
+      <b>Multi-Admin</b><br>
+      <small>Multiple admin credentials</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/day-and-night.png" width="50" height="50" alt="Theme"><br>
+      <b>Theme Options</b><br>
+      <small>Light and dark mode support</small>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/kenya-shilling.png" width="50" height="50" alt="KSh"><br>
+      <b>Kenyan Currency</b><br>
+      <small>Pricing in KSh</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/mobile-payment.png" width="50" height="50" alt="Payment"><br>
+      <b>Payment System</b><br>
+      <small>Comprehensive instructions</small>
+    </td>
+    <td width="33%" align="center">
+      <img src="https://img.icons8.com/ios/50/offline.png" width="50" height="50" alt="Offline"><br>
+      <b>Offline Support</b><br>
+      <small>Works without internet</small>
+    </td>
+  </tr>
+</table>
 
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Storage**: Local Storage for persistent data without backend
-- **UI Framework**: Custom CSS with responsive design principles
-- **Icons**: Font Awesome for visual elements
-- **Images**: High-quality food images from Unsplash
+## 🏛 System Architecture
 
-## Project Structure
+### Component Architecture
+```
+┌─────────────────────────────────────────────────┐
+│                 Client Browser                   │
+├─────────────┬─────────────────┬─────────────────┤
+│ Presentation│   Application   │      Data       │
+│    Layer    │      Layer      │     Layer       │
+│  (HTML/CSS) │   (JavaScript)  │  (LocalStorage) │
+└─────────────┴─────────────────┴─────────────────┘
+```
+
+### User Flow Diagram
+```
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│   Home   │────►│   Menu   │────►│   Cart   │────►│ Checkout │
+└──────────┘     └──────────┘     └──────────┘     └──────────┘
+                      │                                  │
+                      ▼                                  ▼
+                ┌──────────┐                      ┌──────────┐
+                │   Item   │                      │  Order   │
+                │ Details  │                      │ Tracking │
+                └──────────┘                      └──────────┘
+```
+
+## 🧰 Technology Stack
+
+<table>
+  <tr>
+    <th>Category</th>
+    <th>Technologies</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td>Frontend</td>
+    <td>HTML5, CSS3, JavaScript (ES6+)</td>
+    <td>Core application development</td>
+  </tr>
+  <tr>
+    <td>Storage</td>
+    <td>Browser LocalStorage API</td>
+    <td>Data persistence without server</td>
+  </tr>
+  <tr>
+    <td>UI Framework</td>
+    <td>Custom CSS with Flexbox/Grid</td>
+    <td>Responsive and adaptive layouts</td>
+  </tr>
+  <tr>
+    <td>Icons</td>
+    <td>Font Awesome 6.4.0</td>
+    <td>Visual interface elements</td>
+  </tr>
+  <tr>
+    <td>Images</td>
+    <td>Optimized JPG/PNG</td>
+    <td>Food presentation and branding</td>
+  </tr>
+</table>
+
+## 📁 Project Structure
 
 ```
 campus-cafe-system/
 ├── index.html              # Home page
-├── menu.html               # Menu listings page
-├── about.html              # About us page
-├── contact.html            # Contact information page
+├── menu.html               # Menu listings
+├── about.html              # About page
+├── contact.html            # Contact page
 ├── cart.html               # Shopping cart
-├── my-orders.html          # Order tracking page
-├── order-details.html      # Detailed order view
-├── README.md               # Project documentation
-├── admin/                  # Administrative interface
-│   ├── login.html          # Admin login page
+├── my-orders.html          # Order tracking
+├── order-details.html      # Order view
+├── docs/                   # Documentation
+│   └── Campus_Cafe_Documentation.md # Comprehensive documentation
+├── admin/                  # Admin interface
+│   ├── login.html          # Admin login
 │   ├── dashboard.html      # Admin dashboard
 │   └── config.html         # Admin configuration
 ├── css/                    # Stylesheets
 │   ├── styles.css          # Main styles
-│   └── admin.css           # Admin-specific styles
-├── js/                     # JavaScript files
+│   └── admin.css           # Admin styles
+├── js/                     # Scripts
 │   ├── main.js             # Core functionality
-│   ├── menu.js             # Menu page functionality
-│   ├── contact.js          # Contact form handling
-│   ├── my-orders.js        # Order tracking functionality
-│   ├── order-details.js    # Order details page functionality
-│   ├── admin/              # Admin-specific scripts
-│   │   ├── login.js        # Admin authentication
-│   │   └── config-manager.js # Admin configuration management
-│   └── utils/              # Utility functions
-│       ├── storage.js      # Local storage management
-│       ├── auth.js         # Authentication utilities
+│   ├── menu.js             # Menu functionality
+│   ├── cart.js             # Cart operations
+│   ├── my-orders.js        # Order tracking
+│   ├── order-details.js    # Order details
+│   ├── admin/              # Admin scripts
+│   │   ├── login.js        # Authentication
+│   │   ├── dashboard.js    # Dashboard functionality
+│   │   └── config-manager.js # Configuration management
+│   └── utils/              # Utilities
+│       ├── storage.js      # Storage management
+│       ├── auth.js         # Authentication
 │       ├── config.js       # Configuration settings
 │       ├── stats.js        # Statistics management
-│       └── theme.js        # Theme switching functionality
-└── assets/                 # Images and other static assets
-    └── logo.svg            # Campus Cafe logo
+│       └── theme.js        # Theme switching
+└── assets/                 # Media files
+    ├── logo.png            # Campus Cafe logo
+    └── images/             # Menu item images
 ```
 
-## Getting Started
+## 🚀 Getting Started
+
+### Prerequisites
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- JavaScript enabled
+- LocalStorage access
+
+### Installation
 
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/yourusername/campus-cafe-system.git
    ```
 
-2. **Open the project**:
-   Open the directory in your preferred code editor
+2. **Navigate to the project folder**:
+   ```bash
+   cd campus-cafe-system
+   ```
 
-3. **Launch the application**:
-   Open `index.html` in a modern web browser to run the application
+3. **Open the application**:
+   - Open `index.html` in your browser, or
+   - Use a local development server:
+     ```bash
+     # If you have Python installed
+     python -m http.server
+     # Or with Node.js
+     npx serve
+     ```
 
-## Usage
+4. **Admin Access**:
+   - Navigate to `admin/login.html`
+   - Use default credentials:
+     - Email: `admin@campuscafe.com`
+     - Password: `admin123`
 
-- **Browse Menu**: Navigate to the Menu page to view all available food items
-- **Filter Items**: Use category tabs or search function to find specific items
-- **Place Order**: Click on a menu item and use the "Order Now" button
-- **Track Orders**: Check "My Orders" to view your order history and status
-- **Admin Access**: Access the admin panel through the footer link using your credentials
-- **Switch Theme**: Click the moon/sun icon in the header to toggle dark/light mode
+## 🔍 Key Components
 
-## Key Features Explained
+### Dynamic Statistics System
 
-### Gamified Statistics System
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Implementation</th>
+    <th>File Location</th>
+  </tr>
+  <tr>
+    <td>Statistical Counters</td>
+    <td>Real-time metrics with automatic increments</td>
+    <td>js/utils/stats.js</td>
+  </tr>
+  <tr>
+    <td>Time-Based Updates</td>
+    <td>Varied refresh rates between 30-60 seconds</td>
+    <td>js/utils/stats.js</td>
+  </tr>
+  <tr>
+    <td>Daily Reset</td>
+    <td>Automatic reset of daily counters at midnight</td>
+    <td>js/utils/stats.js</td>
+  </tr>
+  <tr>
+    <td>Value Capping</td>
+    <td>Maximum thresholds with rate adjustments</td>
+    <td>js/utils/stats.js</td>
+  </tr>
+  <tr>
+    <td>Offline Persistence</td>
+    <td>LocalStorage-based data retention</td>
+    <td>js/utils/storage.js</td>
+  </tr>
+</table>
 
-The application features a gamified statistics system that:
+### Theme Management System
 
-- Displays dynamic counters for customers served today, total customers, and orders submitted
-- Incrementally updates stats at different intervals for a more engaging visual experience
-- Persists statistics across sessions using localStorage
-- Automatically resets daily counters at the start of a new day
-- Dynamically adjusts increment rates as values approach their maximum thresholds
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Implementation</th>
+    <th>File Location</th>
+  </tr>
+  <tr>
+    <td>Theme Toggle</td>
+    <td>Interactive button with icon change</td>
+    <td>js/utils/theme.js</td>
+  </tr>
+  <tr>
+    <td>Theme Persistence</td>
+    <td>LocalStorage-based preference saving</td>
+    <td>js/utils/theme.js</td>
+  </tr>
+  <tr>
+    <td>System Preference</td>
+    <td>Detection of OS-level dark/light setting</td>
+    <td>js/utils/theme.js</td>
+  </tr>
+  <tr>
+    <td>Flicker Prevention</td>
+    <td>Immediate theme application on page load</td>
+    <td>js/utils/theme.js</td>
+  </tr>
+</table>
 
-### Multiple Admin Credentials System
+### Order Management System
 
-The application supports multiple admin users with:
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Implementation</th>
+    <th>File Location</th>
+  </tr>
+  <tr>
+    <td>Order Creation</td>
+    <td>Conversion of cart items to orders</td>
+    <td>js/cart.js</td>
+  </tr>
+  <tr>
+    <td>Order Tracking</td>
+    <td>Status monitoring through my-orders page</td>
+    <td>js/my-orders.js</td>
+  </tr>
+  <tr>
+    <td>Order Details</td>
+    <td>Comprehensive view of individual orders</td>
+    <td>js/order-details.js</td>
+  </tr>
+  <tr>
+    <td>Payment Instructions</td>
+    <td>Clear paybill information and references</td>
+    <td>js/cart.js</td>
+  </tr>
+</table>
 
-- Secure credential storage in the environment configuration
-- Ability to add, update, and remove admin accounts
-- Password hashing for enhanced security
-- Development mode toggle for easy configuration
+## 📖 Usage Guide
 
-### Payment Instructions
+<table>
+  <tr>
+    <th>Task</th>
+    <th>User Action</th>
+    <th>System Response</th>
+  </tr>
+  <tr>
+    <td>Browse Menu</td>
+    <td>Click "Menu" in the navigation bar</td>
+    <td>Displays categorized menu items with images</td>
+  </tr>
+  <tr>
+    <td>Filter Items</td>
+    <td>Select a category tab on the menu page</td>
+    <td>Shows only items matching the selected category</td>
+  </tr>
+  <tr>
+    <td>Search Items</td>
+    <td>Enter text in the search box on the menu page</td>
+    <td>Displays items matching the search term</td>
+  </tr>
+  <tr>
+    <td>Add to Cart</td>
+    <td>Click "Add to Cart" on a menu item</td>
+    <td>Item added to cart, badge counter updated</td>
+  </tr>
+  <tr>
+    <td>Place Order</td>
+    <td>Click "Checkout" in the cart, fill form, click "Place Order"</td>
+    <td>Order created, payment instructions displayed</td>
+  </tr>
+  <tr>
+    <td>Track Order</td>
+    <td>Navigate to "My Orders" page</td>
+    <td>Shows all orders with status information</td>
+  </tr>
+  <tr>
+    <td>Switch Theme</td>
+    <td>Click moon/sun icon in navigation</td>
+    <td>Toggles between light and dark mode</td>
+  </tr>
+</table>
 
-Enhanced payment system with:
+## ⚙️ Customization
 
-- Clear instructions for the "pay on pickup" option
-- Integration with the paybill system (Campus Cafe)
-- Display of auto-generated order numbers for payment reference
-- Support for multiple payment methods
+<table>
+  <tr>
+    <th>Element</th>
+    <th>Customization Method</th>
+    <th>File Location</th>
+  </tr>
+  <tr>
+    <td>Menu Items</td>
+    <td>Edit <code>getDefaultMenuItems()</code> function</td>
+    <td>js/utils/storage.js</td>
+  </tr>
+  <tr>
+    <td>Admin Credentials</td>
+    <td>Modify <code>ENV.adminCredentials</code> array</td>
+    <td>js/utils/config.js</td>
+  </tr>
+  <tr>
+    <td>Theme Colors</td>
+    <td>Update CSS variables in <code>:root</code> selector</td>
+    <td>css/styles.css</td>
+  </tr>
+  <tr>
+    <td>Statistics Parameters</td>
+    <td>Adjust constants in <code>stats.js</code></td>
+    <td>js/utils/stats.js</td>
+  </tr>
+  <tr>
+    <td>Discount Rules</td>
+    <td>Modify <code>applyDiscount()</code> function</td>
+    <td>js/utils/storage.js</td>
+  </tr>
+</table>
 
-### Local Storage Data Management
+## 🔮 Future Development
 
-The application uses browser localStorage to persist data without requiring a backend server:
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Description</th>
+    <th>Priority</th>
+  </tr>
+  <tr>
+    <td>Backend Integration</td>
+    <td>Database persistence and server-side processing</td>
+    <td>High</td>
+  </tr>
+  <tr>
+    <td>User Accounts</td>
+    <td>Registration, login, and profile management</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td>Online Payment</td>
+    <td>Integration with payment processing platforms</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td>Mobile Application</td>
+    <td>Native apps for iOS and Android platforms</td>
+    <td>Low</td>
+  </tr>
+  <tr>
+    <td>Advanced Analytics</td>
+    <td>Detailed reports and business intelligence</td>
+    <td>Low</td>
+  </tr>
+</table>
 
-- Menu items are stored with pricing, descriptions, and images
-- Orders are saved with status tracking and estimated pickup times
-- User preferences like theme choice are remembered between sessions
-- Admin credentials are securely stored and managed
-
-## Customization
-
-You can easily customize the following aspects:
-
-- **Menu Items**: Edit the `getDefaultMenuItems()` function in `js/utils/storage.js`
-- **Admin Credentials**: Modify the `ENV.adminCredentials` array in `js/utils/config.js`
-- **Color Scheme**: Update the CSS variables in the `:root` selector in `css/styles.css`
-- **Statistics Parameters**: Adjust the increment rates and maximums in `js/utils/stats.js`
-
-## Future Improvements
-
-- Backend integration for real data persistence
-- User account registration and login system
-- Online payment processing integration
-- Advanced analytics for order patterns
-- Mobile app version using the same codebase
-
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+---
 
-- Food images sourced from Unsplash
-- Icons provided by Font Awesome
-- Special thanks to all contributors and testers
+<div align="center">
+  <p>Made with ❤️ by the Campus Cafe Team</p>
+  <p>
+    <a href="https://github.com/yourusername/campus-cafe-system">GitHub</a> •
+    <a href="docs/Campus_Cafe_Documentation.md">Documentation</a>
+  </p>
+</div>#   H o t e l - m e n u - w e b  
+ 
