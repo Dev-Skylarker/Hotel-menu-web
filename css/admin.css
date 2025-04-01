@@ -1545,3 +1545,399 @@
         z-index: 1001;
     }
 }
+
+/* Enhanced Mobile Responsiveness for Admin Dashboard */
+
+/* Improved table responsiveness */
+@media (max-width: 768px) {
+    .admin-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    
+    .orders-table-container {
+        margin: 0 -15px;
+        width: calc(100% + 30px);
+        border-radius: 0;
+    }
+    
+    .admin-table th, 
+    .admin-table td {
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .admin-container {
+        padding: 10px;
+    }
+    
+    .tab-nav {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-item {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .metric-card {
+        padding: 12px;
+    }
+    
+    .filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-group label {
+        margin-bottom: 5px;
+    }
+    
+    .order-filters {
+        flex-direction: column;
+    }
+    
+    .filter-actions {
+        margin-top: 10px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .admin-content {
+        padding: 15px;
+    }
+    
+    /* Make charts more responsive */
+    .chart-container {
+        height: auto;
+        min-height: 250px;
+    }
+}
+
+/* Specific Android device optimizations */
+@media (max-width: 480px) {
+    /* Improved metrics cards layout */
+    .dashboard-metrics,
+    .item-metrics {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .metric-card {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+    }
+    
+    .metric-card .metric-icon {
+        margin-right: 15px;
+        font-size: 24px;
+    }
+    
+    .metric-card .metric-value {
+        font-size: 22px;
+        margin: 3px 0;
+    }
+    
+    .metric-card .metric-label {
+        font-size: 14px;
+    }
+    
+    .metric-card .metric-trend {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+    
+    /* Improved action buttons */
+    .table-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .results-count {
+        margin-bottom: 10px;
+    }
+    
+    .batch-actions {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .batch-actions button {
+        padding: 8px 10px;
+        font-size: 13px;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .batch-actions button i {
+        margin-right: 4px;
+    }
+    
+    /* Improve status badges */
+    .status-badge {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+    
+    /* Enhance dashboard actions */
+    .dashboard-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .dashboard-actions .btn {
+        width: 100%;
+    }
+    
+    /* Fixed bottom action bar for common actions */
+    .mobile-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--background-card);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    
+    .mobile-action-bar button {
+        flex: 1;
+        margin: 0 5px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
+    /* Add padding to main content for fixed action bar */
+    .admin-content {
+        padding-bottom: 60px;
+    }
+    
+    /* Improved search input for touch */
+    .search-input-container {
+        width: 100%;
+    }
+    
+    .search-input-container input {
+        height: 40px;
+        width: 100%;
+    }
+    
+    .clear-search-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    /* Show important columns only */
+    .admin-table .hide-on-mobile {
+        display: none;
+    }
+    
+    /* Improve empty state on small screens */
+    .empty-state {
+        padding: 20px 15px;
+    }
+    
+    .empty-state-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .empty-state-actions .btn {
+        width: 100%;
+    }
+    
+    /* Touch-friendly checkboxes */
+    .checkbox-cell input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* Better admin header */
+    .admin-header {
+        padding: 15px 0;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-title h1 {
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+    }
+    
+    .header-actions {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+}
+
+/* Better sidebar for mobile */
+@media (max-width: 768px) {
+    .mobile-toggle {
+        display: block;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1001;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-toggle:hover,
+    .mobile-toggle:focus {
+        background-color: var(--primary-color-dark);
+        transform: scale(1.05);
+    }
+    
+    .mobile-toggle:active {
+        transform: scale(0.95);
+    }
+    
+    .admin-sidebar {
+        position: fixed;
+        left: -250px;
+        top: 0;
+        bottom: 0;
+        width: 250px;
+        transition: left 0.3s ease;
+        z-index: 1002;
+        box-shadow: 3px 0 15px rgba(0,0,0,0.2);
+        overflow-y: auto;
+    }
+    
+    .admin-sidebar.active {
+        left: 0;
+    }
+    
+    .sidebar-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: var(--text-color);
+        cursor: pointer;
+        display: block;
+    }
+    
+    .admin-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    /* Add overlay when sidebar is open */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1001;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+}
+
+/* Swipe hint and touch feedback styles */
+.swipe-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    animation: fadeInOut 3s ease-in-out;
+}
+
+.swipe-hint i {
+    margin-right: 8px;
+    animation: swipeAnim 1.5s infinite;
+}
+
+@keyframes swipeAnim {
+    0%, 100% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    10%, 90% { opacity: 0.8; }
+}
+
+/* Touch feedback for table rows */
+.row-active {
+    background-color: rgba(var(--primary-color-rgb), 0.05) !important;
+    transition: background-color 0.1s ease;
+}
+
+/* Touch-friendly action buttons */
+.action-btn.touch-friendly {
+    padding: 10px !important;
+    margin: 2px;
+}
+
+/* Body class when sidebar is open */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* Scrollbar styling for better touch experience */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color-dark);
+}

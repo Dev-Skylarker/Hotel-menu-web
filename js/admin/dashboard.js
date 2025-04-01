@@ -140,6 +140,9 @@ function initDashboard() {
     
     // Setup regular auth status check
     setupAuthCheck();
+    
+    // Setup Mobile UI
+    setupMobileUI();
 }
 
 /**
@@ -2259,6 +2262,117 @@ function capitalizeFirstLetter(string) {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
+/**
+ * Setup Mobile UI
+ */
+function setupMobileUI() {
+    // Elements
+    const sidebar = document.querySelector('.admin-sidebar');
+    const sidebarOverlay = document.querySelector('.sidebar-overlay');
+    const sidebarToggle = document.querySelector('.mobile-toggle');
+    const sidebarClose = document.querySelector('.sidebar-close');
+    const toggleSidebarMobile = document.getElementById('toggle-sidebar-mobile');
+    const refreshDataMobile = document.getElementById('refresh-data-mobile');
+    const addItemMobile = document.getElementById('add-item-mobile');
+    
+    // Function to toggle sidebar
+    const toggleSidebar = () => {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        document.body.classList.toggle('sidebar-open');
+    };
+    
+    // Mobile sidebar toggle
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Mobile menu button in action bar
+    if (toggleSidebarMobile) {
+        toggleSidebarMobile.addEventListener('click', toggleSidebar);
+    }
+    
+    // Close sidebar when overlay is clicked
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    }
+    
+    // Close button in sidebar
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', toggleSidebar);
+    }
+    
+    // Refresh data from mobile action bar
+    if (refreshDataMobile) {
+        refreshDataMobile.addEventListener('click', () => {
+            refreshData();
+            showToast('Refreshing dashboard data...', 'info');
+        });
+    }
+    
+    // Add item button (redirect to menu management)
+    if (addItemMobile) {
+        addItemMobile.addEventListener('click', () => {
+            window.location.href = 'manage-menu.html';
+        });
+    }
+    
+    // Optimize tables for mobile
+    setupResponsiveTables();
+}
+
+/**
+ * Make tables more responsive on mobile
+ */
+function setupResponsiveTables() {
+    // Check if we're on a mobile device
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // Add swipe hint to tables
+        const tableContainers = document.querySelectorAll('.orders-table-container');
+        tableContainers.forEach(container => {
+            if (!container.querySelector('.swipe-hint')) {
+                const hint = document.createElement('div');
+                hint.className = 'swipe-hint';
+                hint.innerHTML = '<i class="fas fa-arrows-left-right"></i> Swipe to see more';
+                container.prepend(hint);
+                
+                // Auto-hide the hint after 3 seconds
+                setTimeout(() => {
+                    hint.style.opacity = '0';
+                    setTimeout(() => {
+                        hint.remove();
+                    }, 500);
+                }, 3000);
+            }
+        });
+        
+        // Make all action buttons more touch-friendly
+        const actionButtons = document.querySelectorAll('.admin-table .action-btn');
+        actionButtons.forEach(btn => {
+            btn.classList.add('touch-friendly');
+        });
+        
+        // Add touch feedback to rows
+        const tableRows = document.querySelectorAll('.admin-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('touchstart', () => {
+                row.classList.add('row-active');
+            });
+            
+            row.addEventListener('touchend', () => {
+                row.classList.remove('row-active');
+            });
+        });
+    }
+}
+
+// Call setupMobileUI when resizing to handle orientation changes
+window.addEventListener('resize', () => {
+    setupResponsiveTables();
+});
 
 // Initialize dashboard when DOM is ready
 document.addEventListener('DOMContentLoaded', initDashboard);

@@ -225,7 +225,9 @@
 </head>
 <body class="admin-body dark-mode">
     <div class="admin-wrapper">
-        <nav class="admin-sidebar">
+        <div class="sidebar-overlay"></div>
+        <aside class="admin-sidebar">
+            <button class="sidebar-close" aria-label="Close sidebar"><i class="fas fa-times"></i></button>
             <div class="sidebar-header">
                 <img src="../assets/logo.png" alt="Campus Cafe Logo">
                 <h2>Admin Panel</h2>
@@ -257,13 +259,17 @@
                     <i class="fas fa-external-link-alt"></i> View Site
                 </a>
             </div>
-        </nav>
+        </aside>
         
         <main class="admin-content">
             <header class="admin-header">
-<div class="header-title">
-    <h1>Welcome to orders viewing</h1>
-</div>
+                <div class="header-title">
+                    <button class="mobile-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+                    <p>Welcome back, <span id="admin-name">Admin</span></p>
+                </div>
                 <div class="header-actions">
                     <div class="refresh-container">
                         <button id="refresh-data" class="btn btn-small btn-secondary">
@@ -384,8 +390,8 @@
                                         </th>
                                         <th>Order ID</th>
                                         <th>Customer</th>
-                                        <th>Date & Time</th>
-                                        <th>Collection</th>
+                                        <th class="hide-on-mobile">Date & Time</th>
+                                        <th class="hide-on-mobile">Collection</th>
                                         <th>Items</th>
                                         <th>Total</th>
                                         <th>Status</th>
@@ -703,6 +709,18 @@
                 <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
             </div>
         </div>
+    </div>
+
+    <div class="mobile-action-bar">
+        <button id="refresh-data-mobile" class="btn btn-primary btn-sm">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button id="add-item-mobile" class="btn btn-success btn-sm">
+            <i class="fas fa-plus"></i> Add Item
+        </button>
+        <button id="toggle-sidebar-mobile" class="btn btn-secondary btn-sm">
+            <i class="fas fa-bars"></i> Menu
+        </button>
     </div>
 
     <script src="../js/utils/theme.js"></script>
