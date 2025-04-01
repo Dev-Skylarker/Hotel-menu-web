@@ -163,6 +163,21 @@ function displayOrderDetails(order) {
                     </div>
                     ` : ''}
                     
+                    <div class="promo-ad" style="border-left-color: #FF5722;">
+                        <h3>Today's Special Offers</h3>
+                        <p><i class="fas fa-fire"></i> <strong>Hot Deal:</strong> Buy any 2 meals and get a free drink!</p>
+                        <p><i class="fas fa-star"></i> <strong>Student Discount:</strong> 10% off on all orders with student ID</p>
+                        <p class="text-center" style="margin-top: 15px;">
+                            <a href="menu.html" class="btn btn-primary">Explore Our Menu</a>
+                        </p>
+                    </div>
+                    
+                    <div class="quick-service" style="border-left-color: #4CAF50; margin-top: 15px;">
+                        <h3>Express Service</h3>
+                        <p><i class="fas fa-clock"></i> <strong>Quick Processing:</strong> All orders are processed within 2 minutes!</p>
+                        <p><i class="fas fa-thumbs-up"></i> <strong>Quality Guaranteed:</strong> Fresh ingredients, amazing taste</p>
+                    </div>
+                    
                     ${order.notes ? `
                     <div class="order-notes">
                         <h3>Notes</h3>
@@ -185,15 +200,19 @@ function displayOrderDetails(order) {
         </div>
     `;
     
-    // Add event listeners to buttons
-    cancelOrderButton = document.getElementById('cancel-order');
-    if (cancelOrderButton) {
-        cancelOrderButton.addEventListener('click', () => cancelOrder(order.id));
-    }
-    
-    confirmPickupButton = document.getElementById('confirm-pickup');
-    if (confirmPickupButton) {
-        confirmPickupButton.addEventListener('click', () => confirmPickup(order.id));
+    // Add event listeners for buttons if they exist
+    if (showButtons) {
+        // Cancel order button
+        cancelOrderButton = document.getElementById('cancel-order');
+        if (cancelOrderButton) {
+            cancelOrderButton.addEventListener('click', () => cancelOrder(order.id));
+        }
+        
+        // Confirm pickup button
+        confirmPickupButton = document.getElementById('confirm-pickup');
+        if (confirmPickupButton) {
+            confirmPickupButton.addEventListener('click', () => confirmPickup(order.id));
+        }
     }
 }
 

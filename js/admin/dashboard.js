@@ -70,7 +70,6 @@ let allOrders = [];
 let filteredOrders = [];
 let currentOrder = null;
 let currentAction = null;
-let currentSearchTerm = '';
 
 /**
  * Initialize the dashboard page
@@ -135,14 +134,8 @@ function initDashboard() {
     // Initialize charts
     initCharts();
     
-    // Initialize item statistics
-    initItemStatistics();
-    
     // Setup regular auth status check
     setupAuthCheck();
-    
-    // Setup Mobile UI
-    setupMobileUI();
 }
 
 /**
@@ -210,97 +203,98 @@ function setupAuthCheck() {
  * Attach event listeners
  */
 function attachEventListeners() {
-    // Logout button
+    // Main UI
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
     }
     
-    // Mobile menu toggle
     if (mobileMenuToggle) {
         mobileMenuToggle.addEventListener('click', toggleMobileMenu);
     }
     
-    // Tab navigation
-    tabItems.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.getAttribute('data-tab');
-            switchTab(tabId);
-        });
-    });
-    
-    // Refresh data button
     if (refreshDataBtn) {
-        refreshDataBtn.addEventListener('click', () => refreshData(true));
+        refreshDataBtn.addEventListener('click', refreshData);
     }
     
-    // Apply filters button
+    // Tab navigation
+    tabItems.forEach(item => {
+        item.addEventListener('click', () => switchTab(item.dataset.tab));
+    });
+    
+    // Filters
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', applyFilters);
     }
     
-    // Clear filters button
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', clearFilters);
     }
     
-    // Search input and clear button setup
-    if (searchOrders) {
-        const clearSearchBtn = document.getElementById('clear-search-admin');
-        
-        // Show/hide clear button based on input
-        searchOrders.addEventListener('input', () => {
-            if (clearSearchBtn) {
-                clearSearchBtn.style.display = searchOrders.value ? 'flex' : 'none';
-            }
-        });
-        
-        // Apply filters on Enter key
-        searchOrders.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                applyFilters();
-            }
-        });
-        
-        // Add click handler for clear button
-        if (clearSearchBtn) {
-            // Initialize clear button visibility
-            clearSearchBtn.style.display = searchOrders.value ? 'flex' : 'none';
-            
-            // Add click handler
-            clearSearchBtn.addEventListener('click', () => {
-                searchOrders.value = '';
-                searchOrders.focus();
-                clearSearchBtn.style.display = 'none';
-                applyFilters();
-            });
-        }
-    }
-    
-    // Reset filters button (in no orders message)
-    const resetFiltersBtn = document.getElementById('reset-filters');
     if (resetFiltersBtn) {
         resetFiltersBtn.addEventListener('click', clearFilters);
     }
     
-    // Date filter - automatically apply when changed
-    if (dateFilter) {
-        dateFilter.addEventListener('change', applyFilters);
+    // Export buttons
+    if (exportOrdersBtn) {
+        exportOrdersBtn.addEventListener('click', () => exportOrders('all'));
     }
     
-    // Collection type filter - automatically apply when changed
-    const collectionTypeFilter = document.getElementById('collection-type-filter');
-    if (collectionTypeFilter) {
-        collectionTypeFilter.addEventListener('change', applyFilters);
+    // Select all checkboxes
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', e => toggleSelectAll(e.target.checked, 'all'));
     }
     
-    // Add event listeners for batch actions
-    setupBatchActionListeners();
+    const selectAllPending = document.getElementById('select-all-pending');
+    if (selectAllPending) {
+        selectAllPending.addEventListener('change', e => toggleSelectAll(e.target.checked, 'pending'));
+    }
     
-    // Select all checkbox functionality
-    setupSelectAllCheckboxes();
+    const selectAllCancelled = document.getElementById('select-all-cancelled');
+    if (selectAllCancelled) {
+        selectAllCancelled.addEventListener('change', e => toggleSelectAll(e.target.checked, 'cancelled'));
+    }
     
-    // Add event listeners for modal close buttons
-    setupModalCloseListeners();
+    // Batch action buttons
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', deleteSelectedOrders);
+    }
+    
+    if (completeAllPendingBtn) {
+        completeAllPendingBtn.addEventListener('click', completeAllPendingOrders);
+    }
+    
+    if (clearCancelledBtn) {
+        clearCancelledBtn.addEventListener('click', clearCancelledOrders);
+    }
+    
+    // Modal close buttons
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeModals);
+    });
+    
+    // Modal buttons
+    if (markReadyBtn) {
+        markReadyBtn.addEventListener('click', markOrderReady);
+    }
+    
+    if (cancelOrderBtn) {
+        cancelOrderBtn.addEventListener('click', promptCancelOrder);
+    }
+    
+    if (confirmActionBtn) {
+        confirmActionBtn.addEventListener('click', executeConfirmedAction);
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', e => {
+        if (e.target === orderDetailsModal) {
+            closeModals();
+        }
+        if (e.target === confirmModal) {
+            closeModals();
+        }
+    });
 }
 
 /**
@@ -365,91 +359,110 @@ function toggleMobileMenu() {
 }
 
 /**
- * Refresh all dashboard data
- * @param {boolean} showToast - Whether to show a toast notification
- * @returns {Promise} - Promise that resolves when data is refreshed
+ * Refresh data
  */
-function refreshData(showToast = true) {
-    console.log('Refreshing dashboard data...');
-    
-    // Show loading indicator
-    const refreshButton = document.getElementById('refresh-data');
-    if (refreshButton) {
-        refreshButton.innerHTML = '<i class="fas fa-sync fa-spin"></i> Refreshing...';
-        refreshButton.disabled = true;
-    }
-    
-    return new Promise((resolve) => {
-        // Update last refresh time
-        updateLastRefreshTime();
+function refreshData() {
+    // Show loading spinner on the refresh button
+    if (refreshDataBtn) {
+        const originalContent = refreshDataBtn.innerHTML;
+        refreshDataBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        refreshDataBtn.disabled = true;
         
-        // Load orders
-        allOrders = storageManager.getOrders();
-        filteredOrders = [...allOrders];
+        // Force clear any cached data
+        allOrders = [];
         
-        // Update metrics
-        updateMetrics();
-        
-        // Update orders tables
-        updateOrdersTable();
-        
-        // Update charts
+        // Small delay to ensure UI updates
+        setTimeout(() => {
+            // Load all dashboard data
+            loadDashboardData();
+            
+            // Update charts
+            updateCharts();
+            
+            // Restore button state with success indicator
+            refreshDataBtn.innerHTML = '<i class="fas fa-check"></i> Data Refreshed';
+            refreshDataBtn.disabled = false;
+            
+            // Return to original state after 2 seconds
+            setTimeout(() => {
+                refreshDataBtn.innerHTML = originalContent;
+            }, 2000);
+            
+            // Show toast notification
+            showToast('Dashboard data has been refreshed successfully!', 'success');
+        }, 500);
+    } else {
+        // If button isn't available, just refresh the data
+        loadDashboardData();
         updateCharts();
-        
-        // Show toast notification if enabled
-        if (showToast) {
-            showToast('Dashboard data refreshed successfully', 'success');
-        }
-        
-        // Reset refresh button
-        if (refreshButton) {
-            refreshButton.innerHTML = '<i class="fas fa-sync"></i> Refresh Data';
-            refreshButton.disabled = false;
-        }
-        
-        // Setup auto-refresh
-        setupAutoRefresh();
-        
-        resolve();
-    });
+    }
 }
 
 /**
- * Setup auto-refresh for real-time updates
+ * Show a toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification (success, error, info)
  */
-function setupAutoRefresh() {
-    // Clear any existing auto-refresh
-    if (window.dashboardRefreshTimer) {
-        clearInterval(window.dashboardRefreshTimer);
+function showToast(message, type = 'info') {
+    // Check if toast container exists, create if not
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
     }
     
-    // Set auto-refresh timer (every 10 seconds for more real-time updates)
-    window.dashboardRefreshTimer = setInterval(() => {
-        // Only refresh if page is visible to save resources
-        if (!document.hidden) {
-            refreshData(false); // Don't show toast for auto-refresh
-        }
-    }, 10000); // 10 seconds for more real-time feel
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
     
-    // Add visibility listener to refresh when tab becomes visible
-    if (!window.hasVisibilityListener) {
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                refreshData(false);
-            }
-        });
-        window.hasVisibilityListener = true;
-    }
+    // Set icon based on type
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
     
-    // Add storage listener to refresh when orders change
-    if (!window.hasStorageListener) {
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'campus_cafe_orders') {
-                refreshData(false);
-            }
-        });
-        window.hasStorageListener = true;
-    }
+    // Set toast content
+    toast.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Add toast to container
+    toastContainer.appendChild(toast);
+    
+    // Automatically remove toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.add('toast-hide');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
+}
+
+/**
+ * Load all dashboard data
+ */
+function loadDashboardData() {
+    // Get all orders (force fresh data)
+    allOrders = storageManager.getOrders();
+    
+    // Update metrics
+    updateMetrics();
+    
+    // Populate all order tables
+    populateAllOrdersTable();
+    populatePendingOrdersTable();
+    populateCompletedOrdersTable();
+    populateCancelledOrdersTable();
+    
+    // Apply filters (or show all orders)
+    applyFilters();
+    
+    // Update charts
+    updateCharts();
+    
+    // Update last refresh time
+    updateLastRefreshTime();
 }
 
 /**
@@ -709,147 +722,88 @@ function updateCategoryChart() {
 
 /**
  * Apply filters to orders
- * Filters orders based on date, search term and status
  */
 function applyFilters() {
-    console.log('Applying filters to orders...');
+    const dateValue = dateFilter ? dateFilter.value : 'all';
+    const searchValue = searchOrders ? searchOrders.value.toLowerCase() : '';
     
-    // Get filter values
-    const dateValue = dateFilter ? dateFilter.value : '';
-    const searchValue = searchOrders ? searchOrders.value.toLowerCase().trim() : '';
-    const collectionTypeFilter = document.getElementById('collection-type-filter');
-    const collectionType = collectionTypeFilter ? collectionTypeFilter.value : 'all';
-    
-    // Save current search term
-    currentSearchTerm = searchValue;
-    
-    // Reset to all orders first
+    // Start with all orders
     filteredOrders = [...allOrders];
     
-    // Filter orders
-    filteredOrders = allOrders.filter(order => {
-        // Filter by date if selected
-        if (dateValue) {
-            const orderDate = new Date(order.orderTime);
-            const filterDate = new Date(dateValue);
-            if (!isSameDay(orderDate, filterDate)) {
-                return false;
+    // Apply date filter
+    if (dateValue !== 'all') {
+        filteredOrders = filteredOrders.filter(order => {
+            const orderDate = new Date(order.orderTime || order.date);
+            const now = new Date();
+            
+            switch (dateValue) {
+                case 'today':
+                    return isSameDay(orderDate, now);
+                case 'yesterday':
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    return isSameDay(orderDate, yesterday);
+                case 'week':
+                    const weekStart = new Date();
+                    weekStart.setDate(weekStart.getDate() - 7);
+                    return orderDate >= weekStart;
+                case 'month':
+                    const monthStart = new Date();
+                    monthStart.setMonth(monthStart.getMonth() - 1);
+                    return orderDate >= monthStart;
+                default:
+                    return true;
             }
-        }
-        
-        // Filter by collection type
-        if (collectionType !== 'all' && order.collectionMethod !== collectionType) {
+        });
+    }
+    
+    // Apply search filter
+    if (searchValue) {
+        filteredOrders = filteredOrders.filter(order => {
+            // Search by order ID
+            if (order.id && order.id.toLowerCase().includes(searchValue)) {
+                return true;
+            }
+            
+            // Search by order code
+            if (order.orderCode && order.orderCode.toLowerCase().includes(searchValue)) {
+                return true;
+            }
+            
+            // Search by customer name
+            if (order.customerName && order.customerName.toLowerCase().includes(searchValue)) {
+                return true;
+            }
+            
+            // Search by admission number
+            if (order.admissionNumber && order.admissionNumber.toLowerCase().includes(searchValue)) {
+                return true;
+            }
+            
+            // Search by item name
+            if (order.item && order.item.name && order.item.name.toLowerCase().includes(searchValue)) {
+                return true;
+            }
+            
             return false;
-        }
-        
-        // Filter by search term
-        if (searchValue) {
-            // Search by various fields
-            const orderId = (order.id || order.orderId || '').toLowerCase();
-            const orderCode = (order.orderCode || '').toLowerCase();
-            const customerName = (order.customerName || '').toLowerCase();
-            const admissionNumber = (order.admissionNumber || '').toLowerCase();
-            
-            // Match against normalized search value
-            const normalizedSearch = searchValue.replace(/[-\s]/g, '');
-            const normalizedOrderId = orderId.replace(/[-\s]/g, '');
-            const normalizedOrderCode = orderCode.replace(/[-\s]/g, '');
-            
-            // Check for matches with or without formatting
-            const orderIdMatch = orderId.includes(searchValue) || normalizedOrderId.includes(normalizedSearch);
-            const orderCodeMatch = orderCode.includes(searchValue) || normalizedOrderCode.includes(normalizedSearch);
-            const customerNameMatch = customerName.includes(searchValue);
-            const admissionNumberMatch = admissionNumber.includes(searchValue);
-            
-            if (!orderIdMatch && !orderCodeMatch && !customerNameMatch && !admissionNumberMatch) {
-                return false;
-            }
-        }
-        
-        return true;
-    });
-    
-    // Update tables with filtered orders
-    updateOrdersTable();
-    updatePendingOrdersTable();
-    updateCompletedOrdersTable();
-    updateCancelledOrdersTable();
-    
-    // Show toast notification
-    showToast(`Filtered to ${filteredOrders.length} order(s)`, 'info');
-    
-    // Update active filters indicator
-    updateActiveFiltersIndicator();
-}
-
-/**
- * Update active filters indicator
- */
-function updateActiveFiltersIndicator() {
-    const filtersContainer = document.querySelector('.order-filters');
-    if (!filtersContainer) return;
-    
-    // Remove any existing indicator
-    const existingIndicator = document.querySelector('.active-filters-badge');
-    if (existingIndicator) {
-        existingIndicator.remove();
+        });
     }
-    
-    // Check if filters are active
-    const dateValue = dateFilter ? dateFilter.value : '';
-    const searchValue = searchOrders ? searchOrders.value : '';
-    const collectionTypeFilter = document.getElementById('collection-type-filter');
-    const collectionType = collectionTypeFilter ? collectionTypeFilter.value : 'all';
-    
-    // Count active filters
-    const activeFiltersCount = (dateValue ? 1 : 0) + 
-                           (searchValue ? 1 : 0) + 
-                           (collectionType !== 'all' ? 1 : 0);
-    
-    // Add indicator if filters are active
-    if (activeFiltersCount > 0) {
-        const indicator = document.createElement('span');
-        indicator.className = 'active-filters-badge';
-        indicator.textContent = activeFiltersCount;
-        indicator.title = `${activeFiltersCount} active filter(s)`;
-        
-        filtersContainer.appendChild(indicator);
-    }
-}
-
-/**
- * Clear all filters
- */
-function clearFilters() {
-    console.log('Clearing all filters...');
-    
-    // Reset date filter
-    if (dateFilter) dateFilter.value = '';
-    
-    // Reset search filter
-    if (searchOrders) searchOrders.value = '';
-    
-    // Reset collection type filter
-    const collectionTypeFilter = document.getElementById('collection-type-filter');
-    if (collectionTypeFilter) collectionTypeFilter.value = 'all';
-    
-    // Reset search term and reapply filters
-    currentSearchTerm = '';
-    
-    // Load all orders
-    filteredOrders = [...allOrders];
     
     // Update all tables
     updateOrdersTable();
     updatePendingOrdersTable();
     updateCompletedOrdersTable();
     updateCancelledOrdersTable();
+}
+
+/**
+ * Clear all filters
+ */
+function clearFilters() {
+    if (dateFilter) dateFilter.value = 'today';
+    if (searchOrders) searchOrders.value = '';
     
-    // Clear any filter indicators
-    updateActiveFiltersIndicator();
-    
-    // Show toast notification
-    showToast('Filters cleared', 'info');
+    applyFilters();
 }
 
 /**
@@ -912,26 +866,12 @@ function updatePendingOrdersTable() {
             completeAllPendingBtn.disabled = true;
         }
         
-        // Add empty message to the table body itself to maintain structure
-        pendingOrdersBody.innerHTML = `<tr class="empty-row">
-            <td colspan="7" class="text-center">
-                <div class="table-empty-state">
-                    <p>No pending orders at the moment!</p>
-                </div>
-            </td>
-        </tr>`;
-        
         return;
     }
     
     // Hide empty message
     if (noPendingOrders) {
         noPendingOrders.style.display = 'none';
-    }
-    
-    // Enable batch actions
-    if (completeAllPendingBtn) {
-        completeAllPendingBtn.disabled = false;
     }
     
     // Sort orders by date (oldest first for pending)
@@ -968,16 +908,6 @@ function updateCompletedOrdersTable() {
         if (noCompletedOrders) {
             noCompletedOrders.style.display = 'block';
         }
-        
-        // Add empty message to the table body itself to maintain structure
-        completedOrdersBody.innerHTML = `<tr class="empty-row">
-            <td colspan="6" class="text-center">
-                <div class="table-empty-state">
-                    <p>No completed orders yet.</p>
-                </div>
-            </td>
-        </tr>`;
-        
         return;
     }
     
@@ -986,11 +916,11 @@ function updateCompletedOrdersTable() {
         noCompletedOrders.style.display = 'none';
     }
     
-    // Sort orders by date (newest first)
+                // Sort orders by date (newest first)
     const sortedOrders = [...completedOrders].sort((a, b) => 
-        new Date(b.orderTime || b.date) - new Date(a.orderTime || a.date)
-    );
-    
+                    new Date(b.orderTime || b.date) - new Date(a.orderTime || a.date)
+                );
+                
     // Render orders
     sortedOrders.forEach(order => {
         const row = createOrderRow(order, 'completed');
@@ -1055,102 +985,113 @@ function updateCancelledOrdersTable() {
 /**
  * Create a table row for an order
  * @param {Object} order - Order object
- * @param {string} type - Table type (all, pending, completed, cancelled)
+ * @param {string} type - Type of table (all, pending, completed, cancelled)
  * @returns {HTMLElement} - Table row element
  */
 function createOrderRow(order, type) {
-    const row = document.createElement('tr');
-    row.dataset.orderId = order.id || order.orderId;
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    const orderDate = new Date(order.orderTime || order.date);
+    const formattedDate = formatDate(orderDate);
+                    
+                    // Get item name and price
+    let itemName = 'Unknown';
+    let orderTotal = 0;
     
-    // Checkbox cell
-    const checkboxCell = document.createElement('td');
-    checkboxCell.className = 'checkbox-cell';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = `select-order select-${type}`;
-    checkbox.dataset.orderId = order.id || order.orderId;
-    checkboxCell.appendChild(checkbox);
+    if (order.items && Array.isArray(order.items)) {
+        // Multi-item order
+        itemName = `${order.items.length} items`;
+        orderTotal = parseFloat(order.totalAmount || order.totalPrice || 0);
+    } else if (order.item) {
+        // Single item order
+        itemName = order.item.name;
+        orderTotal = order.item.price * (order.quantity || 1);
+    }
+                    
+                    // Get customer information
+                    const customerName = order.customerName || 'Guest';
+                    const admissionNumber = order.admissionNumber ? `(${order.admissionNumber})` : '';
+                    const phoneNumber = order.phoneNumber || 'N/A';
+                    
+                    // Add payment code if available
+                    const orderIdDisplay = order.orderCode ? 
+        `#${order.id.substring(0, 6)}... <span class="order-code">${order.orderCode}</span>` : 
+        `#${order.id.substring(0, 8)}...`;
     
-    // Format date
-    const orderDate = new Date(order.orderTime || order.date);
-    const formattedDate = formatDate(orderDate, true);
+    // Time information based on type
+    let timeInfo = formattedDate;
     
-    // Format total with currency symbol
-    const formattedTotal = formatCurrency(order.total || "0.00");
-    
-    // Customer information with admission number
-    const customerName = order.customerName || 'Guest';
-    const admissionNumber = order.admissionNumber ? `<div class="customer-admission">#${order.admissionNumber}</div>` : '';
-    
-    // Collection information
-    const collectionType = order.collectionMethod === 'table' ? 'Table' : 'Pickup';
-    const collectionLocation = order.collectionLocation || 'Not specified';
-    const collectionInfo = `<div class="collection-type">${collectionType}</div>
-                          <div class="collection-location">${escapeHtml(collectionLocation)}</div>`;
-    
-    // Order code for reference
-    const orderCode = order.orderCode ? 
-        `<span class="order-code">${order.orderCode}</span>` : '';
-    
-    // Status badge
-    const statusClass = order.status === 'pending' ? 'status-pending' : 
-                      order.status === 'ready' ? 'status-ready' :
-                      order.status === 'completed' ? 'status-completed' : 
-                      'status-cancelled';
-    const statusText = order.status === 'pending' ? 'Pending' : 
-                      order.status === 'ready' ? 'Ready' :
-                      order.status === 'completed' ? 'Completed' : 
-                      'Cancelled';
-    
-    // Items summary
-    let itemsSummary = '';
-    if (order.items) {
-        const itemsList = order.items.map(item => {
-            const itemName = typeof item.item === 'object' ? item.item.name : item.name;
-            const qty = item.quantity || 1;
-            return `${qty}x ${itemName}`;
-        }).join(', ');
+    if (type === 'pending') {
+        // Calculate time elapsed
+        const now = new Date();
+        const elapsed = now - orderDate;
+        const minutes = Math.floor(elapsed / 60000);
         
-        itemsSummary = itemsList;
+        if (minutes < 60) {
+            timeInfo = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            timeInfo = `${hours} hour${hours !== 1 ? 's' : ''}, ${minutes % 60} min`;
+        }
     }
     
-    // Set row HTML based on the table type
-    row.innerHTML = `
-        <td class="checkbox-cell">${checkboxCell.innerHTML}</td>
-        <td class="order-id-cell">
-            <div>${order.id || order.orderId}</div>
-            ${orderCode}
-        </td>
-        <td class="customer-cell">
-            <div class="customer-name">${escapeHtml(customerName)}</div>
-            ${admissionNumber}
-        </td>
-        <td class="date-cell">${formattedDate}</td>
-        <td class="collection-cell">${collectionInfo}</td>
-        <td class="items-cell" title="${escapeHtml(itemsSummary)}">
-            ${escapeHtml(itemsSummary.length > 40 ? itemsSummary.substring(0, 40) + '...' : itemsSummary)}
-        </td>
-        <td class="total-cell">${formattedTotal}</td>
-        <td class="status-cell">
-            <span class="status-badge ${statusClass}">${statusText}</span>
-        </td>
-        <td class="actions-cell">
-            <button class="btn btn-icon btn-sm view-order" title="View Details" data-order-id="${order.id || order.orderId}">
-                <i class="fas fa-eye"></i>
-            </button>
-            ${order.status === 'pending' ? 
-                `<button class="btn btn-icon btn-sm mark-ready" title="Mark Ready" data-order-id="${order.id || order.orderId}">
-                    <i class="fas fa-check"></i>
-                </button>` : ''}
-            ${order.status !== 'cancelled' && order.status !== 'completed' ? 
-                `<button class="btn btn-icon btn-sm btn-danger cancel-order" title="Cancel Order" data-order-id="${order.id || order.orderId}">
-                    <i class="fas fa-times"></i>
-                </button>` : ''}
-            <button class="btn btn-icon btn-sm btn-danger delete-order" title="Delete Order" data-order-id="${order.id || order.orderId}">
+    // Start building row HTML
+    let rowHtml = '';
+    
+    // Checkbox for selectable rows
+    if (type !== 'completed') {
+        rowHtml += `<td class="checkbox-cell">
+            <input type="checkbox" class="order-checkbox" data-id="${order.id}">
+        </td>`;
+    }
+    
+    // Common columns
+    rowHtml += `
+                        <td>${orderIdDisplay}</td>
+                        <td>${customerName}</td>
+                        <td>${escapeHtml(itemName)}</td>
+                        <td>${formatCurrency(orderTotal, true)}</td>
+    `;
+    
+    // Status column (only for all orders)
+    if (type === 'all') {
+        rowHtml += `<td>
+                            <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span>
+        </td>`;
+    }
+    
+    // Time column
+    rowHtml += `<td>${timeInfo}</td>`;
+    
+    // Actions column
+    rowHtml += `<td class="actions">
+                            <button class="btn btn-small btn-primary view-order" data-id="${order.id}" title="View Order">
+                                <i class="fas fa-eye"></i>
+        </button>`;
+    
+    // Add specific actions based on status
+    if (type === 'pending' || (type === 'all' && order.status === 'pending')) {
+        rowHtml += `
+                            <button class="btn btn-small btn-success complete-order" data-id="${order.id}" title="Mark as Ready">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-small btn-danger cancel-order" data-id="${order.id}" title="Cancel Order">
+                                <i class="fas fa-times"></i>
+                            </button>
+        `;
+    } else if (type === 'cancelled' || (type === 'all' && order.status === 'cancelled')) {
+        rowHtml += `
+            <button class="btn btn-small btn-danger delete-order" data-id="${order.id}" title="Delete Order">
                 <i class="fas fa-trash"></i>
             </button>
-        </td>
-    `;
+        `;
+    }
+    
+    rowHtml += `</td>`;
+    
+    // Set row HTML
+    row.innerHTML = rowHtml;
     
     return row;
 }
@@ -1183,26 +1124,26 @@ function attachOrderActionListeners(type) {
     
     // View order buttons
     tableBody.querySelectorAll('.view-order').forEach(btn => {
-        btn.addEventListener('click', () => viewOrderDetails(btn.dataset.orderId));
+        btn.addEventListener('click', () => viewOrderDetails(btn.dataset.id));
     });
     
     // Complete order buttons
-    tableBody.querySelectorAll('.mark-ready').forEach(btn => {
-        btn.addEventListener('click', () => completeOrder(btn.dataset.orderId));
+    tableBody.querySelectorAll('.complete-order').forEach(btn => {
+        btn.addEventListener('click', () => completeOrder(btn.dataset.id));
     });
     
     // Cancel order buttons
     tableBody.querySelectorAll('.cancel-order').forEach(btn => {
-        btn.addEventListener('click', () => promptCancelOrderById(btn.dataset.orderId));
+        btn.addEventListener('click', () => promptCancelOrderById(btn.dataset.id));
     });
     
     // Delete order buttons
     tableBody.querySelectorAll('.delete-order').forEach(btn => {
-        btn.addEventListener('click', () => promptDeleteOrderById(btn.dataset.orderId));
+        btn.addEventListener('click', () => promptDeleteOrderById(btn.dataset.id));
     });
     
     // Order checkboxes
-    tableBody.querySelectorAll('.select-order').forEach(checkbox => {
+    tableBody.querySelectorAll('.order-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', () => updateBatchActionButtons(type));
     });
 }
@@ -1511,13 +1452,13 @@ function toggleSelectAll(checked, type) {
     
     switch (type) {
         case 'all':
-            checkboxes = allOrdersBody.querySelectorAll('.select-order');
+            checkboxes = allOrdersBody.querySelectorAll('.order-checkbox');
             break;
         case 'pending':
-            checkboxes = pendingOrdersBody.querySelectorAll('.select-order');
+            checkboxes = pendingOrdersBody.querySelectorAll('.order-checkbox');
             break;
         case 'cancelled':
-            checkboxes = cancelledOrdersBody.querySelectorAll('.select-order');
+            checkboxes = cancelledOrdersBody.querySelectorAll('.order-checkbox');
             break;
         default:
             return;
@@ -1540,21 +1481,21 @@ function updateBatchActionButtons(type) {
     
     switch (type) {
         case 'all':
-            checkboxes = allOrdersBody.querySelectorAll('.select-order');
+            checkboxes = allOrdersBody.querySelectorAll('.order-checkbox');
             anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
             if (deleteSelectedBtn) {
                 deleteSelectedBtn.disabled = !anyChecked;
             }
             break;
         case 'pending':
-            checkboxes = pendingOrdersBody.querySelectorAll('.select-order');
+            checkboxes = pendingOrdersBody.querySelectorAll('.order-checkbox');
             anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
             if (completeAllPendingBtn) {
                 completeAllPendingBtn.disabled = !anyChecked;
             }
             break;
         case 'cancelled':
-            checkboxes = cancelledOrdersBody.querySelectorAll('.select-order');
+            checkboxes = cancelledOrdersBody.querySelectorAll('.order-checkbox');
             anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
             if (clearCancelledBtn) {
                 clearCancelledBtn.disabled = !anyChecked;
@@ -1569,14 +1510,14 @@ function updateBatchActionButtons(type) {
  * Delete selected orders
  */
 function deleteSelectedOrders() {
-    const checkboxes = allOrdersBody.querySelectorAll('.select-order:checked');
+    const checkboxes = allOrdersBody.querySelectorAll('.order-checkbox:checked');
     if (checkboxes.length === 0) return;
     
     if (confirm(`Are you sure you want to delete ${checkboxes.length} selected order(s)? This cannot be undone.`)) {
-        const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.orderId);
+        const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
         
         // Filter out the selected orders
-        const updatedOrders = allOrders.filter(order => !orderIds.includes(order.id || order.orderId));
+        const updatedOrders = allOrders.filter(order => !orderIds.includes(order.id));
         
         // Save to localStorage
         localStorage.setItem('campus_cafe_orders', JSON.stringify(updatedOrders));
@@ -1595,10 +1536,10 @@ function deleteSelectedOrders() {
  * Complete all selected pending orders
  */
 function completeAllPendingOrders() {
-    const checkboxes = pendingOrdersBody.querySelectorAll('.select-order:checked');
+    const checkboxes = pendingOrdersBody.querySelectorAll('.order-checkbox:checked');
     if (checkboxes.length === 0) return;
     
-    const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.orderId);
+    const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
     
     // Update status for each order
     orderIds.forEach(id => {
@@ -1621,14 +1562,14 @@ function completeAllPendingOrders() {
  * Clear all selected cancelled orders
  */
 function clearCancelledOrders() {
-    const checkboxes = cancelledOrdersBody.querySelectorAll('.select-order:checked');
+    const checkboxes = cancelledOrdersBody.querySelectorAll('.order-checkbox:checked');
     if (checkboxes.length === 0) return;
     
     if (confirm('Are you sure you want to delete the selected cancelled orders? This cannot be undone.')) {
-        const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.orderId);
+        const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
         
         // Filter out the selected orders
-        const updatedOrders = allOrders.filter(order => !orderIds.includes(order.id || order.orderId));
+        const updatedOrders = allOrders.filter(order => !orderIds.includes(order.id));
         
         // Save to localStorage
         localStorage.setItem('campus_cafe_orders', JSON.stringify(updatedOrders));
@@ -1793,586 +1734,6 @@ function formatCurrency(value, includeSymbol = true) {
     
     return includeSymbol ? formattedValue : formattedValue.replace(/[^0-9.,]/g, '');
 }
-
-/**
- * Set up event listeners for batch actions
- */
-function setupBatchActionListeners() {
-    // Export orders
-    if (exportOrdersBtn) {
-        exportOrdersBtn.addEventListener('click', () => exportOrders('all'));
-    }
-    
-    // Delete selected orders
-    if (deleteSelectedBtn) {
-        deleteSelectedBtn.addEventListener('click', deleteSelectedOrders);
-    }
-    
-    // Complete all pending orders
-    if (completeAllPendingBtn) {
-        completeAllPendingBtn.addEventListener('click', completeAllPendingOrders);
-    }
-    
-    // Clear cancelled orders
-    if (clearCancelledBtn) {
-        clearCancelledBtn.addEventListener('click', clearCancelledOrders);
-    }
-}
-
-/**
- * Set up event listeners for select all checkboxes
- */
-function setupSelectAllCheckboxes() {
-    // Select all orders
-    const selectAllOrders = document.getElementById('select-all-orders');
-    if (selectAllOrders) {
-        selectAllOrders.addEventListener('change', e => toggleSelectAll(e.target.checked, 'all'));
-    }
-    
-    // Select all pending
-    const selectAllPending = document.getElementById('select-all-pending');
-    if (selectAllPending) {
-        selectAllPending.addEventListener('change', e => toggleSelectAll(e.target.checked, 'pending'));
-    }
-    
-    // Select all cancelled
-    const selectAllCancelled = document.getElementById('select-all-cancelled');
-    if (selectAllCancelled) {
-        selectAllCancelled.addEventListener('change', e => toggleSelectAll(e.target.checked, 'cancelled'));
-    }
-}
-
-/**
- * Set up event listeners for modal close buttons and actions
- */
-function setupModalCloseListeners() {
-    // Close modal buttons
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', closeModals);
-    });
-    
-    // Mark ready button
-    if (markReadyBtn) {
-        markReadyBtn.addEventListener('click', markOrderReady);
-    }
-    
-    // Cancel order button
-    if (cancelOrderBtn) {
-        cancelOrderBtn.addEventListener('click', promptCancelOrder);
-    }
-    
-    // Confirm action button
-    if (confirmActionBtn) {
-        confirmActionBtn.addEventListener('click', executeConfirmedAction);
-    }
-    
-    // Close modals when clicking outside
-    window.addEventListener('click', e => {
-        if (e.target === orderDetailsModal) {
-            closeModals();
-        }
-        if (e.target === confirmModal) {
-            closeModals();
-        }
-    });
-}
-
-/**
- * Initialize Item Statistics
- */
-function initItemStatistics() {
-    loadPopularItems();
-    loadLowStockItems();
-    loadCategoryPerformance();
-    loadRevenueByItem();
-    initItemPerformanceChart();
-    
-    // Add event listener for refresh button
-    const refreshItemStatsBtn = document.getElementById('refresh-item-stats');
-    if (refreshItemStatsBtn) {
-        refreshItemStatsBtn.addEventListener('click', () => {
-            // Show loading spinners
-            document.querySelectorAll('.item-metrics .metric-content').forEach(el => {
-                el.innerHTML = '<div class="loader"></div>';
-            });
-            
-            // Refresh data
-            setTimeout(() => {
-                loadPopularItems();
-                loadLowStockItems();
-                loadCategoryPerformance();
-                loadRevenueByItem();
-                initItemPerformanceChart();
-                
-                // Show toast notification
-                showToast('Item statistics refreshed', 'success');
-            }, 800);
-        });
-    }
-}
-
-/**
- * Load most popular items based on order frequency
- */
-function loadPopularItems() {
-    const popularItemsList = document.getElementById('popular-items-list');
-    if (!popularItemsList) return;
-    
-    // Get all orders
-    const orders = storageManager.getOrders() || [];
-    
-    // Count item frequency
-    const itemFrequency = {};
-    orders.forEach(order => {
-        if (order.item && order.item.id) {
-            const itemId = order.item.id;
-            itemFrequency[itemId] = (itemFrequency[itemId] || 0) + 1;
-        }
-    });
-    
-    // Convert to array and sort by frequency
-    const sortedItems = Object.entries(itemFrequency)
-        .map(([itemId, count]) => {
-            // Find item details
-            const itemDetails = findMenuItem(itemId);
-            return {
-                id: itemId,
-                name: itemDetails ? itemDetails.name : 'Unknown Item',
-                category: itemDetails ? itemDetails.category : 'Unknown',
-                count: count
-            };
-        })
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Top 5 items
-    
-    // Create HTML
-    if (sortedItems.length === 0) {
-        popularItemsList.innerHTML = '<div class="empty-data">No order data available yet</div>';
-        return;
-    }
-    
-    let html = '<ul class="stat-list">';
-    sortedItems.forEach(item => {
-        html += `
-            <li>
-                <span class="item-name">${item.name}</span>
-                <span class="item-count">${item.count} orders</span>
-            </li>
-        `;
-    });
-    html += '</ul>';
-    
-    popularItemsList.innerHTML = html;
-}
-
-/**
- * Load items with low stock
- */
-function loadLowStockItems() {
-    const lowStockItems = document.getElementById('low-stock-items');
-    if (!lowStockItems) return;
-    
-    // Get all menu items
-    const menuItems = storageManager.getMenuItems() || [];
-    
-    // Filter items with stock < 10 (or your threshold)
-    const lowStock = menuItems
-        .filter(item => item.stock !== undefined && item.stock < 10)
-        .sort((a, b) => a.stock - b.stock)
-        .slice(0, 5); // Top 5 low stock items
-    
-    // Create HTML
-    if (lowStock.length === 0) {
-        lowStockItems.innerHTML = '<div class="empty-data">No low stock items</div>';
-        return;
-    }
-    
-    let html = '<ul class="stat-list">';
-    lowStock.forEach(item => {
-        html += `
-            <li>
-                <span class="item-name">${item.name}</span>
-                <span class="item-stock ${item.stock < 5 ? 'critical' : 'warning'}">
-                    ${item.stock} left
-                </span>
-            </li>
-        `;
-    });
-    html += '</ul>';
-    
-    lowStockItems.innerHTML = html;
-}
-
-/**
- * Load category performance metrics
- */
-function loadCategoryPerformance() {
-    const categoryPerformance = document.getElementById('category-performance');
-    if (!categoryPerformance) return;
-    
-    // Get all orders
-    const orders = storageManager.getOrders() || [];
-    
-    // Count by category
-    const categoryCount = {};
-    orders.forEach(order => {
-        if (order.item && order.item.category) {
-            const category = order.item.category;
-            categoryCount[category] = (categoryCount[category] || 0) + 1;
-        }
-    });
-    
-    // Convert to array and sort
-    const sortedCategories = Object.entries(categoryCount)
-        .map(([category, count]) => ({ category, count }))
-        .sort((a, b) => b.count - a.count);
-    
-    // Create HTML
-    if (sortedCategories.length === 0) {
-        categoryPerformance.innerHTML = '<div class="empty-data">No category data available</div>';
-        return;
-    }
-    
-    let html = '<ul class="stat-list">';
-    sortedCategories.forEach(cat => {
-        html += `
-            <li>
-                <span class="category-name">${capitalizeFirstLetter(cat.category)}</span>
-                <span class="category-count">${cat.count} orders</span>
-            </li>
-        `;
-    });
-    html += '</ul>';
-    
-    categoryPerformance.innerHTML = html;
-}
-
-/**
- * Load revenue by item
- */
-function loadRevenueByItem() {
-    const revenueByItem = document.getElementById('revenue-by-item');
-    if (!revenueByItem) return;
-    
-    // Get all orders
-    const orders = storageManager.getOrders() || [];
-    
-    // Calculate revenue by item
-    const itemRevenue = {};
-    orders.forEach(order => {
-        if (order.item && order.item.id && order.status !== 'cancelled') {
-            const itemId = order.item.id;
-            const price = order.item.price || 0;
-            const quantity = order.quantity || 1;
-            const revenue = price * quantity;
-            
-            itemRevenue[itemId] = (itemRevenue[itemId] || 0) + revenue;
-        }
-    });
-    
-    // Convert to array and sort by revenue
-    const sortedItems = Object.entries(itemRevenue)
-        .map(([itemId, revenue]) => {
-            // Find item details
-            const itemDetails = findMenuItem(itemId);
-            return {
-                id: itemId,
-                name: itemDetails ? itemDetails.name : 'Unknown Item',
-                revenue: revenue
-            };
-        })
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5); // Top 5 items by revenue
-    
-    // Create HTML
-    if (sortedItems.length === 0) {
-        revenueByItem.innerHTML = '<div class="empty-data">No revenue data available yet</div>';
-        return;
-    }
-    
-    let html = '<ul class="stat-list">';
-    sortedItems.forEach(item => {
-        html += `
-            <li>
-                <span class="item-name">${item.name}</span>
-                <span class="item-revenue">${formatCurrency(item.revenue, true)}</span>
-            </li>
-        `;
-    });
-    html += '</ul>';
-    
-    revenueByItem.innerHTML = html;
-}
-
-/**
- * Initialize Item Performance Chart
- */
-function initItemPerformanceChart() {
-    const ctx = document.getElementById('items-performance-chart');
-    if (!ctx) return;
-    
-    // Get all orders
-    const orders = storageManager.getOrders() || [];
-    
-    // Calculate data by item
-    const itemData = {};
-    orders.forEach(order => {
-        if (order.item && order.item.id && order.status !== 'cancelled') {
-            const itemId = order.item.id;
-            const name = order.item.name || 'Unknown Item';
-            const price = order.item.price || 0;
-            const quantity = order.quantity || 1;
-            
-            if (!itemData[itemId]) {
-                itemData[itemId] = {
-                    name: name,
-                    orders: 0,
-                    revenue: 0,
-                    quantities: 0
-                };
-            }
-            
-            itemData[itemId].orders += 1;
-            itemData[itemId].revenue += price * quantity;
-            itemData[itemId].quantities += quantity;
-        }
-    });
-    
-    // Convert to arrays for chart
-    const sortedItems = Object.values(itemData)
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 7); // Top 7 items
-    
-    const labels = sortedItems.map(item => item.name);
-    const revenueData = sortedItems.map(item => item.revenue);
-    const quantityData = sortedItems.map(item => item.quantities);
-    
-    // If chart already exists, destroy it
-    if (window.itemsPerformanceChart) {
-        window.itemsPerformanceChart.destroy();
-    }
-    
-    // Create new chart
-    window.itemsPerformanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Revenue (KSh)',
-                    data: revenueData,
-                    backgroundColor: 'rgba(231, 76, 60, 0.6)',
-                    borderColor: '#e74c3c',
-                    borderWidth: 1,
-                    yAxisID: 'y-revenue'
-                },
-                {
-                    label: 'Quantity Sold',
-                    data: quantityData,
-                    backgroundColor: 'rgba(52, 152, 219, 0.6)',
-                    borderColor: '#3498db',
-                    borderWidth: 1,
-                    yAxisID: 'y-quantity'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Top Items Performance',
-                    font: {
-                        size: 16
-                    }
-                },
-                legend: {
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.dataset.yAxisID === 'y-revenue') {
-                                label += formatCurrency(context.raw, true);
-                            } else {
-                                label += context.raw;
-                            }
-                            return label;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                },
-                'y-revenue': {
-                    type: 'linear',
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Revenue (KSh)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return formatCurrency(value, false);
-                        }
-                    }
-                },
-                'y-quantity': {
-                    type: 'linear',
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Quantity Sold'
-                    },
-                    grid: {
-                        drawOnChartArea: false
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * Find menu item by ID
- * @param {string} itemId - Item ID to find
- * @returns {Object|null} - Menu item or null if not found
- */
-function findMenuItem(itemId) {
-    const menuItems = storageManager.getMenuItems() || [];
-    return menuItems.find(item => item.id === itemId) || null;
-}
-
-/**
- * Capitalize first letter of a string
- * @param {string} string - String to capitalize
- * @returns {string} - Capitalized string
- */
-function capitalizeFirstLetter(string) {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-/**
- * Setup Mobile UI
- */
-function setupMobileUI() {
-    // Elements
-    const sidebar = document.querySelector('.admin-sidebar');
-    const sidebarOverlay = document.querySelector('.sidebar-overlay');
-    const sidebarToggle = document.querySelector('.mobile-toggle');
-    const sidebarClose = document.querySelector('.sidebar-close');
-    const toggleSidebarMobile = document.getElementById('toggle-sidebar-mobile');
-    const refreshDataMobile = document.getElementById('refresh-data-mobile');
-    const addItemMobile = document.getElementById('add-item-mobile');
-    
-    // Function to toggle sidebar
-    const toggleSidebar = () => {
-        sidebar.classList.toggle('active');
-        sidebarOverlay.classList.toggle('active');
-        document.body.classList.toggle('sidebar-open');
-    };
-    
-    // Mobile sidebar toggle
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', toggleSidebar);
-    }
-    
-    // Mobile menu button in action bar
-    if (toggleSidebarMobile) {
-        toggleSidebarMobile.addEventListener('click', toggleSidebar);
-    }
-    
-    // Close sidebar when overlay is clicked
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', toggleSidebar);
-    }
-    
-    // Close button in sidebar
-    if (sidebarClose) {
-        sidebarClose.addEventListener('click', toggleSidebar);
-    }
-    
-    // Refresh data from mobile action bar
-    if (refreshDataMobile) {
-        refreshDataMobile.addEventListener('click', () => {
-            refreshData();
-            showToast('Refreshing dashboard data...', 'info');
-        });
-    }
-    
-    // Add item button (redirect to menu management)
-    if (addItemMobile) {
-        addItemMobile.addEventListener('click', () => {
-            window.location.href = 'manage-menu.html';
-        });
-    }
-    
-    // Optimize tables for mobile
-    setupResponsiveTables();
-}
-
-/**
- * Make tables more responsive on mobile
- */
-function setupResponsiveTables() {
-    // Check if we're on a mobile device
-    const isMobile = window.innerWidth <= 768;
-    
-    if (isMobile) {
-        // Add swipe hint to tables
-        const tableContainers = document.querySelectorAll('.orders-table-container');
-        tableContainers.forEach(container => {
-            if (!container.querySelector('.swipe-hint')) {
-                const hint = document.createElement('div');
-                hint.className = 'swipe-hint';
-                hint.innerHTML = '<i class="fas fa-arrows-left-right"></i> Swipe to see more';
-                container.prepend(hint);
-                
-                // Auto-hide the hint after 3 seconds
-                setTimeout(() => {
-                    hint.style.opacity = '0';
-                    setTimeout(() => {
-                        hint.remove();
-                    }, 500);
-                }, 3000);
-            }
-        });
-        
-        // Make all action buttons more touch-friendly
-        const actionButtons = document.querySelectorAll('.admin-table .action-btn');
-        actionButtons.forEach(btn => {
-            btn.classList.add('touch-friendly');
-        });
-        
-        // Add touch feedback to rows
-        const tableRows = document.querySelectorAll('.admin-table tbody tr');
-        tableRows.forEach(row => {
-            row.addEventListener('touchstart', () => {
-                row.classList.add('row-active');
-            });
-            
-            row.addEventListener('touchend', () => {
-                row.classList.remove('row-active');
-            });
-        });
-    }
-}
-
-// Call setupMobileUI when resizing to handle orientation changes
-window.addEventListener('resize', () => {
-    setupResponsiveTables();
-});
 
 // Initialize dashboard when DOM is ready
 document.addEventListener('DOMContentLoaded', initDashboard);

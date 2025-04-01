@@ -350,39 +350,6 @@
         #clear-all-orders-btn:hover {
             background-color: #b71c1c;
         }
-
-        /* Empty Cart Styles */
-        .empty-cart {
-            text-align: center;
-            padding: 3rem 1rem;
-            margin-top: 2rem;
-            background-color: var(--bg-card, #ffffff);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .empty-cart i {
-            font-size: 3.5rem;
-            color: var(--text-light, #6c757d);
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-        
-        .empty-cart h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: var(--text-color, #333);
-        }
-        
-        .empty-cart p {
-            margin-bottom: 1.5rem;
-            color: var(--text-light, #6c757d);
-        }
-        
-        .empty-cart .btn {
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body class="dark-mode">
@@ -504,7 +471,6 @@
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/currency.js"></script>
-    <script src="js/utils/stats.js"></script>
     <script>
         // Update the cart badge on page load and periodically
         document.addEventListener('DOMContentLoaded', function() {
@@ -541,6 +507,8 @@
             });
         });
     </script>
+    <script src="js/theme.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/my-orders.js"></script>
 </body>
 </html> 

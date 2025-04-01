@@ -375,150 +375,121 @@ function updateCartSummary() {
 }
 
 /**
- * Display all cart items
+ * Display cart items in the cart interface
  */
 function displayCartItems() {
-    // Get cart items
+    // Get cart from localStorage
     const cart = cartManager.getCart();
     
-    // Get the container
-    const cartItemsContainer = document.getElementById('cart-items');
-    if (!cartItemsContainer) return;
-    
-    // Clear the container
-    cartItemsContainer.innerHTML = '';
-    
-    // Check if cart is empty
+    // Show/hide elements based on cart contents
     if (cart.length === 0) {
-        // Show empty state
-        const emptyCart = document.createElement('div');
-        emptyCart.className = 'empty-cart';
-        emptyCart.innerHTML = `
-            <i class="fas fa-shopping-basket"></i>
-            <h3>Your cart is empty</h3>
-            <p>Add items from our menu to get started!</p>
-            <a href="menu.html" class="btn btn-primary">Browse Menu</a>
-        `;
-        cartItemsContainer.appendChild(emptyCart);
-        
-        // Hide checkout button
-        const checkoutBtn = document.getElementById('checkout-btn');
-        if (checkoutBtn) {
-            checkoutBtn.style.display = 'none';
-        }
-        
+        // Empty cart
+        if (cartItemsContainer) cartItemsContainer.style.display = 'none';
+        if (cartSummaryElement) cartSummaryElement.style.display = 'none';
+        if (cartEmptyElement) cartEmptyElement.style.display = 'block';
         return;
+    } else {
+        // Cart has items
+        if (cartItemsContainer) cartItemsContainer.style.display = 'block';
+        if (cartSummaryElement) cartSummaryElement.style.display = 'block';
+        if (cartEmptyElement) cartEmptyElement.style.display = 'none';
     }
     
-    // Show checkout button
-    const checkoutBtn = document.getElementById('checkout-btn');
-    if (checkoutBtn) {
-        checkoutBtn.style.display = 'block';
-    }
-    
-    // Add each item to the cart
-    cart.forEach((cartItem, index) => {
-        const { item, quantity } = cartItem;
+    // Clear container
+    if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = '';
         
-        // Create the cart item container
-        const cartItemEl = document.createElement('div');
-        cartItemEl.className = 'cart-item';
-        cartItemEl.dataset.index = index;
-        
-        // Format the price
-        const formattedPrice = window.formatters?.currency 
-            ? window.formatters.currency(item.price * quantity) 
-            : `KSh ${(item.price * quantity).toFixed(2)}`;
-        
-        // Set HTML content
-        cartItemEl.innerHTML = `
-            <div class="item-image">
-                <i class="fas fa-utensils"></i>
-            </div>
-            <div class="item-details">
-                <h3 class="item-name">${item.name}</h3>
-                <div class="item-price">${formattedPrice}</div>
-                <div class="item-category">${item.category}</div>
-            </div>
-            <div class="item-actions">
-                <div class="quantity-controls">
-                    <button class="quantity-btn decrease-btn" data-index="${index}">-</button>
-                    <span class="quantity">${quantity}</span>
-                    <button class="quantity-btn increase-btn" data-index="${index}">+</button>
+        // Add each cart item
+        cart.forEach(cartItem => {
+            const item = cartItem.item;
+            const cartItemElement = document.createElement('div');
+            cartItemElement.className = 'cart-item';
+            
+            // Create item HTML
+            cartItemElement.innerHTML = `
+                <div class="cart-item-image">
+                    <img src="${item.imageUrl}" alt="${item.name}">
                 </div>
-                <button class="remove-btn" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
+                <div class="cart-item-details">
+                    <h3 class="cart-item-name">${item.name}</h3>
+                    <div class="cart-item-price">KSh ${item.price.toFixed(2)}</div>
+                </div>
+                <div class="cart-item-actions">
+                    <div class="quantity-controls">
+                        <button class="quantity-btn decrease-btn" data-id="${item.id}">-</button>
+                        <span class="quantity-value">${cartItem.quantity}</span>
+                        <button class="quantity-btn increase-btn" data-id="${item.id}">+</button>
+                    </div>
+                    <button class="cart-item-remove" data-id="${item.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add to container
+            cartItemsContainer.appendChild(cartItemElement);
+        });
         
-        // Add to container
-        cartItemsContainer.appendChild(cartItemEl);
-    });
-    
-    // Add event listeners to quantity buttons
-    const decreaseBtns = document.querySelectorAll('.decrease-btn');
-    const increaseBtns = document.querySelectorAll('.increase-btn');
-    const removeBtns = document.querySelectorAll('.remove-btn');
-    
-    decreaseBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.dataset.index);
-            const currentQty = cart[index].quantity;
-            
-            if (currentQty > 1) {
-                cartManager.updateQuantity(index, currentQty - 1);
-            } else {
-                // Automatically remove item when quantity reaches 0
-                cartManager.removeItem(index);
-            }
-            
-            // Update UI
-            updateCartUI();
-        });
-    });
-    
-    increaseBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.dataset.index);
-            const currentQty = cart[index].quantity;
-            
-            // Limit quantity to 99
-            if (currentQty < 99) {
-                cartManager.updateQuantity(index, currentQty + 1);
+        // Add event listeners for quantity buttons
+        const decreaseBtns = cartItemsContainer.querySelectorAll('.decrease-btn');
+        const increaseBtns = cartItemsContainer.querySelectorAll('.increase-btn');
+        const removeButtons = cartItemsContainer.querySelectorAll('.cart-item-remove');
+        
+        decreaseBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemId = e.target.dataset.id;
+                const quantityValue = e.target.nextElementSibling;
+                let quantity = parseInt(quantityValue.textContent) - 1;
                 
-                // Update UI
-                updateCartUI();
-            }
+                if (quantity <= 0) {
+                    // When quantity reaches zero, confirm if user wants to remove item
+                    if (confirm("Remove this item from your cart?")) {
+                        // User confirmed, remove item
+                        cartManager.removeFromCart(itemId);
+                        displayCartItems();
+                    } else {
+                        // User cancelled, keep quantity at 1
+                        quantity = 1;
+                        quantityValue.textContent = quantity;
+                    }
+                } else {
+                    // Update quantity normally
+                    quantityValue.textContent = quantity;
+                    cartManager.updateQuantity(itemId, quantity);
+                    updateCartSummary();
+                }
+            });
         });
-    });
+        
+        increaseBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemId = e.target.dataset.id;
+                const quantityValue = e.target.previousElementSibling;
+                let quantity = parseInt(quantityValue.textContent) + 1;
+                
+                if (quantity > 99) {
+                    quantity = 99;
+                }
+                
+                quantityValue.textContent = quantity;
+                cartManager.updateQuantity(itemId, quantity);
+                updateCartSummary();
+            });
+        });
+        
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const itemId = e.target.closest('.cart-item-remove').dataset.id;
+                if (confirm("Remove this item from your cart?")) {
+                    cartManager.removeFromCart(itemId);
+                    displayCartItems();
+                }
+            });
+        });
+    }
     
-    removeBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.dataset.index);
-            
-            // Remove item without confirmation
-            cartManager.removeItem(index);
-            
-            // Update UI with animation
-            const cartItem = this.closest('.cart-item');
-            cartItem.classList.add('removing');
-            
-            // Wait for animation before updating UI
-            setTimeout(() => {
-                updateCartUI();
-            }, 300);
-        });
-    });
-}
-
-/**
- * Update all cart UI elements
- */
-function updateCartUI() {
-    displayCartItems();
+    // Update cart summary
     updateCartSummary();
-    updateCartBadge();
 }
 
 /**
@@ -528,26 +499,9 @@ function addEventListeners() {
     // Clear cart button
     if (clearCartBtn) {
         clearCartBtn.addEventListener('click', () => {
-            // Add confirmation dialog
-            if (confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
-                // Clear cart after confirmation
+            if (confirm('Are you sure you want to clear your cart?')) {
                 cartManager.clearCart();
                 displayCartItems();
-                updateCartSummary();
-                updateCartBadge();
-                
-                // Show a temporary message
-                const messageEl = document.createElement('div');
-                messageEl.className = 'cart-message';
-                messageEl.textContent = 'Cart cleared';
-                document.body.appendChild(messageEl);
-                
-                // Remove the message after 2 seconds
-                setTimeout(() => {
-                    if (messageEl.parentNode) {
-                        messageEl.parentNode.removeChild(messageEl);
-                    }
-                }, 2000);
             }
         });
     }

@@ -300,73 +300,10 @@ function updateCartBadge() {
     }
 }
 
-/**
- * Initialize mobile menu functionality
- */
-function initMobileMenu() {
-    const mobileMenuToggle = document.querySelector('.mobile-nav-toggle');
-    const navMenu = document.querySelector('.nav-menu, .main-nav');
-    
-    if (mobileMenuToggle && navMenu) {
-        // Toggle mobile menu
-        mobileMenuToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            
-            // Toggle icon
-            const icon = mobileMenuToggle.querySelector('i');
-            if (icon) {
-                if (icon.classList.contains('fa-bars')) {
-                    icon.classList.remove('fa-bars');
-                    icon.classList.add('fa-times');
-                } else {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                }
-            }
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const isClickInside = navMenu.contains(event.target) || mobileMenuToggle.contains(event.target);
-            
-            if (!isClickInside && navMenu.classList.contains('active')) {
-                navMenu.classList.remove('active');
-                
-                // Reset icon
-                const icon = mobileMenuToggle.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                }
-            }
-        });
-        
-        // Close menu when clicking a link
-        const navLinks = navMenu.querySelectorAll('a');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                navMenu.classList.remove('active');
-                
-                // Reset icon
-                const icon = mobileMenuToggle.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                }
-            });
-        });
-    }
-}
-
 // Initialize page
 document.addEventListener('DOMContentLoaded', initPage);
 
 // Clean up resources when page is unloaded
 window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
-});
-
-// Initialize the mobile menu on all pages
-document.addEventListener('DOMContentLoaded', function() {
-    initMobileMenu();
 });

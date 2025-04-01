@@ -39,30 +39,3 @@ build/
 *.sublime-workspace
 .DS_Store
 Thumbs.db
-
-# Ignore docs folder containing explanations
-/docs/
-
-# Ignore changelog file
-CHANGELOG.md
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Dependencies and build outputs
-/node_modules/
-/dist/
-/build/

@@ -252,102 +252,118 @@ const statsManager = (function() {
                         stats.customersServedToday = DEFAULT_STATS.customersServedToday;
                     }
                     
-                    // Also increment total customers
-                    stats.customersEverServed += increment;
-                    
                     hasUpdates = true;
-                    animateStatsChange('customers-today');
+                    
+                    // Add visual indicator
+                    const el = document.getElementById('customers-today');
+                    if (el) {
+                        animationInProgress.customersServedToday = true;
+                        const wrapper = el.closest('.stat-wrapper');
+                        if (wrapper) {
+                            const highlight = wrapper.querySelector('.stat-highlight');
+                            if (highlight) highlight.classList.add('active');
+                        }
+                        el.classList.add('updating');
+                        
+                        setTimeout(() => {
+                            el.classList.remove('updating');
+                            if (wrapper) {
+                                const highlight = wrapper.querySelector('.stat-highlight');
+                                if (highlight) highlight.classList.remove('active');
+                            }
+                            animationInProgress.customersServedToday = false;
+                        }, 5000);
+                    }
                 }
                 
-                // Set next update time - variable intervals for natural feel
-                nextUpdateTime.customersServedToday = currentTime + (Math.random() * 8000) + 12000; // 12-20 seconds
+                // Set next update time (12-30 seconds from now)
+                nextUpdateTime.customersServedToday = currentTime + (Math.random() * 18000) + 12000;
             }
             
-            // Check if it's time to update total customers
+            // Check if it's time to update total customers ever served
             if (currentTime >= nextUpdateTime.customersEverServed && !animationInProgress.customersEverServed) {
-                // Increment total customers (less frequently than today's count)
-                const increment = Math.random() < 0.6 ? 1 : 0; // 60% chance of +1
+                // Update with small increment
+                const increment = stats.customersEverServed > MAX_VALUES.customersEverServed * 0.8
+                    ? (Math.random() < 0.6 ? 1 : 0) // 60% chance of +1
+                    : (Math.random() < 0.8 ? 1 : 2); // 80% chance of +1, 20% chance of +2
                 
                 if (increment > 0) {
                     stats.customersEverServed += increment;
                     hasUpdates = true;
-                    animateStatsChange('customers-total');
+                    
+                    // Add visual indicator
+                    const el = document.getElementById('customers-total');
+                    if (el) {
+                        animationInProgress.customersEverServed = true;
+                        const wrapper = el.closest('.stat-wrapper');
+                        if (wrapper) {
+                            const highlight = wrapper.querySelector('.stat-highlight');
+                            if (highlight) highlight.classList.add('active');
+                        }
+                        el.classList.add('updating');
+                        
+                        setTimeout(() => {
+                            el.classList.remove('updating');
+                            if (wrapper) {
+                                const highlight = wrapper.querySelector('.stat-highlight');
+                                if (highlight) highlight.classList.remove('active');
+                            }
+                            animationInProgress.customersEverServed = false;
+                        }, 5000);
+                    }
                 }
                 
-                // Set next update time
-                nextUpdateTime.customersEverServed = currentTime + (Math.random() * 10000) + 15000; // 15-25 seconds
+                // Set next update time (15-35 seconds from now)
+                nextUpdateTime.customersEverServed = currentTime + (Math.random() * 20000) + 15000;
             }
             
-            // Check if it's time to update orders count
+            // Check if it's time to update orders submitted
             if (currentTime >= nextUpdateTime.ordersSubmitted && !animationInProgress.ordersSubmitted) {
-                // Increment orders (mostly follows customer count)
-                const increment = Math.random() < 0.65 ? 1 : 0; // 65% chance of +1
+                // Update with small increment
+                const increment = stats.ordersSubmitted > MAX_VALUES.ordersSubmitted * 0.8
+                    ? (Math.random() < 0.7 ? 1 : 0) // 70% chance of +1
+                    : (Math.random() < 0.7 ? 1 : 2); // 70% chance of +1, 30% chance of +2
                 
                 if (increment > 0) {
                     stats.ordersSubmitted += increment;
                     hasUpdates = true;
-                    animateStatsChange('orders-count');
+                    
+                    // Add visual indicator
+                    const el = document.getElementById('orders-count');
+                    if (el) {
+                        animationInProgress.ordersSubmitted = true;
+                        const wrapper = el.closest('.stat-wrapper');
+                        if (wrapper) {
+                            const highlight = wrapper.querySelector('.stat-highlight');
+                            if (highlight) highlight.classList.add('active');
+                        }
+                        el.classList.add('updating');
+                        
+                        setTimeout(() => {
+                            el.classList.remove('updating');
+                            if (wrapper) {
+                                const highlight = wrapper.querySelector('.stat-highlight');
+                                if (highlight) highlight.classList.remove('active');
+                            }
+                            animationInProgress.ordersSubmitted = false;
+                        }, 5000);
+                    }
                 }
                 
-                // Set next update time
-                nextUpdateTime.ordersSubmitted = currentTime + (Math.random() * 7000) + 10000; // 10-17 seconds
+                // Set next update time (10-25 seconds from now)
+                nextUpdateTime.ordersSubmitted = currentTime + (Math.random() * 15000) + 10000;
             }
             
-            // Save updated stats if changes were made
+            // Save and update if any changes were made
             if (hasUpdates) {
                 stats.lastUpdateTime = currentTime;
                 saveStats(stats);
                 updateStatsDisplay();
             }
-        }, 1000); // Check every second
+        }, 1000); // Check every second but update DOM less frequently
         
-        // Also update when page becomes visible
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                updateStatsDisplay();
-            }
-        });
-        
-        // Function to animate stat changes with visual indicator
-        function animateStatsChange(elementId) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-            
-            // Set animation flag
-            if (elementId === 'customers-today') {
-                animationInProgress.customersServedToday = true;
-            } else if (elementId === 'customers-total') {
-                animationInProgress.customersEverServed = true;
-            } else if (elementId === 'orders-count') {
-                animationInProgress.ordersSubmitted = true;
-            }
-            
-            // Add updating class for visual highlight
-            element.classList.add('updating');
-            
-            // Find highlight bar
-            const highlightBar = element.parentElement.querySelector('.stat-highlight');
-            if (highlightBar) {
-                highlightBar.classList.add('active');
-            }
-            
-            // Remove class after animation completes
-            setTimeout(() => {
-                element.classList.remove('updating');
-                if (highlightBar) {
-                    highlightBar.classList.remove('active');
-                }
-                
-                // Clear animation flag
-                if (elementId === 'customers-today') {
-                    animationInProgress.customersServedToday = false;
-                } else if (elementId === 'customers-total') {
-                    animationInProgress.customersEverServed = false;
-                } else if (elementId === 'orders-count') {
-                    animationInProgress.ordersSubmitted = false;
-                }
-            }, 5000); // 5-second animation
-        }
+        // Store interval ID in window object to keep it running
+        window.statsUpdateInterval = checkInterval;
     }
     
     /**

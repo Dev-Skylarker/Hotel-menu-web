@@ -16,10 +16,6 @@ const closeConfirmationBtn = document.getElementById('close-confirmation');
 const orderNumberSpan = document.getElementById('order-number');
 const currentOrdersContainer = document.getElementById('current-orders');
 
-// DOM Elements for search status
-const searchStatus = document.getElementById('search-status');
-const searchCount = document.querySelector('.search-count');
-
 // Current filter state
 let currentCategory = 'all';
 let currentSearchTerm = '';
@@ -88,55 +84,14 @@ function addEventListeners() {
     
     if (searchInput) {
         // Real-time search as user types
-        searchInput.addEventListener('input', (e) => {
+        searchInput.addEventListener('input', () => {
             // Update search term and filter in real time
             currentSearchTerm = searchInput.value.trim().toLowerCase();
+            filterMenuItems(currentCategory, currentSearchTerm);
             
-            // Show typing indicator
-            const searchInProgress = currentSearchTerm.length > 0;
-            
-            // Show search status immediately for feedback
-            if (searchStatus && searchInProgress) {
-                searchStatus.style.display = 'block';
-                searchCount.innerHTML = `<span class="search-in-progress"><i class="fas fa-circle-notch fa-spin"></i> Searching...</span>`;
-            } else if (searchStatus) {
-                searchStatus.style.display = 'none';
-            }
-            
-            // Immediately filter and update results
-            const results = filterMenuItems(currentCategory, currentSearchTerm);
-            
-            // Update UI - show/hide clear button
+            // Show clear button if there's text
             if (clearSearchBtn) {
-                clearSearchBtn.style.display = searchInProgress ? 'block' : 'none';
-            }
-            
-            // Update search status after results are displayed
-            if (searchStatus && searchInProgress) {
-                if (results.length === 0) {
-                    searchCount.innerHTML = 'No results found';
-                } else {
-                    searchCount.innerHTML = `Found ${results.length} ${results.length === 1 ? 'item' : 'items'}`;
-                }
-            }
-            
-            // Update any UI indicators for search results
-            updateFilterUI(currentCategory, currentSearchTerm);
-        });
-        
-        // Focus on search input triggers status
-        searchInput.addEventListener('focus', () => {
-            if (currentSearchTerm && searchStatus) {
-                searchStatus.style.display = 'block';
-            }
-        });
-        
-        // Lose focus hides status after delay
-        searchInput.addEventListener('blur', () => {
-            if (searchStatus) {
-                setTimeout(() => {
-                    searchStatus.style.display = 'none';
-                }, 200);
+                clearSearchBtn.style.display = currentSearchTerm ? 'block' : 'none';
             }
         });
         
@@ -151,21 +106,11 @@ function addEventListeners() {
     // Clear search button
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', () => {
-            // Clear search input
             searchInput.value = '';
             currentSearchTerm = '';
-            
-            // Update display immediately
             filterMenuItems(currentCategory, '');
-            
-            // Hide clear button
             clearSearchBtn.style.display = 'none';
-            
-            // Focus back on search input
             searchInput.focus();
-            
-            // Notify user
-            console.log('Search cleared');
         });
     }
     
@@ -242,45 +187,7 @@ function addEventListeners() {
 function handleSearch() {
     const searchTerm = searchInput.value.trim().toLowerCase();
     currentSearchTerm = searchTerm;
-    
-    // Show search status for feedback
-    if (searchStatus && currentSearchTerm) {
-        searchStatus.style.display = 'block';
-        searchCount.innerHTML = `<span class="search-in-progress"><i class="fas fa-circle-notch fa-spin"></i> Searching...</span>`;
-    } else if (searchStatus) {
-        searchStatus.style.display = 'none';
-    }
-    
-    // Clear search if empty
-    if (!searchTerm) {
-        const clearSearchBtn = document.getElementById('clear-search-btn');
-        if (clearSearchBtn) {
-            clearSearchBtn.style.display = 'none';
-        }
-    }
-    
-    // Perform search
-    const results = filterMenuItems(currentCategory, searchTerm);
-    
-    // Update search status after results are displayed
-    if (searchStatus && currentSearchTerm) {
-        if (results.length === 0) {
-            searchCount.innerHTML = 'No results found';
-        } else {
-            searchCount.innerHTML = `Found ${results.length} ${results.length === 1 ? 'item' : 'items'}`;
-        }
-        
-        // Hide status after a short delay
-        setTimeout(() => {
-            searchStatus.style.display = 'none';
-        }, 3000);
-    }
-    
-    // Track search for analytics
-    console.log(`Search performed: ${searchTerm}`);
-    
-    // Keep search input focused for additional searches
-    searchInput.focus();
+    filterMenuItems(currentCategory, searchTerm);
 }
 
 /**
@@ -315,65 +222,25 @@ function filterMenuItems(category, searchTerm = '') {
     }
     
     // Then filter by search term
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim() !== '') {
+        const lowerSearchTerm = searchTerm.toLowerCase().trim();
         filteredItems = filteredItems.filter(item => {
-            const name = item.name.toLowerCase();
-            const desc = item.description.toLowerCase();
-            const cat = item.category.toLowerCase();
-            
-            // Search in name, description, category, and ingredients
-            const nameMatch = name.includes(searchTerm);
-            const descMatch = desc.includes(searchTerm);
-            const catMatch = cat.includes(searchTerm);
-            
-            // Check ingredients if available
-            let ingredientsMatch = false;
-            if (item.ingredients && Array.isArray(item.ingredients)) {
-                ingredientsMatch = item.ingredients.some(ingredient => 
-                    ingredient.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            return nameMatch || descMatch || catMatch || ingredientsMatch;
+            return (
+                (item.name && item.name.toLowerCase().includes(lowerSearchTerm)) ||
+                (item.description && item.description.toLowerCase().includes(lowerSearchTerm)) ||
+                (item.category && item.category.toLowerCase().includes(lowerSearchTerm)) ||
+                (item.ingredients && Array.isArray(item.ingredients) && item.ingredients.some(ing => 
+                    ing.toLowerCase().includes(lowerSearchTerm)
+                ))
+            );
         });
     }
     
     // Display filtered items
     displayMenuItems(filteredItems);
     
-    // Show/hide no results message
-    toggleNoResultsMessage(filteredItems.length === 0);
-    
-    return filteredItems;
-}
-
-/**
- * Toggle the no results message
- * @param {boolean} show - Whether to show the message
- */
-function toggleNoResultsMessage(show) {
-    if (noResults) {
-        noResults.style.display = show ? 'block' : 'none';
-        
-        // If showing no results, customize the message based on filters
-        if (show) {
-            const heading = noResults.querySelector('h2');
-            const message = noResults.querySelector('p');
-            
-            if (heading && message) {
-                if (currentSearchTerm && currentCategory !== 'all') {
-                    heading.textContent = `No ${formatCategoryLabel(currentCategory)} items found`;
-                    message.textContent = `No items matching "${currentSearchTerm}" in ${formatCategoryLabel(currentCategory)}`;
-                } else if (currentSearchTerm) {
-                    heading.textContent = "No items found";
-                    message.textContent = `No items matching "${currentSearchTerm}"`;
-                } else {
-                    heading.textContent = "No items available";
-                    message.textContent = `No ${formatCategoryLabel(currentCategory)} items available at this time`;
-                }
-            }
-        }
-    }
+    // Update the UI to show active filters
+    updateFilterUI(category, searchTerm);
 }
 
 /**
@@ -399,20 +266,9 @@ function displayMenuItems(items) {
         noResults.style.display = 'none';
     }
     
-    // Determine if we need staggered animation (for search results)
-    const useAnimation = currentSearchTerm.length > 0;
-    
     // Create and append menu item elements
-    items.forEach((item, index) => {
+    items.forEach(item => {
         const menuItem = createMenuItemCard(item);
-        
-        // Add search result animation class if searching
-        if (useAnimation) {
-            menuItem.classList.add('search-result-item');
-            // Add staggered animation delay
-            menuItem.style.animationDelay = `${index * 30}ms`;
-        }
-        
         menuContainer.appendChild(menuItem);
     });
     
@@ -1203,96 +1059,23 @@ function orderNowDirectly(item) {
  * @param {string} searchTerm - Active search term
  */
 function updateFilterUI(category, searchTerm) {
-    // Update page title to reflect search
-    let pageTitle = "Menu - Campus Cafe";
-    
-    if (searchTerm && category !== 'all') {
-        pageTitle = `${searchTerm} in ${formatCategoryLabel(category)} - Campus Cafe`;
-    } else if (searchTerm) {
-        pageTitle = `Search: ${searchTerm} - Campus Cafe`;
-    } else if (category !== 'all') {
-        pageTitle = `${formatCategoryLabel(category)} - Campus Cafe`;
+    // Update search input
+    if (searchInput && searchTerm !== searchInput.value) {
+        searchInput.value = searchTerm;
     }
     
-    document.title = pageTitle;
-    
-    // Update search input placeholder based on category
-    if (searchInput && category !== 'all') {
-        searchInput.placeholder = `Search ${formatCategoryLabel(category)}...`;
-    } else if (searchInput) {
-        searchInput.placeholder = "Search our menu...";
+    // Update clear search button visibility
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    if (clearSearchBtn) {
+        clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
     }
     
-    // Update menu container header if it exists
-    const menuHeader = document.querySelector('.menu-items h2');
-    if (menuHeader) {
-        if (searchTerm && category !== 'all') {
-            menuHeader.textContent = `${formatCategoryLabel(category)} - Search: "${searchTerm}"`;
-        } else if (searchTerm) {
-            menuHeader.textContent = `Search Results: "${searchTerm}"`;
-        } else if (category !== 'all') {
-            menuHeader.textContent = formatCategoryLabel(category);
+    // Update category tabs
+    menuTabs.forEach(tab => {
+        if (tab.dataset.category === category) {
+            tab.classList.add('active');
         } else {
-            menuHeader.textContent = "All Menu Items";
+            tab.classList.remove('active');
         }
-    }
-    
-    // Highlight matching text in search results if there's a search term
-    if (searchTerm) {
-        highlightSearchMatches(searchTerm);
-    }
-}
-
-/**
- * Highlight search term matches in the menu items
- * @param {string} searchTerm - The search term to highlight
- */
-function highlightSearchMatches(searchTerm) {
-    if (!searchTerm) return;
-    
-    // Get all menu item names and descriptions
-    const itemNames = document.querySelectorAll('.menu-item-name');
-    const itemDescriptions = document.querySelectorAll('.menu-item-description');
-    
-    // Function to highlight text while preserving HTML structure
-    const highlightText = (element, term) => {
-        if (!element) return;
-        
-        const text = element.textContent;
-        if (!text) return;
-        
-        // Case insensitive search
-        const regex = new RegExp(`(${term})`, 'gi');
-        const highlightedText = text.replace(regex, '<span class="highlight-match">$1</span>');
-        
-        // Only update if there are matches
-        if (text !== highlightedText) {
-            element.innerHTML = highlightedText;
-        }
-    };
-    
-    // Highlight names
-    itemNames.forEach(name => highlightText(name, searchTerm));
-    
-    // Highlight descriptions
-    itemDescriptions.forEach(desc => highlightText(desc, searchTerm));
-    
-    // Add style for highlighted text if it doesn't exist
-    if (!document.getElementById('highlight-style')) {
-        const style = document.createElement('style');
-        style.id = 'highlight-style';
-        style.textContent = `
-            .highlight-match {
-                background-color: rgba(var(--primary-color-rgb), 0.3);
-                padding: 0 2px;
-                border-radius: 3px;
-                font-weight: bold;
-            }
-            .dark-mode .highlight-match {
-                background-color: rgba(var(--primary-color-rgb), 0.5);
-                color: #fff;
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    });
 }

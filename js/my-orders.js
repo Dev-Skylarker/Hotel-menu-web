@@ -145,100 +145,245 @@ function handleStorageChange(e) {
 }
 
 /**
- * Load orders from localStorage
+ * Load and display all orders
  */
 function loadOrders() {
-    // Get orders from storage
-    const allOrders = storageManager.getOrders() || [];
+    // Get orders from localStorage
+    const orders = storageManager.getOrders();
     
-    // Filter orders
-    const currentOrders = allOrders.filter(order => 
-        order.status === 'pending' || order.status === 'ready'
-    );
-    const pastOrders = allOrders.filter(order => 
-        order.status === 'completed' || order.status === 'cancelled'
+    // Sort orders by date (newest first)
+    const sortedOrders = [...orders].sort((a, b) => 
+        new Date(b.orderTime) - new Date(a.orderTime)
     );
     
-    // Update stats
-    document.getElementById('total-orders').textContent = allOrders.length;
-    document.getElementById('pending-orders').textContent = 
-        allOrders.filter(order => order.status === 'pending').length;
-    document.getElementById('completed-orders').textContent = 
-        allOrders.filter(order => order.status === 'completed').length;
+    // Filter active orders (pending or ready)
+    const activeOrders = sortedOrders.filter(order => 
+        order.status === 'pending' || order.status === 'ready');
     
-    // Check if there are any orders to display
-    if (allOrders.length === 0) {
-        // Show empty state
+    // Check if there are any active orders
+    if (activeOrders.length === 0) {
         displayEmptyState();
-        
-        // Hide clear buttons
-        if (clearCompletedBtn) clearCompletedBtn.style.display = 'none';
-        if (clearAllOrdersBtn) clearAllOrdersBtn.style.display = 'none';
         return;
     }
     
-    // Show clear buttons when we have orders
-    if (clearCompletedBtn) clearCompletedBtn.style.display = 'block';
-    if (clearAllOrdersBtn) clearAllOrdersBtn.style.display = 'block';
-    
-    // Clear container
-    if (ordersContainer) {
-        ordersContainer.innerHTML = '';
-    }
-    
-    // Display current orders
-    if (currentOrders.length > 0) {
-        // Add each order
-        currentOrders.forEach(order => {
-            if (ordersContainer) {
-                const orderCard = createOrderCard(order);
-                ordersContainer.appendChild(orderCard);
-            }
-        });
-    } else {
-        // No current orders - show message
-        if (ordersContainer) {
-            const noCurrentOrders = document.createElement('div');
-            noCurrentOrders.className = 'empty-cart';
-            noCurrentOrders.innerHTML = `
-                <i class="fas fa-check-circle"></i>
-                <h3>No current orders</h3>
-                <p>You don't have any pending or ready orders at the moment</p>
-                <a href="menu.html" class="btn btn-primary">Browse Menu</a>
-            `;
-            ordersContainer.appendChild(noCurrentOrders);
-        }
-    }
-    
-    // Display past orders
-    displayPastOrders(pastOrders);
+    // Display active orders
+    displayOrders(activeOrders);
 }
 
 /**
- * Display empty state when no orders are available
+ * Display all orders
+ * @param {Array} orders - Array of order objects
  */
-function displayEmptyState() {
+function displayOrders(orders) {
     if (!ordersContainer) return;
     
     // Clear container
     ordersContainer.innerHTML = '';
     
-    // Create empty state message using the same style as cart.js
-    const emptyState = document.createElement('div');
-    emptyState.className = 'empty-cart';
-    emptyState.innerHTML = `
-        <i class="fas fa-shopping-basket"></i>
-        <h3>You don't have any orders yet</h3>
-        <p>Add items from our menu to get started!</p>
-        <a href="menu.html" class="btn btn-primary">Browse Menu</a>
+    // Add each order
+    orders.forEach(order => {
+        const orderCard = createOrderCard(order);
+        ordersContainer.appendChild(orderCard);
+    });
+}
+
+/**
+ * Create an order card element
+ * @param {Object} order - Order object
+ * @returns {HTMLElement} - Order card element
+ */
+function createOrderCard(order) {
+    const orderCard = document.createElement('div');
+    orderCard.className = 'order-card';
+    
+    // Format dates
+    const orderDate = new Date(order.orderTime);
+    const formattedOrderDate = orderDate.toLocaleString([], { 
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const pickupTime = new Date(order.estimatedPickupTime);
+    const formattedPickupTime = pickupTime.toLocaleTimeString([], { 
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Determine status class
+    let statusClass = '';
+    switch (order.status) {
+        case 'pending':
+            statusClass = 'status-pending';
+            break;
+        case 'ready':
+            statusClass = 'status-ready';
+            break;
+        case 'completed':
+            statusClass = 'status-completed';
+            break;
+        case 'cancelled':
+            statusClass = 'status-cancelled';
+            break;
+    }
+    
+    // Check if order can be cancelled (only pending orders)
+    const canCancel = order.status === 'pending';
+    
+    // Check if order can be restored (only cancelled orders)
+    const canRestore = order.status === 'cancelled';
+    
+    // Check if order can be marked as collected (only ready orders)
+    const canMarkCollected = order.status === 'ready';
+    
+    // Format payment method
+    let paymentMethod = order.paymentMethod || 'cash';
+    let formattedPaymentMethod = '';
+    
+    switch (paymentMethod) {
+        case 'cash':
+            formattedPaymentMethod = 'On Pickup';
+            break;
+        case 'mpesa':
+            formattedPaymentMethod = 'On Pickup';
+            break;
+        case 'card':
+            formattedPaymentMethod = 'On Pickup';
+            break;
+        case 'paypal':
+            formattedPaymentMethod = 'On Pickup';
+            break;
+        case 'bitcoin':
+            formattedPaymentMethod = 'On Pickup';
+            break;
+        default:
+            formattedPaymentMethod = 'On Pickup';
+    }
+    
+    // Create HTML
+    orderCard.innerHTML = `
+        <div class="order-header">
+            <h3>Order #${order.id}</h3>
+            <span class="order-status ${statusClass}">${order.status}</span>
+        </div>
+        <div class="order-details">
+            <p><strong>${order.item.name}</strong></p>
+            <p>Quantity: ${order.quantity}</p>
+            <p>Price: ${window.formatters?.currency ? window.formatters.currency(order.item.price * order.quantity, true) : `KSh ${(order.item.price * order.quantity).toFixed(2)}`}</p>
+            <p><strong>Payment:</strong> ${formattedPaymentMethod}</p>
+            <p><strong>Customer:</strong> ${order.customerName || 'Guest'}</p>
+            ${order.admissionNumber ? `<p><strong>Admission:</strong> ${order.admissionNumber}</p>` : ''}
+            <p><strong>Ordered:</strong> ${formattedOrderDate}</p>
+            <p><strong>Est. Pickup:</strong> ${formattedPickupTime}</p>
+            ${order.collectionMethod ? `
+            <p><strong>Collection:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>
+            <p><strong>Location:</strong> ${order.collectionLocation || 'Not specified'}</p>
+            ` : ''}
+        </div>
+        <div class="order-footer">
+            <a href="order-details.html?id=${order.id}" class="btn btn-small btn-primary">View Details</a>
+            ${canCancel ? `<button class="btn btn-small btn-danger cancel-order-btn" data-id="${order.id}">Cancel</button>` : ''}
+            ${canRestore ? `<button class="btn btn-small btn-success restore-order-btn" data-id="${order.id}">Undo Cancel</button>` : ''}
+            ${canMarkCollected ? `<button class="btn btn-small btn-success mark-collected-btn" data-id="${order.id}">Mark as Collected</button>` : ''}
+        </div>
     `;
     
-    // Add empty state to container
-    ordersContainer.appendChild(emptyState);
+    // Add event listener for cancel button
+    if (canCancel) {
+        const cancelBtn = orderCard.querySelector('.cancel-order-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to cancel this order?')) {
+                    cancelOrder(order.id);
+                }
+            });
+        }
+    }
     
-    // Hide clear buttons when no orders
-    if (clearCompletedBtn) clearCompletedBtn.style.display = 'none';
-    if (clearAllOrdersBtn) clearAllOrdersBtn.style.display = 'none';
+    // Add event listener for restore button
+    if (canRestore) {
+        const restoreBtn = orderCard.querySelector('.restore-order-btn');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', () => {
+                restoreOrder(order.id);
+            });
+        }
+    }
+    
+    // Add event listener for mark as collected button
+    if (canMarkCollected) {
+        const collectBtn = orderCard.querySelector('.mark-collected-btn');
+        if (collectBtn) {
+            collectBtn.addEventListener('click', () => {
+                markAsCollected(order.id);
+            });
+        }
+    }
+    
+    return orderCard;
+}
+
+/**
+ * Display empty state when no orders
+ * Shows different messages and options based on whether there are past orders
+ * or no orders at all. Provides buttons to view menu, cart, and past orders.
+ */
+function displayEmptyState() {
+    if (!ordersContainer) return;
+    
+    // Get all orders
+    const allOrders = storageManager.getOrders();
+    
+    // Check if there are past orders (completed or cancelled)
+    const pastOrders = allOrders.filter(order => 
+        order.status === 'completed' || order.status === 'cancelled');
+    
+    // Check if we have any completed orders
+    const hasCompletedOrders = pastOrders.some(order => order.status === 'completed');
+    
+    ordersContainer.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <h3>${allOrders.length === 0 ? 'No Orders Found' : 'No Pending Orders'}</h3>
+            <p>${allOrders.length === 0 
+                ? 'You don\'t have any orders yet.' 
+                : 'You don\'t have any pending orders at the moment.'}</p>
+            
+            <div class="empty-state-actions">
+                <p class="action-prompt">What would you like to do?</p>
+                <div class="empty-action-buttons">
+                    <a href="menu.html" class="btn btn-primary"><i class="fas fa-utensils"></i> View Menu</a>
+                    <a href="cart.html" class="btn btn-secondary"><i class="fas fa-shopping-cart"></i> View Cart</a>
+                    ${pastOrders.length > 0 
+                        ? `<button id="view-past-orders-btn" class="btn btn-info"><i class="fas fa-history"></i> View Past Orders</button>` 
+                        : ''}
+                </div>
+            </div>
+            
+            ${allOrders.length === 0 ? `
+            <div class="note-container">
+                <div class="note">
+                    <p><i class="fas fa-info-circle"></i> Orders placed through the menu or cart will appear here. You can track their status and receive updates until they're ready for collection.</p>
+                </div>
+            </div>` : ''}
+        </div>
+        ${pastOrders.length > 0 
+            ? `<div id="past-orders-container" class="orders-container" style="display: none;">
+                <h3 class="section-title">${hasCompletedOrders ? 'Completed Orders' : 'Past Orders'}</h3>
+                <div class="past-orders-list"></div>
+              </div>` 
+            : ''}
+    `;
+    
+    // Add event listener for View Past Orders button
+    const viewPastOrdersBtn = document.getElementById('view-past-orders-btn');
+    if (viewPastOrdersBtn) {
+        viewPastOrdersBtn.addEventListener('click', () => {
+            displayPastOrders(pastOrders);
+        });
+    }
 }
 
 /**
@@ -262,10 +407,8 @@ function displayPastOrders(pastOrders) {
     // Check if there are any past orders
     if (pastOrders.length === 0) {
         pastOrdersList.innerHTML = `
-            <div class="empty-cart">
-                <i class="fas fa-history"></i>
-                <h3>No past orders found</h3>
-                <p>Your completed and cancelled orders will appear here</p>
+            <div class="empty-state">
+                <p>No past orders found.</p>
             </div>
         `;
         return;
@@ -711,144 +854,6 @@ function showThankYouModal(orderId) {
     if (modal) {
         modal.style.display = 'block';
     }
-}
-
-/**
- * Create an order card element
- * @param {Object} order - Order object
- * @returns {HTMLElement} - Order card element
- */
-function createOrderCard(order) {
-    const orderCard = document.createElement('div');
-    orderCard.className = 'order-card';
-    
-    // Format dates
-    const orderDate = new Date(order.orderTime);
-    const formattedOrderDate = orderDate.toLocaleString([], { 
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    const pickupTime = new Date(order.estimatedPickupTime);
-    const formattedPickupTime = pickupTime.toLocaleTimeString([], { 
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    // Determine status class
-    let statusClass = '';
-    switch (order.status) {
-        case 'pending':
-            statusClass = 'status-pending';
-            break;
-        case 'ready':
-            statusClass = 'status-ready';
-            break;
-        case 'completed':
-            statusClass = 'status-completed';
-            break;
-        case 'cancelled':
-            statusClass = 'status-cancelled';
-            break;
-    }
-    
-    // Check if order can be cancelled (only pending orders)
-    const canCancel = order.status === 'pending';
-    
-    // Check if order can be restored (only cancelled orders)
-    const canRestore = order.status === 'cancelled';
-    
-    // Check if order can be marked as collected (only ready orders)
-    const canMarkCollected = order.status === 'ready';
-    
-    // Format payment method
-    let paymentMethod = order.paymentMethod || 'cash';
-    let formattedPaymentMethod = '';
-    
-    switch (paymentMethod) {
-        case 'cash':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'mpesa':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'card':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'paypal':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'bitcoin':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        default:
-            formattedPaymentMethod = 'On Pickup';
-    }
-    
-    // Create HTML
-    orderCard.innerHTML = `
-        <div class="order-header">
-            <h3>Order #${order.id}</h3>
-            <span class="order-status ${statusClass}">${order.status}</span>
-        </div>
-        <div class="order-details">
-            <p><strong>${order.item.name}</strong></p>
-            <p>Quantity: ${order.quantity}</p>
-            <p>Price: ${window.formatters?.currency ? window.formatters.currency(order.item.price * order.quantity, true) : `KSh ${(order.item.price * order.quantity).toFixed(2)}`}</p>
-            <p><strong>Payment:</strong> ${formattedPaymentMethod}</p>
-            <p><strong>Customer:</strong> ${order.customerName || 'Guest'}</p>
-            ${order.admissionNumber ? `<p><strong>Admission:</strong> ${order.admissionNumber}</p>` : ''}
-            <p><strong>Ordered:</strong> ${formattedOrderDate}</p>
-            <p><strong>Est. Pickup:</strong> ${formattedPickupTime}</p>
-            ${order.collectionMethod ? `
-            <p><strong>Collection:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>
-            <p><strong>Location:</strong> ${order.collectionLocation || 'Not specified'}</p>
-            ` : ''}
-        </div>
-        <div class="order-footer">
-            <a href="order-details.html?id=${order.id}" class="btn btn-small btn-primary">View Details</a>
-            ${canCancel ? `<button class="btn btn-small btn-danger cancel-order-btn" data-id="${order.id}">Cancel</button>` : ''}
-            ${canRestore ? `<button class="btn btn-small btn-success restore-order-btn" data-id="${order.id}">Undo Cancel</button>` : ''}
-            ${canMarkCollected ? `<button class="btn btn-small btn-success mark-collected-btn" data-id="${order.id}">Mark as Collected</button>` : ''}
-        </div>
-    `;
-    
-    // Add event listener for cancel button
-    if (canCancel) {
-        const cancelBtn = orderCard.querySelector('.cancel-order-btn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to cancel this order?')) {
-                    cancelOrder(order.id);
-                }
-            });
-        }
-    }
-    
-    // Add event listener for restore button
-    if (canRestore) {
-        const restoreBtn = orderCard.querySelector('.restore-order-btn');
-        if (restoreBtn) {
-            restoreBtn.addEventListener('click', () => {
-                restoreOrder(order.id);
-            });
-        }
-    }
-    
-    // Add event listener for mark as collected button
-    if (canMarkCollected) {
-        const collectBtn = orderCard.querySelector('.mark-collected-btn');
-        if (collectBtn) {
-            collectBtn.addEventListener('click', () => {
-                markAsCollected(order.id);
-            });
-        }
-    }
-    
-    return orderCard;
 }
 
 // Execute this immediately when testing with the specific order from the screenshot

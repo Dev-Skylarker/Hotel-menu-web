@@ -225,9 +225,7 @@
 </head>
 <body class="admin-body dark-mode">
     <div class="admin-wrapper">
-        <div class="sidebar-overlay"></div>
-        <aside class="admin-sidebar">
-            <button class="sidebar-close" aria-label="Close sidebar"><i class="fas fa-times"></i></button>
+        <nav class="admin-sidebar">
             <div class="sidebar-header">
                 <img src="../assets/logo.png" alt="Campus Cafe Logo">
                 <h2>Admin Panel</h2>
@@ -259,17 +257,13 @@
                     <i class="fas fa-external-link-alt"></i> View Site
                 </a>
             </div>
-        </aside>
+        </nav>
         
         <main class="admin-content">
             <header class="admin-header">
-                <div class="header-title">
-                    <button class="mobile-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
-                    <p>Welcome back, <span id="admin-name">Admin</span></p>
-                </div>
+<div class="header-title">
+    <h1>Welcome to orders viewing</h1>
+</div>
                 <div class="header-actions">
                     <div class="refresh-container">
                         <button id="refresh-data" class="btn btn-small btn-secondary">
@@ -342,27 +336,27 @@
                     <div class="order-filters">
                         <div class="filter-group">
                             <label for="date-filter">Date:</label>
-                            <input type="date" id="date-filter" class="filter-input">
-                        </div>
-                        <div class="filter-group">
-                            <label for="collection-type-filter">Collection Type:</label>
-                            <select id="collection-type-filter" class="filter-input">
-                                <option value="all">All Types</option>
-                                <option value="pickup">Pickup at Counter</option>
-                                <option value="table">Serve at Table</option>
+                            <select id="date-filter">
+                                <option value="all">All Time</option>
+                                <option value="today" selected>Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
                             </select>
                         </div>
-                        <div class="filter-group search-group">
+                        
+                        <div class="filter-group">
                             <label for="search-orders">Search:</label>
-                            <div class="search-input-container">
-                                <input type="text" id="search-orders" placeholder="Order ID, Name, Admission #" class="filter-input">
-                                <button id="clear-search-admin" class="clear-search-btn"><i class="fas fa-times"></i></button>
-                            </div>
+                            <input type="text" id="search-orders" placeholder="Order ID, customer name...">
                         </div>
-                        <div class="filter-actions">
-                            <button id="apply-filters" class="btn btn-sm btn-primary">Apply Filters</button>
-                            <button id="clear-filters" class="btn btn-sm btn-secondary">Clear Filters</button>
-                        </div>
+                        
+                        <button id="apply-filters" class="btn btn-primary btn-small">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        
+                        <button id="clear-filters" class="btn btn-secondary btn-small">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
                     </div>
                     
                     <!-- All Orders Tab -->
@@ -386,34 +380,27 @@
                                 <thead>
                                     <tr>
                                         <th class="checkbox-cell">
-                                            <input type="checkbox" id="select-all-orders">
+                                            <input type="checkbox" id="select-all">
                                         </th>
                                         <th>Order ID</th>
                                         <th>Customer</th>
-                                        <th class="hide-on-mobile">Date & Time</th>
-                                        <th class="hide-on-mobile">Collection</th>
                                         <th>Items</th>
                                         <th>Total</th>
                                         <th>Status</th>
+                                        <th>Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="all-orders-body">
-                                    <!-- Orders will be loaded here -->
+                                    <!-- Orders will be loaded dynamically -->
                                 </tbody>
                             </table>
-                            <div id="no-orders-message" class="empty-state" style="display: none;">
-                                <i class="fas fa-receipt"></i>
-                                <h3>No Pending Orders!</h3>
-                                <p>Try our meals now!</p>
-                                <div class="empty-state-actions">
-                                    <button id="refresh-empty-orders" class="btn btn-primary">
-                                        <i class="fas fa-sync"></i> Refresh
-                                    </button>
-                                    <button id="go-to-menu-manager" class="btn btn-secondary">
-                                        <i class="fas fa-utensils"></i> Manage Menu
-                                    </button>
-                                </div>
+                            <div id="no-orders-message" class="empty-state">
+                                <i class="fas fa-shopping-cart"></i>
+                                <p>No orders found for the selected criteria</p>
+                                <button id="reset-filters" class="btn btn-primary btn-small">
+                                    Reset Filters
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -452,16 +439,7 @@
                             </table>
                             <div id="no-pending-orders" class="empty-state">
                                 <i class="fas fa-check-circle"></i>
-                                <h3>No pending orders at the moment!</h3>
-                                <p>Try our meals today!</p>
-                                <div class="empty-state-actions">
-                                    <a href="../menu.html" class="btn btn-primary">
-                                        <i class="fas fa-utensils"></i> Browse Menu
-                                    </a>
-                                    <a href="../cart.html" class="btn btn-secondary">
-                                        <i class="fas fa-shopping-cart"></i> View Cart
-                                    </a>
-                                </div>
+                                <p>No pending orders at the moment!</p>
                             </div>
                         </div>
                     </div>
@@ -497,13 +475,7 @@
                             </table>
                             <div id="no-completed-orders" class="empty-state">
                                 <i class="fas fa-clipboard-check"></i>
-                                <h3>No completed orders yet</h3>
-                                <p>Completed orders will appear here.</p>
-                                <div class="empty-state-actions">
-                                    <a href="../menu.html" class="btn btn-primary">
-                                        <i class="fas fa-utensils"></i> Browse Menu
-                                    </a>
-                                </div>
+                                <p>No completed orders yet</p>
                             </div>
                         </div>
                     </div>
@@ -605,73 +577,6 @@
                         </a>
                     </div>
                 </div>
-
-                <!-- Dashboard sections -->
-                <div class="dashboard-sections">
-                    <!-- Sales Overview -->
-                    <div class="dashboard-section">
-                        <h2>Sales Overview</h2>
-                        <div class="chart-container">
-                            <canvas id="sales-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Item Statistics -->
-                    <div class="dashboard-section">
-                        <h2>Menu Item Statistics</h2>
-                        <div class="dashboard-metrics item-metrics">
-                            <div class="metric-card popular-items">
-                                <div class="metric-label">Most Popular Items</div>
-                                <div class="metric-content" id="popular-items-list">
-                                    <div class="loader"></div>
-                                </div>
-                            </div>
-                            <div class="metric-card low-stock">
-                                <div class="metric-label">Low Stock Alert</div>
-                                <div class="metric-content" id="low-stock-items">
-                                    <div class="loader"></div>
-                                </div>
-                            </div>
-                            <div class="metric-card category-performance">
-                                <div class="metric-label">Category Performance</div>
-                                <div class="metric-content" id="category-performance">
-                                    <div class="loader"></div>
-                                </div>
-                            </div>
-                            <div class="metric-card revenue-by-item">
-                                <div class="metric-label">Revenue by Item</div>
-                                <div class="metric-content" id="revenue-by-item">
-                                    <div class="loader"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="items-performance-chart"></canvas>
-                        </div>
-                        <div class="dashboard-actions">
-                            <a href="menu-manager.html" class="btn btn-primary">
-                                <i class="fas fa-utensils"></i> Manage Menu Items
-                            </a>
-                            <button id="refresh-item-stats" class="btn btn-secondary">
-                                <i class="fas fa-sync"></i> Refresh Item Stats
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Category Performance -->
-                    <div class="dashboard-section">
-                        <h2>Menu Performance</h2>
-                        <div class="chart-container">
-                            <canvas id="category-chart"></canvas>
-                        </div>
-                        
-                        <div class="dashboard-actions">
-                            <a href="manage-menu.html" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add New Menu Item
-                            </a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
@@ -709,18 +614,6 @@
                 <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
             </div>
         </div>
-    </div>
-
-    <div class="mobile-action-bar">
-        <button id="refresh-data-mobile" class="btn btn-primary btn-sm">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-        <button id="add-item-mobile" class="btn btn-success btn-sm">
-            <i class="fas fa-plus"></i> Add Item
-        </button>
-        <button id="toggle-sidebar-mobile" class="btn btn-secondary btn-sm">
-            <i class="fas fa-bars"></i> Menu
-        </button>
     </div>
 
     <script src="../js/utils/theme.js"></script>
