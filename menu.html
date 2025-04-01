@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="icon1.png" type="image/png">
 </head>
-<body class="light-mode">
+<body class="dark-mode">
     <header>
         <div class="container">
             <div class="logo">
@@ -51,15 +51,20 @@
                 <p>Delicious and affordable options to fuel your day on campus</p>
                 
                 <div class="search-container">
-                    <input type="text" id="menu-search" placeholder="Search our menu...">
+                    <input type="text" id="menu-search" placeholder="Search our menu..." autocomplete="off">
+                    <div id="search-status" class="search-status" style="display: none;">
+                        <span class="search-count"></span>
+                    </div>
+                    <button id="clear-search-btn" style="display: none;"><i class="fas fa-times"></i></button>
                     <button id="search-btn"><i class="fas fa-search"></i></button>
                 </div>
                 
                 <div class="menu-tabs">
                     <button class="menu-tab active" data-category="all">All</button>
-                    <button class="menu-tab" data-category="appetizers">Breakfast</button>
+                    <button class="menu-tab" data-category="breakfast">Breakfast</button>
+                    <button class="menu-tab" data-category="lunch">Lunch</button>
                     <button class="menu-tab" data-category="main-courses">Main Courses</button>
-                    <button class="menu-tab" data-category="desserts">Desserts</button>
+                    <button class="menu-tab" data-category="snacks">Snacks</button>
                     <button class="menu-tab" data-category="drinks">Drinks</button>
                 </div>
             </div>
@@ -181,6 +186,7 @@
 
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
+    <script src="js/utils/currency.js"></script>
     <script src="js/utils/stats.js"></script>
     <script>
         // Update the cart badge on page load and periodically

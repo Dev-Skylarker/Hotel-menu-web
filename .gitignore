@@ -1,0 +1,68 @@
+# Deployment
+.vercel
+.netlify
+.firebase
+
+# Sensitive configuration files
+js/utils/env.js
+js/utils/credentials.js
+DEPLOYMENT.md
+.env
+.env.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Distribution directory
+dist/
+build/
+
+# Cache directories
+.npm
+.eslintcache
+.cache
+.parcel-cache
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Ignore docs folder containing explanations
+/docs/
+
+# Ignore changelog file
+CHANGELOG.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies and build outputs
+/node_modules/
+/dist/
+/build/

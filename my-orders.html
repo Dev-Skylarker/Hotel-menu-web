@@ -9,6 +9,10 @@
     <link rel="icon" href="icon1.png" type="image/png">
     <style>
         /* My Orders specific styles */
+        :root {
+            --primary-color-rgb: 190, 0, 39; /* RGB values for the primary color */
+        }
+        
         .my-orders-section {
             padding: 2rem 0;
             min-height: 60vh;
@@ -27,6 +31,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
         }
         
         .order-card:hover {
@@ -88,6 +93,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .empty-state {
@@ -105,9 +112,75 @@
             display: block;
         }
         
+        .empty-state h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        
         .empty-state p {
             margin-bottom: 1.5rem;
             font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+        
+        .empty-state-actions {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: rgba(var(--primary-color-rgb), 0.05);
+            border-radius: 8px;
+            display: inline-block;
+            min-width: 80%;
+        }
+        
+        .action-prompt {
+            font-weight: 600;
+            margin-bottom: 1rem !important;
+            color: var(--text-color) !important;
+            font-size: 1.2rem !important;
+        }
+        
+        .empty-action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .empty-action-buttons .btn {
+            min-width: 140px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .note-container {
+            margin-top: 2rem;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .note {
+            padding: 1rem;
+            background-color: rgba(var(--primary-color-rgb), 0.1);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        
+        .note p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        .note i {
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            display: inline-block;
+            color: var(--primary-color);
         }
 
         /* My Orders Page Styles */
@@ -126,71 +199,193 @@
         .orders-container {
             margin-bottom: 3rem;
         }
-
-        .order-card {
-            background-color: var(--background-color);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-            padding: 1.5rem;
-        }
-
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.75rem;
-        }
-
-        .order-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 100px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .status-pending {
-            background-color: #fcf8e3;
-            color: #8a6d3b;
-        }
-
-        .status-ready {
-            background-color: #d9edf7;
-            color: #31708f;
-        }
-
-        .status-completed {
-            background-color: #dff0d8;
-            color: #3c763d;
-        }
-
-        .status-cancelled {
-            background-color: #f2dede;
-            color: #a94442;
-        }
-
-        .order-details {
-            margin-bottom: 1.5rem;
-        }
-
-        .order-details p {
-            margin-bottom: 0.5rem;
-        }
-
-        .order-footer {
-            display: flex;
-            gap: 0.75rem;
+        
+        /* Past Orders Styles */
+        #past-orders-container {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
         }
         
-        .restore-order-btn {
-            background-color: var(--kenya-green);
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .section-title:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 5px;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+        
+        .mark-collected-btn {
+            background-color: var(--kenya-green, #27ae60);
+        }
+        
+        .mark-collected-btn:hover {
+            background-color: var(--kenya-green-dark, #219653);
+        }
+        
+        /* View Past Orders button */
+        .btn-info {
+            background-color: var(--info-color, #17a2b8);
             color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        
+        /* Thank You Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background-color: var(--bg-card);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: slideIn 0.3s;
+        }
+        
+        .close-modal {
+            position: absolute;
+            right: 1.5rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        
+        .close-modal:hover {
+            color: var(--primary-color);
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        #thank-you-modal .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        #thank-you-modal .success-icon {
+            font-size: 4rem;
+            color: var(--success-color, #28a745);
+            margin-bottom: 1rem;
+        }
+        
+        /* Message Alert Styles */
+        .message-alert {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            max-width: 80%;
+        }
+        
+        .message-alert.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .order-card .order-details {
+            max-height: 250px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        
+        /* Clear All button styles */
+        #clear-all-orders-btn {
+            background-color: var(--kenya-red, #dd2c00);
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        
+        #clear-all-orders-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        /* Empty Cart Styles */
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1rem;
+            margin-top: 2rem;
+            background-color: var(--bg-card, #ffffff);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .empty-cart i {
+            font-size: 3.5rem;
+            color: var(--text-light, #6c757d);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        
+        .empty-cart h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-color, #333);
+        }
+        
+        .empty-cart p {
+            margin-bottom: 1.5rem;
+            color: var(--text-light, #6c757d);
+        }
+        
+        .empty-cart .btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
         }
     </style>
 </head>
-<body class="light-mode">
+<body class="dark-mode">
     <header>
         <div class="container">
             <div class="logo">
@@ -238,6 +433,7 @@
                 <div class="orders-header">
                     <h2>Your Orders</h2>
                     <div class="order-actions">
+                        <button id="clear-all-orders-btn" class="btn btn-danger">Clear All</button>
                         <button id="clear-completed-btn" class="btn btn-secondary">Clear Completed/Cancelled</button>
                     </div>
                 </div>
@@ -295,6 +491,9 @@
                         <li><span id="orders-count">0</span> orders submitted</li>
                     </ul>
                 </div>
+                <div class="footer-admin">
+                    <a href="admin/login.html" class="btn btn-small">Admin Login</a>
+                </div>
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2023 Campus Cafe. All rights reserved.</p>
@@ -302,7 +501,9 @@
         </div>
     </footer>
 
+    <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
+    <script src="js/utils/currency.js"></script>
     <script src="js/utils/stats.js"></script>
     <script>
         // Update the cart badge on page load and periodically
@@ -340,8 +541,6 @@
             });
         });
     </script>
-    <script src="js/theme.js"></script>
-    <script src="js/nav.js"></script>
     <script src="js/my-orders.js"></script>
 </body>
 </html> 

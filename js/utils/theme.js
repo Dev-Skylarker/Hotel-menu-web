@@ -16,7 +16,7 @@ const themeManager = (function() {
      * Initialize theme manager
      */
     function init() {
-        // Load saved theme preference or use system preference
+        // Load saved theme preference or use dark mode by default
         loadTheme();
         
         // Add event listeners to theme toggles
@@ -81,7 +81,7 @@ const themeManager = (function() {
     }
     
     /**
-     * Load saved theme or use system preference
+     * Load saved theme or use dark mode by default
      */
     function loadTheme() {
         // Check if user has saved preference
@@ -91,20 +91,14 @@ const themeManager = (function() {
             // Use saved preference
             setTheme(savedTheme);
         } else {
-            // Use system preference
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                setTheme(DARK_CLASS);
-            } else {
-                setTheme(LIGHT_CLASS);
-            }
+            // Use dark mode as default
+            setTheme(DARK_CLASS);
             
-            // Listen for system theme changes
+            // Still listen for system theme changes if needed
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                    if (e.matches) {
-                        setTheme(DARK_CLASS);
-                    } else {
-                        setTheme(LIGHT_CLASS);
+                    if (!localStorage.getItem(THEME_KEY)) {
+                        setTheme(DARK_CLASS); // Keep dark mode even if system changes
                     }
                 });
             }

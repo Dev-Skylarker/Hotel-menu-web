@@ -200,8 +200,17 @@ function handleSearch() {
 function handleLogout(e) {
     e.preventDefault();
     
+    // Add a fade-out effect to the body
+    document.body.style.opacity = '0.5';
+    document.body.style.transition = 'opacity 0.5s ease';
+    
+    // Log the user out
     authManager.logout();
-    window.location.href = 'login.html';
+    
+    // Redirect to login page after a short delay for the animation
+    setTimeout(() => {
+        window.location.href = 'login.html';
+    }, 500);
 }
 
 /**
@@ -323,9 +332,16 @@ function displayMenuItems(items) {
         row.innerHTML = `
             <td>${escapeHtml(item.name)}</td>
             <td>${categoryLabel}</td>
-            <td>$${item.price.toFixed(2)}</td>
+            <td>${formatCurrency(item.price)}</td>
             <td class="image-cell">${imageHtml}</td>
             <td>${item.featured ? '<span class="featured-badge">Featured</span>' : 'No'}</td>
+            <td>
+                <button type="button" class="toggle-available-btn ${item.available !== false ? 'available' : 'unavailable'}" title="${item.available !== false ? 'Mark as unavailable' : 'Mark as available'}" data-id="${item.id}">
+                    ${item.available !== false ? 
+                        '<span class="available-badge"><i class="fas fa-check-circle"></i> Available</span>' : 
+                        '<span class="unavailable-badge"><i class="fas fa-times-circle"></i> Unavailable</span>'}
+                </button>
+            </td>
             <td>
                 <div class="action-buttons">
                     <button type="button" class="action-btn edit-btn" title="Edit item">
@@ -341,6 +357,7 @@ function displayMenuItems(items) {
         // Add event listeners to action buttons
         const editBtn = row.querySelector('.edit-btn');
         const deleteBtn = row.querySelector('.delete-btn');
+        const toggleAvailableBtn = row.querySelector('.toggle-available-btn');
         
         if (editBtn) {
             editBtn.addEventListener('click', () => openItemModal(item));
@@ -348,6 +365,10 @@ function displayMenuItems(items) {
         
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => openDeleteModal(item));
+        }
+        
+        if (toggleAvailableBtn) {
+            toggleAvailableBtn.addEventListener('click', () => toggleItemAvailability(item));
         }
         
         menuItemsBody.appendChild(row);
@@ -385,6 +406,13 @@ function openItemModal(item = null) {
             document.getElementById('item-ingredients').value = item.ingredients.join('\n');
         } else {
             document.getElementById('item-ingredients').value = '';
+        }
+
+        // Set availability checkbox
+        const availableCheckbox = document.getElementById('item-available');
+        if (availableCheckbox) {
+            // Default to available if not specified
+            availableCheckbox.checked = item.available !== false;
         }
     } else {
         modalTitle.textContent = 'Add New Menu Item';
@@ -466,6 +494,9 @@ function handleSaveItem(e) {
         const ingredientsText = document.getElementById('item-ingredients').value.trim();
         const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
         
+        // Get availability status
+        const available = document.getElementById('item-available').checked;
+        
         // Validate inputs
         if (!name) {
             showFormError('Item name is required');
@@ -503,6 +534,7 @@ function handleSaveItem(e) {
             category,
             price,
             featured,
+            available,
             description,
             ingredients,
             imageUrl: imageUrl || null
@@ -646,6 +678,74 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+/**
+ * Toggle item availability
+ * @param {Object} item - Item to toggle
+ */
+function toggleItemAvailability(item) {
+    // Create confirmation dialog
+    const confirmDialog = document.createElement('div');
+    confirmDialog.className = 'confirm-dialog';
+    
+    const newAvailability = item.available === false;
+    const message = newAvailability ? 
+        `Make "${item.name}" available for ordering?` : 
+        `Mark "${item.name}" as unavailable? Current orders will not be affected.`;
+    
+    confirmDialog.innerHTML = `
+        <div class="confirm-dialog-content">
+            <h3>Confirm Change</h3>
+            <p>${message}</p>
+            <div class="confirm-dialog-actions">
+                <button class="btn btn-secondary cancel-btn">Cancel</button>
+                <button class="btn btn-primary confirm-btn">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(confirmDialog);
+    
+    // Add event listeners
+    const cancelBtn = confirmDialog.querySelector('.cancel-btn');
+    const confirmBtn = confirmDialog.querySelector('.confirm-btn');
+    
+    // Cancel button
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(confirmDialog);
+    });
+    
+    // Confirm button
+    confirmBtn.addEventListener('click', () => {
+        // Toggle availability
+        const updatedItem = { ...item, available: newAvailability };
+        
+        // Save to storage
+        storageManager.saveMenuItem(updatedItem);
+        
+        // Close dialog
+        document.body.removeChild(confirmDialog);
+        
+        // Reload menu items
+        loadMenuItems();
+        
+        // Show success message
+        showAlert(`"${item.name}" is now ${newAvailability ? 'available' : 'unavailable'} for ordering`);
+    });
+    
+    // Close on outside click
+    confirmDialog.addEventListener('click', (e) => {
+        if (e.target === confirmDialog) {
+            document.body.removeChild(confirmDialog);
+        }
+    });
+    
+    // Show dialog with animation
+    setTimeout(() => {
+        confirmDialog.classList.add('show');
+    }, 10);
 }
 
 // Initialize menu manager

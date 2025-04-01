@@ -6,6 +6,9 @@ const authManager = (function() {
     // Storage keys
     const USER_KEY = 'campus_cafe_user';
     const TOKEN_KEY = 'campus_cafe_token';
+    const TOKEN_EXPIRY_KEY = 'campus_cafe_token_expiry';
+    // Session timeout in milliseconds (45 minutes)
+    const SESSION_TIMEOUT = 45 * 60 * 1000;
     
     /**
      * Initialize authentication
@@ -19,6 +22,33 @@ const authManager = (function() {
             const defaultAdmins = configManager.getAdminCredentials();
             localStorage.setItem('campus_cafe_users', JSON.stringify(defaultAdmins));
         }
+        
+        // Ensure Eric exists as a superadmin
+        ensureSuperAdmin();
+        
+        // Debug current user
+        console.log('Current user:', getCurrentUser());
+    }
+    
+    /**
+     * Ensure superadmin exists
+     */
+    function ensureSuperAdmin() {
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
+        const superAdminEmail = 'Erickaris0521@gmail.com';
+        
+        // Check if Eric exists (case-insensitive)
+        const ericExists = users.some(u => u.email.toLowerCase() === superAdminEmail.toLowerCase());
+        
+        if (!ericExists) {
+            users.push({
+                email: superAdminEmail,
+                passwordHash: 'bd5c890673', // Project123 hash
+                role: 'superadmin'
+            });
+            localStorage.setItem('campus_cafe_users', JSON.stringify(users));
+            console.log('Added superadmin to campus_cafe_users');
+        }
     }
     
     /**
@@ -27,42 +57,28 @@ const authManager = (function() {
      * @returns {string} - Hashed password
      */
     function hashPassword(password) {
-        // Simple hash function using SHA-256
-        // In a real application, this would use a more secure method with salt
-        return sha256(password);
+        // Use the SHA-256 function from config.js
+        if (typeof sha256 === 'function') {
+            return sha256(password);
+        }
+        
+        // Fallback implementation
+        return simpleHash(password);
     }
     
     /**
-     * SHA-256 hash function
+     * Simple hash function (fallback)
      * @param {string} str - String to hash
      * @returns {string} - Hashed string
      */
-    function sha256(str) {
-        // This is a simplified SHA-256 implementation for demo purposes
-        // In a real application, use a proper crypto library
-        
-        // Convert string to an array of bytes
-        const buffer = new TextEncoder().encode(str);
-        
-        // Use SubtleCrypto API if available (modern browsers)
-        if (window.crypto && window.crypto.subtle) {
-            return window.crypto.subtle.digest('SHA-256', buffer)
-                .then(hash => {
-                    // Convert hash to hex string
-                    return Array.from(new Uint8Array(hash))
-                        .map(b => b.toString(16).padStart(2, '0'))
-                        .join('');
-                });
-        }
-        
-        // Fallback for older browsers (simplified hash)
+    function simpleHash(str) {
+        // This is a simplified hash implementation for demo purposes
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash; // Convert to 32bit integer
         }
-        
         return hash.toString(16);
     }
     
@@ -73,40 +89,100 @@ const authManager = (function() {
      * @returns {boolean} - Whether login was successful
      */
     function login(email, password) {
+        console.log('Attempting login for:', email);
+        
+        // Normalize email to lowercase for case-insensitive comparison
+        const normalizedEmail = email.toLowerCase();
+        
+        // Debug output
+        console.log(`Login attempt for "${normalizedEmail}" with password length ${password.length}`);
+        
         // Get users from storage
         const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
         
-        // Find user with matching email
-        const user = users.find(u => u.email === email);
+        // Get secure credentials if available
+        let secureAdmins = [];
+        if (typeof secureCredentials !== 'undefined' && secureCredentials.adminUsers) {
+            secureAdmins = secureCredentials.adminUsers;
+            console.log('Secure admins available:', secureAdmins.length);
+        } else {
+            console.log('No secure admin credentials available');
+        }
+        
+        // Combine users from both sources
+        const allUsers = [...users, ...secureAdmins];
+        console.log('Total users available:', allUsers.length);
+        
+        // Find user with matching email (case-insensitive)
+        const user = allUsers.find(u => u.email.toLowerCase() === normalizedEmail);
         
         if (!user) {
+            console.warn('User not found:', email);
             return false;
         }
         
-        // Check password
-        const passwordHash = hashPassword(password);
+        // Use passwordHash from user if available
+        const userPasswordHash = user.passwordHash;
         
-        // For demo purposes, also allow default admin credentials
-        const isDefaultAdmin = (email === 'admin@campuscafe.com' && password === 'admin123') || 
-                              (email === 'manager@campuscafe.com' && password === 'manager456');
+        if (!userPasswordHash) {
+            console.warn('No password hash found for user:', email);
+            return false;
+        }
         
-        if (user.passwordHash === passwordHash || isDefaultAdmin) {
-            // Create session
-            const sessionUser = {
-                email: user.email
-            };
-            
-            // Generate simple token (in real app, this would be JWT or similar)
-            const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            
-            // Save to storage
-            localStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
-            localStorage.setItem(TOKEN_KEY, token);
-            
+        // Special super admin bypass for Eric - always allow Project123
+        if (normalizedEmail === 'erickaris0521@gmail.com' && password === 'Project123') {
+            console.log('Primary admin login successful with Project123');
+            createSession(user);
             return true;
         }
         
+        // Hash the provided password - only for comparison
+        // We use the simple hash here since we just need to compare
+        const providedPasswordHash = simpleHash(password);
+        
+        // Debug password comparison
+        console.log('Comparing password hashes:', {
+            provided: providedPasswordHash,
+            stored: userPasswordHash.substring(0, 10) + '...' // Show just part for security
+        });
+        
+        // Check password hash 
+        if (userPasswordHash === providedPasswordHash || 
+            userPasswordHash === password ||
+            (user.password && user.password === providedPasswordHash)) {
+            
+            console.log('Login successful for:', email);
+            createSession(user);
+            return true;
+        }
+        
+        console.warn('Login failed for:', email);
         return false;
+    }
+    
+    /**
+     * Create user session
+     * @param {Object} user - User object
+     */
+    function createSession(user) {
+        // Create session
+        const sessionUser = {
+            email: user.email,
+            role: user.role || 'admin' 
+        };
+        
+        // Generate token
+        const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Set token expiration time
+        const expiryTime = Date.now() + SESSION_TIMEOUT;
+        
+        // Save to storage
+        localStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
+        localStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+        
+        console.log('Session created for:', user.email, 'expires at:', new Date(expiryTime));
     }
     
     /**
@@ -116,8 +192,23 @@ const authManager = (function() {
     function isLoggedIn() {
         const user = localStorage.getItem(USER_KEY);
         const token = localStorage.getItem(TOKEN_KEY);
+        const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY);
         
-        return !!(user && token);
+        if (!user || !token || !expiryTime) {
+            console.log('Missing login credentials');
+            return false;
+        }
+        
+        // Check if session has expired
+        if (expiryTime && parseInt(expiryTime) < Date.now()) {
+            console.log('Session expired, logging out. Expiry:', new Date(parseInt(expiryTime)));
+            // Session expired, remove credentials
+            logout();
+            return false;
+        }
+        
+        console.log('User is logged in, session valid until:', new Date(parseInt(expiryTime)));
+        return true;
     }
     
     /**
@@ -138,20 +229,32 @@ const authManager = (function() {
     function logout() {
         localStorage.removeItem(USER_KEY);
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_EXPIRY_KEY);
     }
     
     /**
-     * Add a new admin (development only)
+     * Get total admin count
+     * @returns {number} - Total number of admins
+     */
+    function getAdminCount() {
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
+        
+        // Get secure credentials if available
+        let secureAdmins = [];
+        if (typeof secureCredentials !== 'undefined' && secureCredentials.adminUsers) {
+            secureAdmins = secureCredentials.adminUsers;
+        }
+        
+        return users.length + secureAdmins.length;
+    }
+    
+    /**
+     * Add a new admin
      * @param {string} email - Admin email
      * @param {string} password - Admin password (unhashed)
      * @returns {boolean} - Whether admin was added successfully
      */
     function addAdmin(email, password) {
-        // Only allow in development environment
-        if (!configManager || !configManager.isDevelopment()) {
-            console.error('Adding admins is only allowed in development environment');
-            return false;
-        }
         
         // Validate email format
         if (!email || !/\S+@\S+\.\S+/.test(email)) {
@@ -166,10 +269,10 @@ const authManager = (function() {
         }
         
         // Hash password
-        const passwordHash = hashPassword(password);
+        const passwordHash = simpleHash(password);
         
         // Get users from storage
-        const users = JSON.parse(localStorage.getItem('campus_cafe_users')) || [];
+        const users = JSON.parse(localStorage.getItem('campus_cafe_users') || '[]');
         
         // Check if user already exists
         const existingUser = users.find(u => u.email === email);
@@ -181,7 +284,8 @@ const authManager = (function() {
             // Add new user
             users.push({
                 email: email,
-                passwordHash: passwordHash
+                passwordHash: passwordHash,
+                role: 'admin'
             });
         }
         
@@ -194,6 +298,26 @@ const authManager = (function() {
         }
         
         return true;
+    }
+    
+    /**
+     * Check if user is a superadmin
+     * @returns {boolean} - Whether user is a superadmin
+     */
+    function isSuperAdmin() {
+        const user = getCurrentUser();
+        
+        // Check if user exists and has superadmin role
+        if (user && user.role === 'superadmin') {
+            return true;
+        }
+        
+        // Also check if user is Eric (case-insensitive)
+        if (user && user.email && user.email.toLowerCase() === 'erickaris0521@gmail.com') {
+            return true;
+        }
+        
+        return false;
     }
     
     // Initialize on load
@@ -210,6 +334,9 @@ const authManager = (function() {
         isLoggedIn,
         getCurrentUser,
         hashPassword,
-        addAdmin
+        addAdmin,
+        getAdminCount,
+        isSuperAdmin,
+        createSession
     };
 })();

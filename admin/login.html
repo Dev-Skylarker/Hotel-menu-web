@@ -86,9 +86,45 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        
+        /* Error and Success Messages */
+        .error-message,
+        .success-message {
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .error-message {
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+            border-left: 4px solid #bd2130;
+        }
+        
+        .success-message {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+            border-left: 4px solid #1e7e34;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+            40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="admin-body light-mode">
+<body class="admin-body dark-mode">
     <div class="admin-container">
         <div class="admin-login-card">
             <div class="login-header">
@@ -117,7 +153,10 @@
                 </div>
                 
                 <div class="login-info">
-                    <p><i class="fas fa-info-circle"></i> Default login: admin@campuscafe.com / admin123</p>
+                    <p><i class="fas fa-info-circle"></i> Login with your admin credentials</p>
+                    <div id="debug-hint" style="display: none; margin-top: 10px; font-size: 0.85rem; background-color: rgba(0,0,0,0.2); padding: 5px; border-radius: 3px;">
+                        <p><i class="fas fa-bug"></i> <strong>Debug info:</strong> Email: Erickaris0521@gmail.com / Password: Contact ICT support</p>
+                    </div>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-full">
@@ -136,8 +175,20 @@
 
     <script src="../js/utils/theme.js"></script>
     <script src="../js/utils/storage.js"></script>
+    <!-- Load environment and credentials files first (these are git-ignored) -->
+    <script src="../js/utils/env.js"></script>
+    <script src="../js/utils/credentials.js"></script>
+    <!-- Load main configuration that uses the above files -->
     <script src="../js/utils/config.js"></script>
     <script src="../js/utils/auth.js"></script>
     <script src="../js/admin/login.js"></script>
+    <script>
+        // Show debug hint in development mode
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.envConfig && window.envConfig.development) {
+                document.getElementById('debug-hint').style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

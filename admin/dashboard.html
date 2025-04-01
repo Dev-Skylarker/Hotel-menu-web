@@ -8,9 +8,222 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/dashboard-extras.css">
     <link rel="icon" href="../icon1.png" type="image/png">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: var(--background-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        
+        .metric-card .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
+        
+        .metric-card .metric-label {
+            font-size: 16px;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+        
+        .metric-card .metric-trend {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .metric-card .trend-up {
+            color: #2ecc71;
+        }
+        
+        .metric-card .trend-down {
+            color: #e74c3c;
+        }
+        
+        .chart-container {
+            background: var(--background-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+            height: 300px;
+        }
+        
+        .order-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-group select, .filter-group input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .tab-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-item.active {
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .batch-actions button {
+            margin-left: 10px;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-pending {
+            background-color: #fef9c3;
+            color: #854d0e;
+        }
+        
+        .status-ready {
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+        
+        .status-completed {
+            background-color: #a7f3d0;
+            color: #065f46;
+        }
+        
+        .status-cancelled {
+            background-color: #fecaca;
+            color: #991b1b;
+        }
+        
+        .order-code {
+            background-color: var(--background-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+            font-family: monospace;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-light);
+        }
+        
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th, .admin-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .admin-table th {
+            background-color: var(--background-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .admin-table tbody tr:hover {
+            background-color: var(--background-hover);
+        }
+        
+        .checkbox-cell {
+            width: 40px;
+        }
+        
+        @media (max-width: 1100px) {
+            .dashboard-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 650px) {
+            .dashboard-metrics {
+                grid-template-columns: 1fr;
+            }
+            
+            .order-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
 </head>
-<body class="admin-body light-mode">
+<body class="admin-body dark-mode">
     <div class="admin-wrapper">
         <nav class="admin-sidebar">
             <div class="sidebar-header">
@@ -26,6 +239,9 @@
                     <a href="manage-menu.html"><i class="fas fa-utensils"></i> Manage Menu</a>
                 </li>
                 <li>
+                    <a href="dashboard.html"><i class="fas fa-shopping-cart"></i> All Orders</a>
+                </li>
+                <li class="admin-nav-item superadmin-only">
                     <a href="config.html"><i class="fas fa-cog"></i> Configuration</a>
                 </li>
                 <li>
@@ -45,11 +261,18 @@
         
         <main class="admin-content">
             <header class="admin-header">
-                <div class="header-title">
-                    <h1>Dashboard</h1>
-                    <p>Welcome back, <span id="admin-name">Admin</span></p>
-                </div>
+<div class="header-title">
+    <h1>Welcome to orders viewing</h1>
+</div>
                 <div class="header-actions">
+                    <div class="refresh-container">
+                        <button id="refresh-data" class="btn btn-small btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
+                        <div class="last-refresh">
+                            Last updated: <span id="last-refresh-time">--:--:--</span>
+                        </div>
+                    </div>
                     <button id="mobile-menu-toggle" class="mobile-toggle">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -57,106 +280,383 @@
             </header>
             
             <div class="dashboard-container">
-                <div class="stats-cards">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-hamburger"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Total Menu Items</h3>
-                            <p id="total-menu-items">0</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-list"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Categories</h3>
-                            <p id="total-categories">4</p>
+                <!-- Key Performance Metrics -->
+                <div class="dashboard-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Revenue</div>
+                        <div id="total-revenue" class="metric-value">KSh 0.00</div>
+                        <div class="metric-trend">
+                            <i class="fas fa-arrow-up trend-up"></i>
+                            <span id="revenue-trend">0%</span> from last week
                         </div>
                     </div>
                     
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Total Orders</h3>
-                            <p id="total-orders">0</p>
+                    <div class="metric-card">
+                        <div class="metric-label">Completed Orders</div>
+                        <div id="completed-orders" class="metric-value">0</div>
+                        <div class="metric-trend">
+                            <span id="completed-trend">No previous data</span>
                         </div>
                     </div>
                     
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-money-bill-wave"></i>
+                    <div class="metric-card">
+                        <div class="metric-label">Pending Orders</div>
+                        <div id="pending-orders" class="metric-value">0</div>
+                        <div class="metric-trend">
+                            Need attention
                         </div>
-                        <div class="stat-info">
-                            <h3>Total Revenue</h3>
-                            <p id="total-revenue">$0.00</p>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Average Order Value</div>
+                        <div id="avg-order-value" class="metric-value">KSh 0.00</div>
+                        <div class="metric-trend">
+                            <span id="avg-value-trend">Calculate from orders</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="dashboard-sections">
-                    <div class="dashboard-section">
-                        <h2>Recent Orders</h2>
-                        <div class="recent-orders-container">
-                            <table class="admin-table" id="recent-orders-table">
+                <!-- Sales & Order Trends Chart -->
+                <div class="chart-container">
+                    <h2>Sales & Order Trends</h2>
+                    <canvas id="sales-chart"></canvas>
+                </div>
+                
+                <!-- Order Management Section -->
+                <div class="dashboard-section">
+                    <h2>Order Management</h2>
+                    
+                    <div class="tab-nav">
+                        <div class="tab-item active" data-tab="all-orders">All Orders</div>
+                        <div class="tab-item" data-tab="pending-orders">Pending</div>
+                        <div class="tab-item" data-tab="completed-orders">Completed</div>
+                        <div class="tab-item" data-tab="cancelled-orders">Cancelled</div>
+                    </div>
+                    
+                    <div class="order-filters">
+                        <div class="filter-group">
+                            <label for="date-filter">Date:</label>
+                            <input type="date" id="date-filter" class="filter-input">
+                        </div>
+                        <div class="filter-group">
+                            <label for="collection-type-filter">Collection Type:</label>
+                            <select id="collection-type-filter" class="filter-input">
+                                <option value="all">All Types</option>
+                                <option value="pickup">Pickup at Counter</option>
+                                <option value="table">Serve at Table</option>
+                            </select>
+                        </div>
+                        <div class="filter-group search-group">
+                            <label for="search-orders">Search:</label>
+                            <div class="search-input-container">
+                                <input type="text" id="search-orders" placeholder="Order ID, Name, Admission #" class="filter-input">
+                                <button id="clear-search-admin" class="clear-search-btn"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="apply-filters" class="btn btn-sm btn-primary">Apply Filters</button>
+                            <button id="clear-filters" class="btn btn-sm btn-secondary">Clear Filters</button>
+                        </div>
+                    </div>
+                    
+                    <!-- All Orders Tab -->
+                    <div class="tab-content active" id="all-orders">
+                        <div class="table-actions">
+                            <div class="results-count">
+                                <span id="all-count">0</span> orders found
+                            </div>
+                            <div class="batch-actions">
+                                <button id="export-orders" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-file-export"></i> Export
+                                </button>
+                                <button id="delete-selected" class="btn btn-danger btn-small admin-restricted" disabled>
+                                    <i class="fas fa-trash"></i> Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="orders-table-container">
+                            <table class="admin-table" id="all-orders-table">
                                 <thead>
                                     <tr>
+                                        <th class="checkbox-cell">
+                                            <input type="checkbox" id="select-all-orders">
+                                        </th>
                                         <th>Order ID</th>
                                         <th>Customer</th>
-                                        <th>Item</th>
+                                        <th>Date & Time</th>
+                                        <th>Collection</th>
+                                        <th>Items</th>
                                         <th>Total</th>
                                         <th>Status</th>
-                                        <th>Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="recent-orders-body">
-                                    <!-- Orders will be loaded dynamically -->
+                                <tbody id="all-orders-body">
+                                    <!-- Orders will be loaded here -->
                                 </tbody>
                             </table>
-                            <div id="no-orders-message" class="empty-state">
-                                <i class="fas fa-shopping-cart"></i>
-                                <p>No orders yet</p>
+                            <div id="no-orders-message" class="empty-state" style="display: none;">
+                                <i class="fas fa-receipt"></i>
+                                <h3>No Pending Orders!</h3>
+                                <p>Try our meals now!</p>
+                                <div class="empty-state-actions">
+                                    <button id="refresh-empty-orders" class="btn btn-primary">
+                                        <i class="fas fa-sync"></i> Refresh
+                                    </button>
+                                    <button id="go-to-menu-manager" class="btn btn-secondary">
+                                        <i class="fas fa-utensils"></i> Manage Menu
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Pending Orders Tab -->
+                    <div class="tab-content" id="pending-orders">
+                        <div class="table-actions">
+                            <div class="results-count">
+                                <span id="pending-count">0</span> pending orders
+                            </div>
+                            <div class="batch-actions">
+                                <button id="complete-all-pending" class="btn btn-success btn-small admin-restricted" disabled>
+                                    <i class="fas fa-check"></i> Mark All as Ready
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="orders-table-container">
+                            <table class="admin-table" id="pending-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th class="checkbox-cell">
+                                            <input type="checkbox" id="select-all-pending">
+                                        </th>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Time Elapsed</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pending-orders-body">
+                                    <!-- Pending orders will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                            <div id="no-pending-orders" class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <h3>No pending orders at the moment!</h3>
+                                <p>Try our meals today!</p>
+                                <div class="empty-state-actions">
+                                    <a href="../menu.html" class="btn btn-primary">
+                                        <i class="fas fa-utensils"></i> Browse Menu
+                                    </a>
+                                    <a href="../cart.html" class="btn btn-secondary">
+                                        <i class="fas fa-shopping-cart"></i> View Cart
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Completed Orders Tab -->
+                    <div class="tab-content" id="completed-orders">
+                        <div class="table-actions">
+                            <div class="results-count">
+                                <span id="completed-count">0</span> completed orders
+                            </div>
+                            <div class="batch-actions">
+                                <button id="export-completed" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-file-export"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="orders-table-container">
+                            <table class="admin-table" id="completed-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Completion Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completed-orders-body">
+                                    <!-- Completed orders will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                            <div id="no-completed-orders" class="empty-state">
+                                <i class="fas fa-clipboard-check"></i>
+                                <h3>No completed orders yet</h3>
+                                <p>Completed orders will appear here.</p>
+                                <div class="empty-state-actions">
+                                    <a href="../menu.html" class="btn btn-primary">
+                                        <i class="fas fa-utensils"></i> Browse Menu
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cancelled Orders Tab -->
+                    <div class="tab-content" id="cancelled-orders">
+                        <div class="table-actions">
+                            <div class="results-count">
+                                <span id="cancelled-count">0</span> cancelled orders
+                            </div>
+                            <div class="batch-actions">
+                                <button id="clear-cancelled" class="btn btn-danger btn-small superadmin-only" disabled>
+                                    <i class="fas fa-trash"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="orders-table-container">
+                            <table class="admin-table" id="cancelled-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th class="checkbox-cell">
+                                            <input type="checkbox" id="select-all-cancelled">
+                                        </th>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Cancelled On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cancelled-orders-body">
+                                    <!-- Cancelled orders will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                            <div id="no-cancelled-orders" class="empty-state">
+                                <i class="fas fa-ban"></i>
+                                <p>No cancelled orders</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Orders Table -->
+                <div class="dashboard-section">
+                    <h2>Pending Orders</h2>
+                    <div class="orders-table-container">
+                        <table class="admin-table" id="pending-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-orders-body">
+                                <!-- Pending orders will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pending Orders Table -->
+                <div class="dashboard-section">
+                    <h2>Pending Orders</h2>
+                    <div class="orders-table-container">
+                        <table class="admin-table" id="pending-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-orders-body">
+                                <!-- Pending orders will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Category Performance -->
+                <div class="dashboard-section">
+                    <h2>Menu Performance</h2>
+                    <div class="chart-container">
+                        <canvas id="category-chart"></canvas>
+                    </div>
+                    
+                    <div class="dashboard-actions">
+                        <a href="manage-menu.html" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Menu Item
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Dashboard sections -->
+                <div class="dashboard-sections">
+                    <!-- Sales Overview -->
                     <div class="dashboard-section">
-                        <h2>Menu Overview</h2>
-                        <div class="menu-stats">
-                            <div class="category-stat" data-category="appetizers">
-                                <h3>Breakfast</h3>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 0%"></div>
+                        <h2>Sales Overview</h2>
+                        <div class="chart-container">
+                            <canvas id="sales-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Item Statistics -->
+                    <div class="dashboard-section">
+                        <h2>Menu Item Statistics</h2>
+                        <div class="dashboard-metrics item-metrics">
+                            <div class="metric-card popular-items">
+                                <div class="metric-label">Most Popular Items</div>
+                                <div class="metric-content" id="popular-items-list">
+                                    <div class="loader"></div>
                                 </div>
-                                <p>0 items</p>
                             </div>
-                            <div class="category-stat" data-category="main-courses">
-                                <h3>Main Courses</h3>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 0%"></div>
+                            <div class="metric-card low-stock">
+                                <div class="metric-label">Low Stock Alert</div>
+                                <div class="metric-content" id="low-stock-items">
+                                    <div class="loader"></div>
                                 </div>
-                                <p>0 items</p>
                             </div>
-                            <div class="category-stat" data-category="desserts">
-                                <h3>Desserts</h3>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 0%"></div>
+                            <div class="metric-card category-performance">
+                                <div class="metric-label">Category Performance</div>
+                                <div class="metric-content" id="category-performance">
+                                    <div class="loader"></div>
                                 </div>
-                                <p>0 items</p>
                             </div>
-                            <div class="category-stat" data-category="drinks">
-                                <h3>Drinks</h3>
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 0%"></div>
+                            <div class="metric-card revenue-by-item">
+                                <div class="metric-label">Revenue by Item</div>
+                                <div class="metric-content" id="revenue-by-item">
+                                    <div class="loader"></div>
                                 </div>
-                                <p>0 items</p>
                             </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="items-performance-chart"></canvas>
+                        </div>
+                        <div class="dashboard-actions">
+                            <a href="menu-manager.html" class="btn btn-primary">
+                                <i class="fas fa-utensils"></i> Manage Menu Items
+                            </a>
+                            <button id="refresh-item-stats" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> Refresh Item Stats
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category Performance -->
+                    <div class="dashboard-section">
+                        <h2>Menu Performance</h2>
+                        <div class="chart-container">
+                            <canvas id="category-chart"></canvas>
                         </div>
                         
                         <div class="dashboard-actions">
@@ -166,37 +666,95 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="dashboard-sections">
-                    <div class="dashboard-section">
-                        <h2>Website Images</h2>
-                        <p>The following sections allow customization of website images:</p>
-                        <div class="image-management">
-                            <div class="image-manager-link">
-                                <h3>Menu Items</h3>
-                                <p>Edit individual menu item images</p>
-                                <a href="manage-menu.html" class="btn btn-secondary">Manage Menu Items</a>
-                            </div>
-                            <div class="image-info">
-                                <h3>Image Guidelines</h3>
-                                <ul>
-                                    <li>Use high-quality, well-lit images</li>
-                                    <li>Recommended size: 800x600 pixels</li>
-                                    <li>Use .jpg or .png formats for best compatibility</li>
-                                    <li>Use web-optimized images (under 500KB) for better performance</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
+    
+    <!-- Order View Modal -->
+    <div class="modal" id="order-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Order Details</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="order-details-content">
+                <!-- Order details will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal">Close</button>
+                <button class="btn btn-success" id="mark-ready-btn">Mark as Ready</button>
+                <button class="btn btn-danger" id="cancel-order-btn">Cancel Order</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Action</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="confirm-message">
+                Are you sure you want to proceed with this action?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal">Cancel</button>
+                <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <script src="../js/utils/theme.js"></script>
-    <script src="../js/utils/storage.js"></script>
+    <script>
+        function loadPendingOrders() {
+            const orders = storageManager.getOrders();
+            const pendingOrders = orders.filter(order => order.status === 'pending');
+            const pendingOrdersBody = document.getElementById('pending-orders-body');
+
+            if (pendingOrdersBody) {
+                pendingOrdersBody.innerHTML = ''; // Clear existing content
+
+                if (pendingOrders.length === 0) {
+                    pendingOrdersBody.innerHTML = '<tr><td colspan="6">No pending orders</td></tr>';
+                } else {
+                    pendingOrders.forEach(order => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${order.id}</td>
+                            <td>${order.customerName}</td>
+                            <td>${order.item.name}</td>
+                            <td>${order.totalPrice}</td>
+                            <td>${order.status}</td>
+                            <td>
+                                <button class="btn btn-success btn-small" onclick="markOrderReady('${order.id}')">Mark Ready</button>
+                                <button class="btn btn-danger btn-small" onclick="cancelOrder('${order.id}')">Cancel</button>
+                            </td>
+                        `;
+                        pendingOrdersBody.appendChild(row);
+                    });
+                }
+            }
+        }
+
+        function markOrderReady(orderId) {
+            storageManager.updateOrderStatus(orderId, 'ready');
+            loadPendingOrders(); // Refresh the table
+        }
+
+        function cancelOrder(orderId) {
+            storageManager.updateOrderStatus(orderId, 'cancelled');
+            loadPendingOrders(); // Refresh the table
+        }
+
+        // Load pending orders on dashboard load
+        document.addEventListener('DOMContentLoaded', loadPendingOrders);
+    </script>
+    <script src="../js/utils/env.js"></script>
+    <script src="../js/utils/credentials.js"></script>
     <script src="../js/utils/config.js"></script>
     <script src="../js/utils/auth.js"></script>
+    <script src="../js/utils/currency.js"></script>
     <script src="../js/admin/dashboard.js"></script>
 </body>
 </html>

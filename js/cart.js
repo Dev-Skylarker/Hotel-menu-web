@@ -1,25 +1,105 @@
-function showSuccessModal(orders, orderId, totalAmount, orderCode) {
-    const orderNumbersEl = document.getElementById('order-numbers');
-    orderNumbersEl.innerHTML = '';
+// DOM Element references
+const cartItemsContainer = document.getElementById('cart-items');
+const cartEmptyElement = document.getElementById('cart-empty');
+const cartSummaryElement = document.getElementById('cart-summary');
+const cartSummaryList = document.getElementById('cart-summary-list');
+const cartTotalPrice = document.getElementById('cart-total-price');
+const clearCartBtn = document.getElementById('clear-cart');
+const checkoutBtn = document.getElementById('checkout-btn');
+const checkoutModal = document.getElementById('checkout-modal');
+const checkoutForm = document.getElementById('checkout-form');
+const cancelCheckoutBtn = document.getElementById('cancel-checkout');
+const checkoutTotalPrice = document.getElementById('checkout-total-price');
+const successModal = document.getElementById('checkout-success-modal');
+const closeSuccessModalBtn = document.getElementById('close-success-modal');
+const orderNumbersContainer = document.getElementById('order-numbers');
+const closeModalBtns = document.querySelectorAll('.close-modal');
+
+/**
+ * Show success modal after checkout
+ * @param {Array} orders - Array of order objects
+ * @param {string} mainOrderId - Main order ID
+ * @param {string} totalAmount - Total order amount
+ * @param {string} orderCode - Order code for reference
+ */
+function showSuccessModal(orders, mainOrderId, totalAmount, orderCode) {
+    const successModal = document.getElementById('checkout-success-modal');
+    const orderNumbersContainer = document.getElementById('order-numbers');
+    const collectionInfoContainer = document.getElementById('collection-info');
     
-    // Create a single order number entry
-    const p = document.createElement('p');
-    p.innerHTML = `<strong>Order Number</strong>: ${orderId}`;
-    orderNumbersEl.appendChild(p);
+    if (!successModal || !orderNumbersContainer) {
+        console.error('Success modal or order numbers container not found');
+        return;
+    }
+    
+    // Clear previous order numbers
+    orderNumbersContainer.innerHTML = '';
+    
+    // Create a paragraph for order number
+    const orderPara = document.createElement('p');
+    orderPara.innerHTML = `<strong>Order Number:</strong> ${mainOrderId}`;
+    orderNumbersContainer.appendChild(orderPara);
+    
+    // Display collection information if available
+    if (collectionInfoContainer && orders && orders.length > 0) {
+        collectionInfoContainer.innerHTML = '';
+        
+        const order = orders[0];
+        if (order.collectionMethod && order.collectionLocation) {
+            const collectionTitle = document.createElement('h4');
+            collectionTitle.textContent = 'Collection Information';
+            collectionInfoContainer.appendChild(collectionTitle);
+            
+            const collectionMethodPara = document.createElement('p');
+            collectionMethodPara.innerHTML = `<strong>Method:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}`;
+            collectionInfoContainer.appendChild(collectionMethodPara);
+            
+            const collectionLocationPara = document.createElement('p');
+            collectionLocationPara.innerHTML = `<strong>Location:</strong> <span class="highlight">${order.collectionLocation}</span>`;
+            collectionInfoContainer.appendChild(collectionLocationPara);
+            
+            if (order.collectionMethod === 'table') {
+                const tablePara = document.createElement('p');
+                tablePara.textContent = 'Your order will be served directly to your table once ready.';
+                collectionInfoContainer.appendChild(tablePara);
+            } else {
+                const pickupPara = document.createElement('p');
+                pickupPara.textContent = 'Please collect your order from Counter 3 when notified that it is ready.';
+                collectionInfoContainer.appendChild(pickupPara);
+            }
+        }
+    }
+    
+    // Update the account number in the payment instructions
+    const accountNumberEl = document.getElementById('success-account-number');
+    if (accountNumberEl) {
+        accountNumberEl.textContent = orderCode;
+    }
+    
+    // Update the amount in the payment instructions
+    const amountEl = document.getElementById('checkout-amount');
+    if (amountEl) {
+        amountEl.textContent = `KSh ${parseFloat(totalAmount).toFixed(2)}`;
+    }
     
     // Update continue button to redirect to order status
     const continueBtn = document.getElementById('close-success-modal');
     if (continueBtn) {
-        continueBtn.textContent = 'View Order Status';
-        continueBtn.addEventListener('click', function() {
-            // Redirect to order-details.html with the order ID
-            window.location.href = `order-details.html?id=${orderId}`;
+        // Remove previous event listeners by cloning the button
+        const newBtn = continueBtn.cloneNode(true);
+        continueBtn.parentNode.replaceChild(newBtn, continueBtn);
+        
+        // Add new event listener
+        newBtn.addEventListener('click', function() {
+            // Save current order ID to localStorage
+            localStorage.setItem('last_order_id', mainOrderId);
+            // Redirect to my-orders page
+            window.location.href = 'my-orders.html';
         });
     }
     
     // Show the modal
-    const modal = document.getElementById('checkout-success-modal');
-    modal.classList.add('show');
+    successModal.classList.add('show');
 }
 
 /**
@@ -27,6 +107,7 @@ function showSuccessModal(orders, orderId, totalAmount, orderCode) {
  * @param {Event} e - Form submission event
  */
 function handleCheckout(e) {
+    console.log('Handling checkout form submission...');
     e.preventDefault();
     
     // Get customer information
@@ -34,16 +115,45 @@ function handleCheckout(e) {
     const admissionNumber = document.getElementById('admission-number').value.trim();
     const orderNotes = document.getElementById('order-notes').value.trim();
     
+    // Get collection method
+    const collectionMethod = document.getElementById('collection-method').value;
+    let collectionLocation = '';
+    
+    if (collectionMethod === 'table') {
+        collectionLocation = document.getElementById('table-number').value;
+        if (!collectionLocation) {
+            alert('Please select a table number');
+            return;
+        }
+    } else if (collectionMethod === 'pickup') {
+        collectionLocation = 'Counter 3 (Outgoing Orders)';
+    } else {
+        alert('Please select a collection method (Table or Pickup)');
+        return;
+    }
+    
+    console.log('Customer Name:', customerName);
+    console.log('Admission Number:', admissionNumber);
+    console.log('Collection Method:', collectionMethod);
+    console.log('Collection Location:', collectionLocation);
+    
     // Validate required fields
     if (!customerName) {
         alert('Please enter your full name');
         return;
     }
     
-    if (!admissionNumber || !/^\d{5}$/.test(admissionNumber)) {
+    // Validate admission number format (exactly 5 digits)
+    if (!admissionNumber) {
+        alert('Please enter your admission number');
+        return;
+    } else if (!/^\d{5}$/.test(admissionNumber)) {
         alert('Please enter exactly 5 digits for your admission number');
+        document.getElementById('admission-number').focus();
         return;
     }
+    
+    console.log('Form validation passed, creating order...');
     
     // Get the order code
     const orderCode = localStorage.getItem('temp_order_code') || 
@@ -51,42 +161,48 @@ function handleCheckout(e) {
     
     // Create orders from cart with payment info
     const cart = cartManager.getCart();
-    const orders = [];
+    console.log('Cart items:', cart.length);
     
     // Generate a unique order ID using the order code
     const mainOrderId = 'ORD-' + orderCode + '-' + Date.now().toString().slice(-4);
+    console.log('Order ID:', mainOrderId);
     
-    // Calculate the total order amount
-    let totalOrderAmount = cartManager.getTotalPrice();
+    // Calculate the total order amount WITHOUT discount
+    const totalOrderAmount = cartManager.getTotalPrice();
     
-    // Apply discount if eligible
-    totalOrderAmount = cartManager.applyDiscount(totalOrderAmount);
+    // Format the total amount to 2 decimal places
+    const formattedTotal = totalOrderAmount.toFixed(2);
+    console.log('Total amount:', formattedTotal);
     
-    // Create an order for each item
-    cart.forEach(cartItem => {
-        // Calculate item total (already discounted in the order)
-        const itemTotal = cartItem.item.price * cartItem.quantity;
-        
+    // Create the order object
         const order = {
-            id: mainOrderId, // Use the same order ID for all items in this checkout
-            orderCode: orderCode, // Store the 4-digit code
+        id: mainOrderId,
+        orderCode: orderCode,
+        items: cart.map(cartItem => ({
             item: cartItem.item,
             quantity: cartItem.quantity,
+            price: cartItem.item.price
+        })),
             status: 'pending',
             orderTime: new Date().toISOString(),
             estimatedPickupTime: new Date(Date.now() + 20 * 60000).toISOString(), // 20 minutes from now
             notes: orderNotes || null,
             customerName: customerName,
-            admissionNumber: admissionNumber,
+        admissionNumber: admissionNumber, // Properly captured admission number
             paymentMethod: 'mpesa', // Always use M-Pesa as payment method
             paymentStatus: 'pending',
-            totalAmount: totalOrderAmount.toFixed(2)
+        total: formattedTotal,
+        collectionMethod: collectionMethod,
+        collectionLocation: collectionLocation
         };
         
-        // Save order
+    // Save the order
+    console.log('Saving order to storage...');
         storageManager.saveOrder(order);
-        orders.push(order);
-    });
+    
+    // Show success modal with the correct amount
+    console.log('Showing success modal...');
+    showSuccessModal([order], mainOrderId, formattedTotal, orderCode);
     
     // Clear cart
     cartManager.clearCart();
@@ -96,10 +212,10 @@ function handleCheckout(e) {
     localStorage.removeItem('temp_order_code'); // Clean up
     
     // Close checkout modal
+    console.log('Closing checkout modal...');
     checkoutModal.classList.remove('show');
     
-    // Redirect directly to my-orders.html
-    window.location.href = "my-orders.html";
+    console.log('Checkout complete!');
 }
 
 function openCheckoutModal() {
@@ -117,6 +233,39 @@ function openCheckoutModal() {
     // Store order code temporarily
     localStorage.setItem('temp_order_code', orderCode);
     
+    // Calculate total price WITHOUT applying discount
+    const totalPrice = cartManager.getTotalPrice();
+    const formattedTotal = totalPrice.toFixed(2);
+    
+    // Update the checkout total display
+    if (checkoutTotalPrice) {
+        checkoutTotalPrice.textContent = window.formatters?.currency 
+            ? window.formatters.currency(totalPrice, true) 
+            : `KSh ${formattedTotal}`;
+    }
+    
+    // Update M-Pesa amount in instructions
+    const mpesaAmountEl = document.getElementById('checkout-mpesa-amount');
+    if (mpesaAmountEl) {
+        mpesaAmountEl.textContent = window.formatters?.currency 
+            ? window.formatters.currency(totalPrice, true) 
+            : `KSh ${formattedTotal}`;
+    }
+    
+    // Update checkout amount in other places
+    const checkoutAmount = document.getElementById('checkout-amount');
+    if (checkoutAmount) {
+        checkoutAmount.textContent = window.formatters?.currency 
+            ? window.formatters.currency(totalPrice, true) 
+            : `KSh ${formattedTotal}`;
+    }
+    
+    // Update account/order number
+    const accountNumberEl = document.getElementById('checkout-account-number');
+    if (accountNumberEl) {
+        accountNumberEl.textContent = orderCode;
+    }
+    
     // Show checkout modal
     if (checkoutModal) {
         checkoutModal.classList.add('show');
@@ -127,11 +276,27 @@ function openCheckoutModal() {
  * Initialize the cart page
  */
 function initCart() {
+    console.log('Initializing cart page...');
+    
+    // Debug element existence
+    console.log('Checkout form exists:', !!checkoutForm);
+    console.log('Checkout modal exists:', !!checkoutModal);
+    console.log('Success modal exists:', !!document.getElementById('checkout-success-modal'));
+    
     // Load cart items
     displayCartItems();
     
     // Add event listeners
     addEventListeners();
+    
+    // Check if there's a checkout parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('checkout') === 'true') {
+        // Open checkout modal automatically after a short delay
+        setTimeout(() => {
+            openCheckoutModal();
+        }, 500);
+    }
     
     // Update cart badge
     updateCartBadge();
@@ -159,7 +324,7 @@ function updateCartBadge() {
 }
 
 /**
- * Calculate and display the cart summary
+ * Update the cart summary section
  */
 function updateCartSummary() {
     if (!cartSummaryList || !cartTotalPrice) return;
@@ -172,54 +337,302 @@ function updateCartSummary() {
     
     // Get total price
     let totalPrice = cartManager.getTotalPrice();
-    const originalTotal = totalPrice;
-    
-    // Apply discount if eligible
-    const discountedTotal = cartManager.applyDiscount(totalPrice);
-    const hasDiscount = discountedTotal < originalTotal;
     
     // Add items to summary
     cart.forEach(cartItem => {
         const itemTotal = cartItem.item.price * cartItem.quantity;
         
-        const li = document.createElement('li');
-        li.innerHTML = `
+        const summaryItem = document.createElement('div');
+        summaryItem.className = 'cart-summary-item';
+        
+        summaryItem.innerHTML = `
             <span>${cartItem.item.name} x${cartItem.quantity}</span>
             <span>KSh ${itemTotal.toFixed(2)}</span>
         `;
-        cartSummaryList.appendChild(li);
+        
+        cartSummaryList.appendChild(summaryItem);
     });
     
-    // Add discount line if applicable
-    if (hasDiscount) {
-        const discountLi = document.createElement('li');
-        discountLi.className = 'discount-line';
-        discountLi.innerHTML = `
-            <span>Original Total</span>
-            <span>KSh ${originalTotal.toFixed(2)}</span>
-        `;
-        cartSummaryList.appendChild(discountLi);
-        
-        const savingsLi = document.createElement('li');
-        savingsLi.className = 'discount-savings';
-        savingsLi.innerHTML = `
-            <span>Discount (-300 bob)</span>
-            <span>-KSh 300.00</span>
-        `;
-        cartSummaryList.appendChild(savingsLi);
-    }
-    
     // Update total price
-    cartTotalPrice.textContent = `KSh ${discountedTotal.toFixed(2)}`;
+    cartTotalPrice.textContent = `KSh ${totalPrice.toFixed(2)}`;
     
     // Also update checkout total if visible
     if (checkoutTotalPrice) {
-        checkoutTotalPrice.textContent = `KSh ${discountedTotal.toFixed(2)}`;
+        checkoutTotalPrice.textContent = `KSh ${totalPrice.toFixed(2)}`;
     }
     
     // Update checkout amount in M-Pesa instructions if visible
     const checkoutAmount = document.getElementById('checkout-amount');
     if (checkoutAmount) {
-        checkoutAmount.textContent = `KSh ${discountedTotal.toFixed(2)}`;
+        checkoutAmount.textContent = `KSh ${totalPrice.toFixed(2)}`;
     }
-} 
+    
+    // Update M-Pesa amount in instructions if visible
+    const mpesaAmountEl = document.getElementById('checkout-mpesa-amount');
+    if (mpesaAmountEl) {
+        mpesaAmountEl.textContent = `KSh ${totalPrice.toFixed(2)}`;
+    }
+}
+
+/**
+ * Display all cart items
+ */
+function displayCartItems() {
+    // Get cart items
+    const cart = cartManager.getCart();
+    
+    // Get the container
+    const cartItemsContainer = document.getElementById('cart-items');
+    if (!cartItemsContainer) return;
+    
+    // Clear the container
+    cartItemsContainer.innerHTML = '';
+    
+    // Check if cart is empty
+    if (cart.length === 0) {
+        // Show empty state
+        const emptyCart = document.createElement('div');
+        emptyCart.className = 'empty-cart';
+        emptyCart.innerHTML = `
+            <i class="fas fa-shopping-basket"></i>
+            <h3>Your cart is empty</h3>
+            <p>Add items from our menu to get started!</p>
+            <a href="menu.html" class="btn btn-primary">Browse Menu</a>
+        `;
+        cartItemsContainer.appendChild(emptyCart);
+        
+        // Hide checkout button
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.style.display = 'none';
+        }
+        
+        return;
+    }
+    
+    // Show checkout button
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.style.display = 'block';
+    }
+    
+    // Add each item to the cart
+    cart.forEach((cartItem, index) => {
+        const { item, quantity } = cartItem;
+        
+        // Create the cart item container
+        const cartItemEl = document.createElement('div');
+        cartItemEl.className = 'cart-item';
+        cartItemEl.dataset.index = index;
+        
+        // Format the price
+        const formattedPrice = window.formatters?.currency 
+            ? window.formatters.currency(item.price * quantity) 
+            : `KSh ${(item.price * quantity).toFixed(2)}`;
+        
+        // Set HTML content
+        cartItemEl.innerHTML = `
+            <div class="item-image">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="item-details">
+                <h3 class="item-name">${item.name}</h3>
+                <div class="item-price">${formattedPrice}</div>
+                <div class="item-category">${item.category}</div>
+            </div>
+            <div class="item-actions">
+                <div class="quantity-controls">
+                    <button class="quantity-btn decrease-btn" data-index="${index}">-</button>
+                    <span class="quantity">${quantity}</span>
+                    <button class="quantity-btn increase-btn" data-index="${index}">+</button>
+                </div>
+                <button class="remove-btn" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Add to container
+        cartItemsContainer.appendChild(cartItemEl);
+    });
+    
+    // Add event listeners to quantity buttons
+    const decreaseBtns = document.querySelectorAll('.decrease-btn');
+    const increaseBtns = document.querySelectorAll('.increase-btn');
+    const removeBtns = document.querySelectorAll('.remove-btn');
+    
+    decreaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.dataset.index);
+            const currentQty = cart[index].quantity;
+            
+            if (currentQty > 1) {
+                cartManager.updateQuantity(index, currentQty - 1);
+            } else {
+                // Automatically remove item when quantity reaches 0
+                cartManager.removeItem(index);
+            }
+            
+            // Update UI
+            updateCartUI();
+        });
+    });
+    
+    increaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.dataset.index);
+            const currentQty = cart[index].quantity;
+            
+            // Limit quantity to 99
+            if (currentQty < 99) {
+                cartManager.updateQuantity(index, currentQty + 1);
+                
+                // Update UI
+                updateCartUI();
+            }
+        });
+    });
+    
+    removeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.dataset.index);
+            
+            // Remove item without confirmation
+            cartManager.removeItem(index);
+            
+            // Update UI with animation
+            const cartItem = this.closest('.cart-item');
+            cartItem.classList.add('removing');
+            
+            // Wait for animation before updating UI
+            setTimeout(() => {
+                updateCartUI();
+            }, 300);
+        });
+    });
+}
+
+/**
+ * Update all cart UI elements
+ */
+function updateCartUI() {
+    displayCartItems();
+    updateCartSummary();
+    updateCartBadge();
+}
+
+/**
+ * Add event listeners
+ */
+function addEventListeners() {
+    // Clear cart button
+    if (clearCartBtn) {
+        clearCartBtn.addEventListener('click', () => {
+            // Add confirmation dialog
+            if (confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
+                // Clear cart after confirmation
+                cartManager.clearCart();
+                displayCartItems();
+                updateCartSummary();
+                updateCartBadge();
+                
+                // Show a temporary message
+                const messageEl = document.createElement('div');
+                messageEl.className = 'cart-message';
+                messageEl.textContent = 'Cart cleared';
+                document.body.appendChild(messageEl);
+                
+                // Remove the message after 2 seconds
+                setTimeout(() => {
+                    if (messageEl.parentNode) {
+                        messageEl.parentNode.removeChild(messageEl);
+                    }
+                }, 2000);
+            }
+        });
+    }
+    
+    // Checkout button
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', openCheckoutModal);
+    }
+    
+    // Cancel checkout button
+    if (cancelCheckoutBtn) {
+        cancelCheckoutBtn.addEventListener('click', () => {
+            checkoutModal.classList.remove('show');
+        });
+    }
+    
+    // Collection method selection
+    const collectionMethodSelect = document.getElementById('collection-method');
+    if (collectionMethodSelect) {
+        collectionMethodSelect.addEventListener('change', (e) => {
+            const tableSelection = document.getElementById('table-selection');
+            const tableNumberSelect = document.getElementById('table-number');
+            const pickupCounter = document.getElementById('pickup-counter');
+            
+            if (e.target.value === 'table') {
+                tableSelection.style.display = 'block';
+                tableNumberSelect.disabled = false;
+                tableNumberSelect.required = true;
+                pickupCounter.style.display = 'none';
+            } else if (e.target.value === 'pickup') {
+                tableSelection.style.display = 'none';
+                tableNumberSelect.disabled = true;
+                tableNumberSelect.required = false;
+                pickupCounter.style.display = 'block';
+            } else {
+                tableSelection.style.display = 'none';
+                pickupCounter.style.display = 'none';
+                tableNumberSelect.disabled = true;
+                tableNumberSelect.required = false;
+            }
+        });
+    }
+    
+    // Checkout form
+    if (checkoutForm) {
+        console.log('Adding submit event listener to checkout form');
+        checkoutForm.addEventListener('submit', handleCheckout);
+    } else {
+        console.error('Checkout form not found!');
+    }
+    
+    // Close success modal
+    if (closeSuccessModalBtn) {
+        closeSuccessModalBtn.addEventListener('click', () => {
+            window.location.href = 'my-orders.html';
+        });
+    }
+    
+    // Close modals
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        });
+    });
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+        }
+    });
+    
+    // Close modals with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal.show');
+            modals.forEach(modal => {
+                modal.classList.remove('show');
+            });
+        }
+    });
+}
+
+// Initialize cart page when DOM is loaded
+document.addEventListener('DOMContentLoaded', initCart); 

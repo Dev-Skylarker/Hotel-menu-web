@@ -104,20 +104,6 @@ function loadOrderDetails(orderId) {
 function displayOrderDetails(order) {
     if (!orderDetailsContainer) return;
     
-    // Format pickup time
-    const pickupTime = new Date(order.estimatedPickupTime);
-    const formattedTime = pickupTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Format order time
-    const orderTime = new Date(order.orderTime);
-    const formattedOrderTime = orderTime.toLocaleString([], { 
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
     // Create order details HTML
     let statusClass = '';
     switch (order.status) {
@@ -138,50 +124,8 @@ function displayOrderDetails(order) {
     // Calculate when buttons should be shown (only show for pending or ready orders)
     const showButtons = order.status === 'pending' || order.status === 'ready';
     
-    // Format payment method
-    let paymentMethod = order.paymentMethod || 'cash';
-    let formattedPaymentMethod = '';
-    
-    switch (paymentMethod) {
-        case 'cash':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'mpesa':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'card':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'paypal':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'bitcoin':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        default:
-            formattedPaymentMethod = 'On Pickup';
-    }
-    
-    // Format payment status
-    let paymentStatus = order.paymentStatus || 'pending';
-    let paymentStatusClass = '';
-    
-    switch (paymentStatus) {
-        case 'pending':
-            paymentStatusClass = 'status-pending';
-            break;
-        case 'processed':
-            paymentStatusClass = 'status-completed';
-            break;
-        case 'failed':
-            paymentStatusClass = 'status-cancelled';
-            break;
-        default:
-            paymentStatusClass = 'status-pending';
-    }
-    
     // Get the total amount or calculate it
-    const totalAmount = order.totalAmount || (order.item.price * order.quantity).toFixed(2);
+    const totalAmount = order.totalAmount || (order.item.price * order.quantity);
     
     orderDetailsContainer.innerHTML = `
         <div class="order-details-card">
@@ -196,7 +140,7 @@ function displayOrderDetails(order) {
                     <div class="order-item-details">
                         <h3>${order.item.name}</h3>
                         <p>Quantity: ${order.quantity}</p>
-                        <p>Price: KSh ${(order.item.price * order.quantity).toFixed(2)}</p>
+                        <p>Price: ${window.formatters?.currency ? window.formatters.currency(order.item.price * order.quantity, true) : `KSh ${(order.item.price * order.quantity).toFixed(2)}`}</p>
                     </div>
                 </div>
                 
@@ -207,19 +151,17 @@ function displayOrderDetails(order) {
                         <p><strong>Admission #:</strong> ${order.admissionNumber || 'N/A'}</p>
                     </div>
                     
-                    <div class="payment-info">
-                        <h3>Payment Information</h3>
-                        <p><strong>Payment Code:</strong> ${order.orderCode || 'N/A'}</p>
-                        <p><strong>Total Amount:</strong> KSh ${totalAmount}</p>
-                        <p><strong>Payment Method:</strong> ${formattedPaymentMethod}</p>
-                        <p><strong>Payment Status:</strong> <span class="status-badge ${paymentStatusClass}">${paymentStatus}</span></p>
+                    ${order.collectionMethod ? `
+                    <div class="collection-info">
+                        <h3>Collection Information</h3>
+                        <p><strong>Method:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>
+                        <p><strong>Location:</strong> <span class="highlight">${order.collectionLocation || 'Not specified'}</span></p>
+                        ${order.collectionMethod === 'table' 
+                            ? `<p>Your order will be served directly to your table once ready.</p>` 
+                            : `<p>Please collect your order from Counter 3 when notified that it is ready.</p>`
+                        }
                     </div>
-                    
-                    <div class="order-timing">
-                        <h3>Order Timing</h3>
-                        <p><strong>Order Time:</strong> ${formattedOrderTime}</p>
-                        <p><strong>Estimated Pickup:</strong> ${formattedTime}</p>
-                    </div>
+                    ` : ''}
                     
                     ${order.notes ? `
                     <div class="order-notes">
@@ -243,19 +185,15 @@ function displayOrderDetails(order) {
         </div>
     `;
     
-    // Add event listeners for buttons if they exist
-    if (showButtons) {
-        // Cancel order button
-        cancelOrderButton = document.getElementById('cancel-order');
-        if (cancelOrderButton) {
-            cancelOrderButton.addEventListener('click', () => cancelOrder(order.id));
-        }
-        
-        // Confirm pickup button
-        confirmPickupButton = document.getElementById('confirm-pickup');
-        if (confirmPickupButton) {
-            confirmPickupButton.addEventListener('click', () => confirmPickup(order.id));
-        }
+    // Add event listeners to buttons
+    cancelOrderButton = document.getElementById('cancel-order');
+    if (cancelOrderButton) {
+        cancelOrderButton.addEventListener('click', () => cancelOrder(order.id));
+    }
+    
+    confirmPickupButton = document.getElementById('confirm-pickup');
+    if (confirmPickupButton) {
+        confirmPickupButton.addEventListener('click', () => confirmPickup(order.id));
     }
 }
 

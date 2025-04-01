@@ -16,6 +16,10 @@ const closeConfirmationBtn = document.getElementById('close-confirmation');
 const orderNumberSpan = document.getElementById('order-number');
 const currentOrdersContainer = document.getElementById('current-orders');
 
+// DOM Elements for search status
+const searchStatus = document.getElementById('search-status');
+const searchCount = document.querySelector('.search-count');
+
 // Current filter state
 let currentCategory = 'all';
 let currentSearchTerm = '';
@@ -74,21 +78,94 @@ function stopAutoRefresh() {
  * Add all event listeners for the menu page
  */
 function addEventListeners() {
+    // Get clear search button
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    
     // Search functionality
     if (searchBtn) {
         searchBtn.addEventListener('click', handleSearch);
     }
     
     if (searchInput) {
+        // Real-time search as user types
+        searchInput.addEventListener('input', (e) => {
+            // Update search term and filter in real time
+            currentSearchTerm = searchInput.value.trim().toLowerCase();
+            
+            // Show typing indicator
+            const searchInProgress = currentSearchTerm.length > 0;
+            
+            // Show search status immediately for feedback
+            if (searchStatus && searchInProgress) {
+                searchStatus.style.display = 'block';
+                searchCount.innerHTML = `<span class="search-in-progress"><i class="fas fa-circle-notch fa-spin"></i> Searching...</span>`;
+            } else if (searchStatus) {
+                searchStatus.style.display = 'none';
+            }
+            
+            // Immediately filter and update results
+            const results = filterMenuItems(currentCategory, currentSearchTerm);
+            
+            // Update UI - show/hide clear button
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchInProgress ? 'block' : 'none';
+            }
+            
+            // Update search status after results are displayed
+            if (searchStatus && searchInProgress) {
+                if (results.length === 0) {
+                    searchCount.innerHTML = 'No results found';
+                } else {
+                    searchCount.innerHTML = `Found ${results.length} ${results.length === 1 ? 'item' : 'items'}`;
+                }
+            }
+            
+            // Update any UI indicators for search results
+            updateFilterUI(currentCategory, currentSearchTerm);
+        });
+        
+        // Focus on search input triggers status
+        searchInput.addEventListener('focus', () => {
+            if (currentSearchTerm && searchStatus) {
+                searchStatus.style.display = 'block';
+            }
+        });
+        
+        // Lose focus hides status after delay
+        searchInput.addEventListener('blur', () => {
+            if (searchStatus) {
+                setTimeout(() => {
+                    searchStatus.style.display = 'none';
+                }, 200);
+            }
+        });
+        
+        // Search on Enter key
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 handleSearch();
             }
-            // Show all items when search field is cleared
-            if (searchInput.value.trim() === '') {
-                currentSearchTerm = '';
-                filterMenuItems(currentCategory, '');
-            }
+        });
+    }
+    
+    // Clear search button
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            // Clear search input
+            searchInput.value = '';
+            currentSearchTerm = '';
+            
+            // Update display immediately
+            filterMenuItems(currentCategory, '');
+            
+            // Hide clear button
+            clearSearchBtn.style.display = 'none';
+            
+            // Focus back on search input
+            searchInput.focus();
+            
+            // Notify user
+            console.log('Search cleared');
         });
     }
     
@@ -97,6 +174,7 @@ function addEventListeners() {
         tab.addEventListener('click', () => {
             const category = tab.dataset.category;
             setActiveTab(tab);
+            currentCategory = category;
             filterMenuItems(category, currentSearchTerm);
         });
     });
@@ -164,7 +242,45 @@ function addEventListeners() {
 function handleSearch() {
     const searchTerm = searchInput.value.trim().toLowerCase();
     currentSearchTerm = searchTerm;
-    filterMenuItems(currentCategory, searchTerm);
+    
+    // Show search status for feedback
+    if (searchStatus && currentSearchTerm) {
+        searchStatus.style.display = 'block';
+        searchCount.innerHTML = `<span class="search-in-progress"><i class="fas fa-circle-notch fa-spin"></i> Searching...</span>`;
+    } else if (searchStatus) {
+        searchStatus.style.display = 'none';
+    }
+    
+    // Clear search if empty
+    if (!searchTerm) {
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = 'none';
+        }
+    }
+    
+    // Perform search
+    const results = filterMenuItems(currentCategory, searchTerm);
+    
+    // Update search status after results are displayed
+    if (searchStatus && currentSearchTerm) {
+        if (results.length === 0) {
+            searchCount.innerHTML = 'No results found';
+        } else {
+            searchCount.innerHTML = `Found ${results.length} ${results.length === 1 ? 'item' : 'items'}`;
+        }
+        
+        // Hide status after a short delay
+        setTimeout(() => {
+            searchStatus.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Track search for analytics
+    console.log(`Search performed: ${searchTerm}`);
+    
+    // Keep search input focused for additional searches
+    searchInput.focus();
 }
 
 /**
@@ -185,31 +301,79 @@ function setActiveTab(activeTab) {
  * @param {string} searchTerm - Search term to filter by
  */
 function filterMenuItems(category, searchTerm = '') {
+    console.log(`Filtering by category: ${category} and search term: ${searchTerm}`);
+    
+    // Get all menu items
     const menuItems = storageManager.getMenuItems();
     
     // Apply filters
     let filteredItems = menuItems;
     
-    // Filter by category
-    if (category !== 'all') {
+    // Filter by category first
+    if (category && category !== 'all') {
         filteredItems = filteredItems.filter(item => item.category === category);
     }
     
-    // Filter by search term
+    // Then filter by search term
     if (searchTerm) {
         filteredItems = filteredItems.filter(item => {
-            return (
-                item.name.toLowerCase().includes(searchTerm) ||
-                item.description.toLowerCase().includes(searchTerm) ||
-                (item.ingredients && item.ingredients.some(ing => 
-                    ing.toLowerCase().includes(searchTerm)
-                ))
-            );
+            const name = item.name.toLowerCase();
+            const desc = item.description.toLowerCase();
+            const cat = item.category.toLowerCase();
+            
+            // Search in name, description, category, and ingredients
+            const nameMatch = name.includes(searchTerm);
+            const descMatch = desc.includes(searchTerm);
+            const catMatch = cat.includes(searchTerm);
+            
+            // Check ingredients if available
+            let ingredientsMatch = false;
+            if (item.ingredients && Array.isArray(item.ingredients)) {
+                ingredientsMatch = item.ingredients.some(ingredient => 
+                    ingredient.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            return nameMatch || descMatch || catMatch || ingredientsMatch;
         });
     }
     
     // Display filtered items
     displayMenuItems(filteredItems);
+    
+    // Show/hide no results message
+    toggleNoResultsMessage(filteredItems.length === 0);
+    
+    return filteredItems;
+}
+
+/**
+ * Toggle the no results message
+ * @param {boolean} show - Whether to show the message
+ */
+function toggleNoResultsMessage(show) {
+    if (noResults) {
+        noResults.style.display = show ? 'block' : 'none';
+        
+        // If showing no results, customize the message based on filters
+        if (show) {
+            const heading = noResults.querySelector('h2');
+            const message = noResults.querySelector('p');
+            
+            if (heading && message) {
+                if (currentSearchTerm && currentCategory !== 'all') {
+                    heading.textContent = `No ${formatCategoryLabel(currentCategory)} items found`;
+                    message.textContent = `No items matching "${currentSearchTerm}" in ${formatCategoryLabel(currentCategory)}`;
+                } else if (currentSearchTerm) {
+                    heading.textContent = "No items found";
+                    message.textContent = `No items matching "${currentSearchTerm}"`;
+                } else {
+                    heading.textContent = "No items available";
+                    message.textContent = `No ${formatCategoryLabel(currentCategory)} items available at this time`;
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -235,9 +399,20 @@ function displayMenuItems(items) {
         noResults.style.display = 'none';
     }
     
+    // Determine if we need staggered animation (for search results)
+    const useAnimation = currentSearchTerm.length > 0;
+    
     // Create and append menu item elements
-    items.forEach(item => {
-        const menuItem = createMenuItem(item);
+    items.forEach((item, index) => {
+        const menuItem = createMenuItemCard(item);
+        
+        // Add search result animation class if searching
+        if (useAnimation) {
+            menuItem.classList.add('search-result-item');
+            // Add staggered animation delay
+            menuItem.style.animationDelay = `${index * 30}ms`;
+        }
+        
         menuContainer.appendChild(menuItem);
     });
     
@@ -256,42 +431,94 @@ function displayMenuItems(items) {
 }
 
 /**
- * Create a menu item element
+ * Create a menu item card
  * @param {Object} item - Menu item data
- * @returns {HTMLElement} - Menu item element
+ * @returns {HTMLElement} - Menu item card element
  */
-function createMenuItem(item) {
+function createMenuItemCard(item) {
     const menuItem = document.createElement('div');
     menuItem.className = 'menu-item';
-    menuItem.dataset.id = item.id;
+    if (item.available === false) {
+        menuItem.classList.add('unavailable');
+    }
+    menuItem.setAttribute('data-id', item.id);
     
-    const categoryLabel = formatCategoryLabel(item.category);
+    const formattedPrice = window.formatters?.currency 
+        ? window.formatters.currency(item.price, true) 
+        : `KSh ${item.price.toFixed(2)}`;
     
-    // Determine if we should show image or placeholder
-    const imageHtml = item.imageUrl ? 
-        `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="menu-item-img">` :
-        `<div class="image-placeholder"><i class="fas fa-utensils"></i></div>`;
-        
+    // Create availability badge
+    const availabilityBadge = item.available === false ? 
+        '<div class="unavailable-indicator"><i class="fas fa-times-circle"></i> Currently Unavailable</div>' : 
+        '<div class="available-indicator"><i class="fas fa-check-circle"></i> Available</div>';
+    
+    // Create featured badge if needed
+    const featuredBadge = item.featured ? 
+        '<div class="featured-indicator"><i class="fas fa-star"></i> Featured</div>' : 
+        '';
+    
     menuItem.innerHTML = `
         <div class="menu-item-image">
-            ${imageHtml}
+            ${item.imageUrl 
+                ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="menu-img">` 
+                : `<div class="image-placeholder"><i class="fas fa-utensils"></i><p>No image available</p></div>`
+            }
+            ${featuredBadge}
+            ${availabilityBadge}
         </div>
         <div class="menu-item-info">
-            <div class="menu-item-category">${categoryLabel}</div>
             <h3 class="menu-item-name">${escapeHtml(item.name)}</h3>
-            <div class="menu-item-price">Ksh ${item.price}</div>
+            <div class="menu-item-price">${formattedPrice}</div>
             <p class="menu-item-description">${escapeHtml(item.description)}</p>
-            <button class="order-btn btn btn-small">Order Now</button>
+            <div class="menu-item-category">${formatCategoryLabel(item.category)}</div>
+            <div class="menu-item-actions">
+                <button class="btn btn-small btn-secondary view-details-btn" data-id="${item.id}">
+                    <i class="fas fa-eye"></i> View Details
+                </button>
+                ${item.available === false ? 
+                    `<div class="unavailable-message">Not Available</div>` :
+                    `<button class="btn btn-small btn-secondary add-to-cart-btn" data-id="${item.id}">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                    <button class="btn btn-small btn-primary order-now-btn" data-id="${item.id}">
+                        <i class="fas fa-shopping-cart"></i> Order Now
+                    </button>`
+                }
+            </div>
         </div>
     `;
     
-    // Add click event to open modal
-    const orderBtn = menuItem.querySelector('.order-btn');
-    orderBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openItemModal(item);
-    });
+    // Add event listener to the view details button
+    const viewDetailsBtn = menuItem.querySelector('.view-details-btn');
+    if (viewDetailsBtn) {
+        viewDetailsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openItemModal(item);
+        });
+    }
     
+    // Add event listeners to action buttons only if item is available
+    if (item.available !== false) {
+        // Add event listener to the add to cart button
+        const addToCartBtn = menuItem.querySelector('.add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addToCartDirectly(item);
+            });
+        }
+        
+        // Add event listener to the order now button
+        const orderNowBtn = menuItem.querySelector('.order-now-btn');
+        if (orderNowBtn) {
+            orderNowBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                orderNowDirectly(item);
+            });
+        }
+    }
+    
+    // Make entire card clickable for details
     menuItem.addEventListener('click', () => {
         openItemModal(item);
     });
@@ -312,96 +539,97 @@ function openItemModal(item) {
     // Set modal content
     document.getElementById('modal-item-name').textContent = item.name;
     document.getElementById('modal-item-description').textContent = item.description;
-    document.getElementById('modal-item-price').textContent = `Ksh ${item.price}`;
+    document.getElementById('modal-item-price').textContent = window.formatters?.currency ? window.formatters.currency(item.price, true) : `KSh ${item.price}`;
     document.getElementById('modal-item-category').textContent = formatCategoryLabel(item.category);
+    
+    // Check if item is available
+    const isAvailable = item.available !== false;
     
     // Set the image
     const imageContainer = document.getElementById('modal-item-image');
     if (imageContainer) {
         if (item.imageUrl) {
-            imageContainer.innerHTML = `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="modal-item-img">`;
+            imageContainer.innerHTML = `
+                <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="modal-item-img">
+                ${!isAvailable ? '<div class="modal-unavailable-indicator"><i class="fas fa-times-circle"></i> Currently Unavailable</div>' : ''}
+            `;
         } else {
-            imageContainer.innerHTML = `<div class="image-placeholder"><i class="fas fa-utensils"></i></div>`;
+            imageContainer.innerHTML = `
+                <div class="image-placeholder"><i class="fas fa-utensils"></i></div>
+                ${!isAvailable ? '<div class="modal-unavailable-indicator"><i class="fas fa-times-circle"></i> Currently Unavailable</div>' : ''}
+            `;
         }
     }
-    
-    // Set ingredients list
-    const ingredientsList = document.getElementById('modal-item-ingredients');
-    ingredientsList.innerHTML = '';
-    
-    if (item.ingredients && item.ingredients.length > 0) {
-        item.ingredients.forEach(ingredient => {
-            const li = document.createElement('li');
-            li.textContent = ingredient;
-            ingredientsList.appendChild(li);
-        });
-    } else {
-        const li = document.createElement('li');
-        li.textContent = 'No ingredients listed';
-        ingredientsList.appendChild(li);
-    }
-    
-    // Add quantity controls
+
+    // Add quantity controls only if item is available
     const actionsContainer = document.querySelector('.modal-item-actions');
     if (actionsContainer) {
-        actionsContainer.innerHTML = `
-            <div class="quantity-control">
-                <button class="quantity-btn decrease-btn" id="decrease-quantity">-</button>
-                <input type="number" id="item-quantity" class="quantity-input" value="1" min="1" max="99">
-                <button class="quantity-btn increase-btn" id="increase-quantity">+</button>
-            </div>
-            <div class="action-buttons">
-                <button id="add-to-cart-btn" class="btn btn-secondary">
-                    <i class="fas fa-cart-plus"></i> Add to Cart
-                </button>
-                <button id="order-item-btn" class="btn btn-primary">
-                    <i class="fas fa-shopping-cart"></i> Order Now
-                </button>
-            </div>
-        `;
-        
-        // Add event listeners for quantity buttons
-        const decreaseBtn = document.getElementById('decrease-quantity');
-        const increaseBtn = document.getElementById('increase-quantity');
-        const quantityInput = document.getElementById('item-quantity');
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
-        const orderBtn = document.getElementById('order-item-btn');
-        
-        if (decreaseBtn) {
-            decreaseBtn.addEventListener('click', () => {
-                let quantity = parseInt(quantityInput.value) - 1;
-                if (quantity < 1) quantity = 1;
-                quantityInput.value = quantity;
-            });
-        }
-        
-        if (increaseBtn) {
-            increaseBtn.addEventListener('click', () => {
-                let quantity = parseInt(quantityInput.value) + 1;
-                if (quantity > 99) quantity = 99;
-                quantityInput.value = quantity;
-            });
-        }
-        
-        if (quantityInput) {
-            quantityInput.addEventListener('change', () => {
-                let quantity = parseInt(quantityInput.value);
-                if (isNaN(quantity) || quantity < 1) {
-                    quantity = 1;
-                    quantityInput.value = 1;
-                } else if (quantity > 99) {
-                    quantity = 99;
-                    quantityInput.value = 99;
-                }
-            });
-        }
-        
-        if (addToCartBtn) {
-            addToCartBtn.addEventListener('click', addToCart);
-        }
-        
-        if (orderBtn) {
-            orderBtn.addEventListener('click', placeOrder);
+        if (isAvailable) {
+            actionsContainer.innerHTML = `
+                <div class="quantity-control">
+                    <button class="quantity-btn decrease-btn" id="decrease-quantity">-</button>
+                    <input type="number" id="item-quantity" class="quantity-input" value="1" min="1" max="99">
+                    <button class="quantity-btn increase-btn" id="increase-quantity">+</button>
+                </div>
+                <div class="action-buttons">
+                    <button id="add-to-cart-btn" class="btn btn-secondary">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                    <button id="order-item-btn" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart"></i> Order Now
+                    </button>
+                </div>
+            `;
+            
+            // Add event listeners for quantity buttons
+            const decreaseBtn = document.getElementById('decrease-quantity');
+            const increaseBtn = document.getElementById('increase-quantity');
+            const quantityInput = document.getElementById('item-quantity');
+            const addToCartBtn = document.getElementById('add-to-cart-btn');
+            const orderBtn = document.getElementById('order-item-btn');
+            
+            // Decrease quantity button
+            if (decreaseBtn) {
+                decreaseBtn.addEventListener('click', () => {
+                    const currentValue = parseInt(quantityInput.value);
+                    if (currentValue > 1) {
+                        quantityInput.value = currentValue - 1;
+                    }
+                });
+            }
+            
+            // Increase quantity button
+            if (increaseBtn) {
+                increaseBtn.addEventListener('click', () => {
+                    const currentValue = parseInt(quantityInput.value);
+                    if (currentValue < 99) {
+                        quantityInput.value = currentValue + 1;
+                    }
+                });
+            }
+            
+            // Add to cart button
+            if (addToCartBtn) {
+                addToCartBtn.addEventListener('click', () => {
+                    const quantity = parseInt(quantityInput.value);
+                    addToCart(quantity);
+                });
+            }
+            
+            // Order button
+            if (orderBtn) {
+                orderBtn.addEventListener('click', () => {
+                    placeOrder();
+                });
+            }
+        } else {
+            // Item is unavailable - show message instead of controls
+            actionsContainer.innerHTML = `
+                <div class="modal-unavailable-message">
+                    <i class="fas fa-info-circle"></i> 
+                    This item is currently unavailable for ordering
+                </div>
+            `;
         }
     }
     
@@ -508,20 +736,65 @@ function addToCart() {
  * Place an order for the current item
  */
 function placeOrder() {
-    if (!currentItem) return;
-    
-    // Get quantity
-    const quantityInput = document.getElementById('item-quantity');
-    const quantity = parseInt(quantityInput ? quantityInput.value : 1);
-    
-    // Add to cart first
-    cartManager.addToCart(currentItem, quantity);
-    
-    // Close item modal
-    closeItemModal();
-    
-    // Redirect to cart page
-    window.location.href = "cart.html?checkout=true";
+    try {
+        // Check if item is available
+        if (currentItem.available === false) {
+            showNotification('This item is currently unavailable for ordering', 'error');
+            return;
+        }
+        
+        // Get quantity
+        const quantityInput = document.getElementById('item-quantity');
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+        
+        // Create a unique order ID
+        const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000) + '-' + 
+                        Math.floor(1000 + Math.random() * 9000);
+        
+        // Create order object
+        const order = {
+            id: orderId,
+            item: currentItem,
+            quantity: quantity,
+            status: 'pending',
+            customerName: 'Current User',
+            orderTime: new Date().toISOString(),
+            estimatedPickupTime: new Date(new Date().getTime() + 20 * 60000).toISOString(), // 20 minutes from now
+            paymentMethod: 'cash'
+        };
+        
+        // Get current orders array
+        const currentOrders = storageManager.getOrders();
+        
+        // Add the new order
+        currentOrders.push(order);
+        
+        // Save back to storage
+        localStorage.setItem('campus_cafe_orders', JSON.stringify(currentOrders));
+        
+        // Store the order ID for tracking
+        localStorage.setItem('last_order_id', orderId);
+        
+        // Add item to cart for backup
+        cartManager.addToCart(currentItem, quantity);
+        
+        // Update cart badge count
+        updateCartBadge();
+        
+        // Close the modal
+        closeItemModal();
+        
+        // Navigate directly to my-orders page
+        showNotification(`${quantity} x ${currentItem.name} has been added to cart. Redirecting to orders...`, 'success');
+        
+        // Short delay before redirecting to give notification time to show
+        setTimeout(() => {
+            window.location.href = 'my-orders.html';
+        }, 1000);
+    } catch (error) {
+        console.error('Error placing order:', error);
+        showNotification('Failed to place order. Please try again.', 'error');
+    }
 }
 
 /**
@@ -631,19 +904,12 @@ function handleHashChange() {
 }
 
 /**
- * Load all menu items from storage
+ * Load menu items from storage
  */
 function loadMenuItems() {
     try {
         // Get menu items
         const menuItems = storageManager.getMenuItems();
-        
-        // Update category labels for Campus Cafe
-        menuItems.forEach(item => {
-            if (item.category === 'appetizers') {
-                item.category = 'appetizers'; // Keeping as is, but could change to 'breakfast'
-            }
-        });
         
         // Display all items
         displayMenuItems(menuItems);
@@ -667,9 +933,10 @@ function loadMenuItems() {
  */
 function formatCategoryLabel(category) {
     const categories = {
-        'appetizers': 'Breakfast',
+        'breakfast': 'Breakfast',
+        'lunch': 'Lunch',
         'main-courses': 'Main Course',
-        'desserts': 'Dessert',
+        'snacks': 'Snack',
         'drinks': 'Drink'
     };
     
@@ -832,4 +1099,200 @@ function animateCounter(element, start, end, duration = 1000) {
         }
     };
     window.requestAnimationFrame(step);
+}
+
+/**
+ * Add an item to cart directly from the menu
+ * @param {Object} item - Menu item data
+ */
+function addToCartDirectly(item) {
+    // Add to cart with quantity 1
+    cartManager.addToCart(item, 1);
+    
+    // Update cart badge
+    updateCartBadge();
+    
+    // Show confirmation
+    const confirmationContainer = document.createElement('div');
+    confirmationContainer.className = 'order-confirmation-popup';
+    confirmationContainer.innerHTML = `
+        <div class="confirmation-content">
+            <div class="confirmation-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>${item.name} added to cart!</h3>
+            <p>Your item has been added to the cart.</p>
+            <div class="confirmation-actions">
+                <button id="continue-shopping" class="btn btn-secondary">Continue Shopping</button>
+                <a href="cart.html" class="btn btn-primary">View Cart</a>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(confirmationContainer);
+    
+    // Add animation
+    setTimeout(() => {
+        confirmationContainer.classList.add('show');
+    }, 10);
+    
+    // Add event listener to continue shopping button
+    const continueBtn = confirmationContainer.querySelector('#continue-shopping');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', () => {
+            confirmationContainer.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(confirmationContainer);
+            }, 300);
+        });
+    }
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(confirmationContainer)) {
+            confirmationContainer.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(confirmationContainer)) {
+                    document.body.removeChild(confirmationContainer);
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+/**
+ * Order item now and redirect to checkout
+ * @param {Object} item - Menu item data
+ */
+function orderNowDirectly(item) {
+    // Add to cart with quantity 1
+    cartManager.addToCart(item, 1);
+    
+    // Update cart badge
+    updateCartBadge();
+    
+    // Show confirmation briefly before redirecting
+    const confirmationContainer = document.createElement('div');
+    confirmationContainer.className = 'order-confirmation-popup';
+    confirmationContainer.innerHTML = `
+        <div class="confirmation-content">
+            <div class="confirmation-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>${item.name} added to cart!</h3>
+            <p>Redirecting to checkout...</p>
+        </div>
+    `;
+    
+    document.body.appendChild(confirmationContainer);
+    
+    // Add animation
+    setTimeout(() => {
+        confirmationContainer.classList.add('show');
+    }, 10);
+    
+    // Redirect to cart after 1.5 seconds
+    setTimeout(() => {
+        window.location.href = 'cart.html';
+    }, 1500);
+}
+
+/**
+ * Update the UI to reflect active filters
+ * @param {string} category - Active category
+ * @param {string} searchTerm - Active search term
+ */
+function updateFilterUI(category, searchTerm) {
+    // Update page title to reflect search
+    let pageTitle = "Menu - Campus Cafe";
+    
+    if (searchTerm && category !== 'all') {
+        pageTitle = `${searchTerm} in ${formatCategoryLabel(category)} - Campus Cafe`;
+    } else if (searchTerm) {
+        pageTitle = `Search: ${searchTerm} - Campus Cafe`;
+    } else if (category !== 'all') {
+        pageTitle = `${formatCategoryLabel(category)} - Campus Cafe`;
+    }
+    
+    document.title = pageTitle;
+    
+    // Update search input placeholder based on category
+    if (searchInput && category !== 'all') {
+        searchInput.placeholder = `Search ${formatCategoryLabel(category)}...`;
+    } else if (searchInput) {
+        searchInput.placeholder = "Search our menu...";
+    }
+    
+    // Update menu container header if it exists
+    const menuHeader = document.querySelector('.menu-items h2');
+    if (menuHeader) {
+        if (searchTerm && category !== 'all') {
+            menuHeader.textContent = `${formatCategoryLabel(category)} - Search: "${searchTerm}"`;
+        } else if (searchTerm) {
+            menuHeader.textContent = `Search Results: "${searchTerm}"`;
+        } else if (category !== 'all') {
+            menuHeader.textContent = formatCategoryLabel(category);
+        } else {
+            menuHeader.textContent = "All Menu Items";
+        }
+    }
+    
+    // Highlight matching text in search results if there's a search term
+    if (searchTerm) {
+        highlightSearchMatches(searchTerm);
+    }
+}
+
+/**
+ * Highlight search term matches in the menu items
+ * @param {string} searchTerm - The search term to highlight
+ */
+function highlightSearchMatches(searchTerm) {
+    if (!searchTerm) return;
+    
+    // Get all menu item names and descriptions
+    const itemNames = document.querySelectorAll('.menu-item-name');
+    const itemDescriptions = document.querySelectorAll('.menu-item-description');
+    
+    // Function to highlight text while preserving HTML structure
+    const highlightText = (element, term) => {
+        if (!element) return;
+        
+        const text = element.textContent;
+        if (!text) return;
+        
+        // Case insensitive search
+        const regex = new RegExp(`(${term})`, 'gi');
+        const highlightedText = text.replace(regex, '<span class="highlight-match">$1</span>');
+        
+        // Only update if there are matches
+        if (text !== highlightedText) {
+            element.innerHTML = highlightedText;
+        }
+    };
+    
+    // Highlight names
+    itemNames.forEach(name => highlightText(name, searchTerm));
+    
+    // Highlight descriptions
+    itemDescriptions.forEach(desc => highlightText(desc, searchTerm));
+    
+    // Add style for highlighted text if it doesn't exist
+    if (!document.getElementById('highlight-style')) {
+        const style = document.createElement('style');
+        style.id = 'highlight-style';
+        style.textContent = `
+            .highlight-match {
+                background-color: rgba(var(--primary-color-rgb), 0.3);
+                padding: 0 2px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            .dark-mode .highlight-match {
+                background-color: rgba(var(--primary-color-rgb), 0.5);
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }

@@ -104,7 +104,7 @@
             margin-bottom: 0.5rem;
         }
         
-        .customer-info, .payment-info, .order-timing, .order-notes {
+        .customer-info, .promo-ad, .quick-service, .order-notes {
             margin-bottom: 1.5rem;
             padding: 1rem;
             background-color: var(--background-secondary);
@@ -112,23 +112,39 @@
             border-left: 3px solid var(--primary-color);
         }
         
-        .payment-info {
-            border-left-color: var(--kenya-green);
+        .promo-ad {
+            border-left-color: #FF5722;
+            background-color: rgba(255, 87, 34, 0.05);
         }
         
-        .order-timing {
-            border-left-color: var(--kenya-orange);
+        .quick-service {
+            border-left-color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.05);
         }
         
         .order-notes {
             border-left-color: var(--secondary-color);
         }
         
-        .customer-info h3, .payment-info h3, .order-timing h3, .order-notes h3 {
+        .customer-info h3, .promo-ad h3, .quick-service h3, .order-notes h3 {
             margin-top: 0;
             color: var(--text-color);
             border-bottom: none;
             padding-bottom: 0;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .promo-ad i, .quick-service i {
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+        
+        .promo-ad .btn {
+            margin-top: 10px;
+            display: inline-block;
         }
         
         .order-actions {
@@ -176,7 +192,7 @@
         }
     </style>
 </head>
-<body class="light-mode">
+<body class="dark-mode">
     <header>
         <div class="container">
             <div class="logo">
@@ -282,6 +298,9 @@
                         <li><span id="orders-count">0</span> orders submitted</li>
                     </ul>
                 </div>
+                <div class="footer-admin">
+                    <a href="admin/login.html" class="btn btn-small">Admin Login</a>
+                </div>
             </div>
             <div class="copyright">
                 <p>&copy; 2025 Campus Cafe. All rights reserved.</p>
@@ -291,6 +310,7 @@
 
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
+    <script src="js/utils/currency.js"></script>
     <script src="js/utils/stats.js"></script>
     <script>
         // Update the cart badge on page load and periodically

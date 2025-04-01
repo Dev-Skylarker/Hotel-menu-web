@@ -7,10 +7,15 @@ const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
 const mainNav = document.querySelector('.main-nav');
 const contactForm = document.getElementById('contact-form');
 const featuredDishesContainer = document.getElementById('featured-dishes-container');
+const cartBadge = document.getElementById('cart-badge');
+const themeToggle = document.querySelector('.theme-toggle');
 
 // Auto-refresh configuration
 const REFRESH_INTERVAL = 60000; // 60 seconds
 let refreshTimerId = null;
+
+// Check for pricing update flag
+const pricingUpdated = localStorage.getItem('pricing_updated_v1');
 
 // Toggle mobile navigation
 if (mobileNavToggle) {
@@ -178,7 +183,7 @@ function createDishCard(dish) {
         <div class="dish-info">
             <div class="dish-category">${categoryLabel}</div>
             <h3 class="dish-name">${escapeHtml(dish.name)}</h3>
-            <div class="dish-price">Ksh ${dish.price}</div>
+            <div class="dish-price">${window.formatters?.currency ? window.formatters.currency(dish.price, true) : `KSh ${dish.price}`}</div>
             <p class="dish-description">${escapeHtml(dish.description)}</p>
             <div class="dish-actions">
                 <a href="menu.html#${dish.id}" class="btn btn-secondary btn-small">View Details</a>
@@ -246,24 +251,122 @@ function isMobileDevice() {
            navigator.userAgent.match(/iPhone|iPad|iPod/i);
 }
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Initialize the page
+ */
+function initPage() {
+    // Check if pricing needs to be updated
+    if (!pricingUpdated && storageManager) {
+        console.log('Updating to new pricing model...');
+        storageManager.resetMenuItems();
+        localStorage.setItem('pricing_updated_v1', 'true');
+    }
+    
     storageManager.initStorage();
     loadFeaturedDishes();
     startAutoRefresh();
     
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            stopAutoRefresh();
-        } else {
-            loadFeaturedDishes();
-            startAutoRefresh();
-        }
-    });
-});
+    // Handle contact form submission
+    if (contactForm) {
+        contactForm.addEventListener('submit', handleContactSubmit);
+    }
+}
+
+/**
+ * Add event listeners
+ */
+function addEventListeners() {
+    // Theme toggle
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+}
+
+/**
+ * Update the cart badge
+ */
+function updateCartBadge() {
+    if (!cartBadge) return;
+    
+    // If cartManager is available, use it to get cart items
+    if (typeof cartManager !== 'undefined') {
+        const totalItems = cartManager.getTotalItems();
+        
+        // Update badge
+        cartBadge.textContent = totalItems;
+        
+        // Show or hide badge
+        cartBadge.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+}
+
+/**
+ * Initialize mobile menu functionality
+ */
+function initMobileMenu() {
+    const mobileMenuToggle = document.querySelector('.mobile-nav-toggle');
+    const navMenu = document.querySelector('.nav-menu, .main-nav');
+    
+    if (mobileMenuToggle && navMenu) {
+        // Toggle mobile menu
+        mobileMenuToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+            
+            // Toggle icon
+            const icon = mobileMenuToggle.querySelector('i');
+            if (icon) {
+                if (icon.classList.contains('fa-bars')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const isClickInside = navMenu.contains(event.target) || mobileMenuToggle.contains(event.target);
+            
+            if (!isClickInside && navMenu.classList.contains('active')) {
+                navMenu.classList.remove('active');
+                
+                // Reset icon
+                const icon = mobileMenuToggle.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+        
+        // Close menu when clicking a link
+        const navLinks = navMenu.querySelectorAll('a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                navMenu.classList.remove('active');
+                
+                // Reset icon
+                const icon = mobileMenuToggle.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        });
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', initPage);
 
 // Clean up resources when page is unloaded
 window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
+});
+
+// Initialize the mobile menu on all pages
+document.addEventListener('DOMContentLoaded', function() {
+    initMobileMenu();
 });

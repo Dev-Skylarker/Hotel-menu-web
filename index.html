@@ -11,27 +11,26 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="icon1.png" type="image/png">
 </head>
-<body class="light-mode">
+<body class="dark-mode">
     <header>
         <div class="container">
-            <div class="logo">
-                <a href="index.html">
-                    <img src="assets/logo.png" alt="Campus Cafe Logo">
-                    <span>Campus Cafe</span>
-                </a>
-            </div>
-            <nav>
-                <ul class="main-nav">
-                    <li><a href="index.html" class="active">Home</a></li>
-                    <li><a href="menu.html">Menu</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                    <li><a href="my-orders.html">My Orders</a></li>
-                </ul>
-                <div class="mobile-nav-toggle">
-                    <i class="fas fa-bars"></i>
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html"><img src="img/logo.png" alt="Campus Cafe"> Campus Cafe</a>
                 </div>
-            </nav>
+                <button class="mobile-nav-toggle" aria-expanded="false" aria-controls="main-nav">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <nav>
+                    <ul class="main-nav" id="main-nav">
+                        <li><a href="index.html" class="active">Home</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="my-orders.html">My Orders</a></li>
+                    </ul>
+                </nav>
+            </div>
             <div class="nav-actions">
                 <a href="cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
@@ -136,15 +135,28 @@
                 </ul>
             </div>
             
+            <div class="footer-admin" style="text-align: center; margin: 15px 0;">
+                <a href="admin/login.html" class="btn btn-small">Admin Login</a>
+            </div>
+            
             <div class="copyright">
                 <p>&copy; 2023 Campus Cafe. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <a href="index.html"><i class="fas fa-home"></i> Home</a>
+        <a href="menu.html"><i class="fas fa-utensils"></i> Menu</a>
+        <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart</a>
+        <a href="my-orders.html"><i class="fas fa-receipt"></i> Orders</a>
+    </div>
+    
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/stats.js"></script>
+    <script src="js/utils/currency.js"></script>
     <script>
         // Update the cart badge on page load and periodically
         document.addEventListener('DOMContentLoaded', function() {
@@ -182,5 +194,11 @@
         });
     </script>
     <script src="js/main.js"></script>
+    <script>
+        // Check if admin is logged in and redirect to dashboard
+        if (authManager.isLoggedIn()) {
+            window.location.href = 'admin/dashboard.html';
+        }
+    </script>
 </body>
 </html>
