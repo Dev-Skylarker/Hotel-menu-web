@@ -4,7 +4,8 @@
  */
 
 (function() {
-    console.log('Initializing database...');
+    console.log('======= INITIALIZING DATABASE =======');
+    console.log('Checking if database needs initialization...');
     
     // Initialize users collection if it doesn't exist
     if (!localStorage.getItem('campus_cafe_users')) {
@@ -32,7 +33,7 @@
     
     // Create admin user if it doesn't exist
     if (!hasAdmin && users.length === 0) {
-        console.log('Creating admin user');
+        console.log('%c========== DEFAULT ADMIN CREDENTIALS ==========', 'font-weight: bold; color: blue;');
         
         // Create admin user with specified credentials
         const adminUser = {
@@ -45,7 +46,10 @@
         };
         
         users.push(adminUser);
-        console.log('Admin user created');
+        console.log('%cAdmin user created with the following credentials:', 'color: blue;');
+        console.log('%cEmail: ' + adminUser.email, 'color: blue;');
+        console.log('%cPassword: ' + adminUser.password, 'color: blue;');
+        console.log('%c=============================================', 'font-weight: bold; color: blue;');
     }
     
     // Check if default user exists
@@ -53,7 +57,7 @@
     
     // Create default user if it doesn't exist
     if (!hasDefaultUser) {
-        console.log('Creating default user account');
+        console.log('%c========== DEFAULT USER CREDENTIALS ==========', 'font-weight: bold; color: green;');
         
         // Create default user
         const defaultUser = {
@@ -66,13 +70,17 @@
         };
         
         users.push(defaultUser);
-        console.log('Default user created');
+        console.log('%cDefault user created with the following credentials:', 'color: green;');
+        console.log('%cEmail: ' + defaultUser.email, 'color: green;');
+        console.log('%cPassword: ' + defaultUser.password, 'color: green;');
+        console.log('%c=============================================', 'font-weight: bold; color: green;');
     }
     
     // Save users back to localStorage
     localStorage.setItem('campus_cafe_users', JSON.stringify(users));
     
     console.log('Database initialization complete');
+    console.log('=========================================');
     
     /**
      * Generate a secure random password

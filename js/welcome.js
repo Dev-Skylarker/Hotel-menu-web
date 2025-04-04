@@ -4,6 +4,13 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug information for welcome page
+    console.log('======= CAMPUS CAFE SYSTEM DEBUGGING =======');
+    console.log('Welcome page loaded at: ' + new Date().toLocaleString());
+    console.log('Environment mode: ' + (window.ENV?.production ? 'Production' : 'Development'));
+    console.log('Offline mode: ' + (window.ENV?.features?.offlineMode ? 'Enabled' : 'Disabled'));
+    console.log('=============================================');
+    
     // Initialize the welcome page
     initWelcomePage();
     
