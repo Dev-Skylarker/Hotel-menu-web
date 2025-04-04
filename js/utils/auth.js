@@ -225,11 +225,24 @@ const authManager = (function() {
     
     /**
      * Logout current user
+     * @param {boolean} redirect - Whether to redirect to welcome page
+     * @param {string} redirectPath - Optional custom redirect path
      */
-    function logout() {
+    function logout(redirect = false, redirectPath = null) {
         localStorage.removeItem(USER_KEY);
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(TOKEN_EXPIRY_KEY);
+        
+        if (redirect) {
+            // Determine the right path to the welcome page based on current location
+            const isAdmin = window.location.pathname.toLowerCase().includes('/admin/');
+            const welcomePath = redirectPath || (isAdmin ? '../welcome.html' : 'welcome.html');
+            
+            // Add a slight delay for any logout notifications to be seen
+            setTimeout(() => {
+                window.location.href = welcomePath;
+            }, 1000);
+        }
     }
     
     /**

@@ -362,13 +362,10 @@ function handleLogout(e) {
     document.body.style.opacity = '0.5';
     document.body.style.transition = 'opacity 0.5s ease';
     
-    // Log the user out
-    authManager.logout();
+    // Log the user out with redirect to welcome page
+    authManager.logout(true);
     
-    // Redirect to login page after a short delay for the animation
-    setTimeout(() => {
-        window.location.href = 'login.html';
-    }, 500);
+    // Note: The redirect is now handled by the auth.js logout function
 }
 
 /**

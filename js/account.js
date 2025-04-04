@@ -196,18 +196,23 @@ function setupLogout() {
         logoutBtn.addEventListener('click', function() {
             // Confirm before logout
             if (confirm('Are you sure you want to log out?')) {
-                // Remove user from localStorage
-                localStorage.removeItem('campus_cafe_user');
-                
-                // Show logout notification
-                if (window.showToast) {
-                    showToast('You have been logged out successfully', 'success');
+                // Use the auth utility if available
+                if (typeof authManager !== 'undefined' && authManager.logout) {
+                    authManager.logout(true); // true to redirect to welcome page
+                } else {
+                    // Fallback to direct localStorage removal
+                    localStorage.removeItem('campus_cafe_user');
+                    
+                    // Show logout notification
+                    if (window.showToast) {
+                        showToast('You have been logged out successfully', 'success');
+                    }
+                    
+                    // Redirect to welcome page
+                    setTimeout(() => {
+                        window.location.href = 'welcome.html';
+                    }, 1000);
                 }
-                
-                // Redirect to login page
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1000);
             }
         });
     }

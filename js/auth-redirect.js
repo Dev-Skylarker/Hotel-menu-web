@@ -26,31 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Check if we're on the index page and redirect to welcome if not logged in
-    if (currentPageName === 'index.html' || currentPageName === '' || currentPath.endsWith('/')) {
-        const userData = localStorage.getItem('campus_cafe_user');
-        if (!userData) {
-            console.log('Not logged in, redirecting index to welcome page');
-            window.location.href = currentPath.includes('/admin/') ? '../welcome.html' : 'welcome.html';
-            return;
-        }
-    }
-    
-    // Check if user is logged in for protected pages
+    // Check if we're on any page other than welcome and redirect if not logged in
     const userData = localStorage.getItem('campus_cafe_user');
     if (!userData) {
-        console.log('User not logged in, redirecting to login page');
+        console.log('Not logged in, redirecting to welcome page');
         
-        // Store the current URL to redirect back after login
-        localStorage.setItem('redirect_after_login', window.location.href);
+        // Don't store the current URL since we want users to always start at welcome
         
-        // Show toast notification if possible
-        if (typeof showToast === 'function') {
-            showToast('Please log in to access this page', 'info');
-        }
-        
-        // Redirect to login page
-        window.location.href = currentPath.includes('/admin/') ? '../login.html' : 'login.html';
+        // Redirect to welcome page
+        window.location.href = currentPath.includes('/admin/') ? '../welcome.html' : 'welcome.html';
         return;
     }
     

@@ -36,17 +36,16 @@ function initSuperAdminPassword() {
 function handleLogout(e) {
     e.preventDefault();
     
-    // Add a fade-out effect to the body
-    document.body.style.opacity = '0.5';
-    document.body.style.transition = 'opacity 0.5s ease';
-    
-    // Log the user out
-    authManager.logout();
-    
-    // Redirect to login page after a short delay for the animation
-    setTimeout(() => {
-        window.location.href = 'login.html';
-    }, 500);
+    if (confirm('Are you sure you want to log out?')) {
+        // Add animation for visual feedback
+        const adminPanel = document.querySelector('.admin-panel');
+        if (adminPanel) {
+            adminPanel.classList.add('fade-out');
+        }
+        
+        // Log the user out with redirect
+        authManager.logout(true);
+    }
 }
 
 /**

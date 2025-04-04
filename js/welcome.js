@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the welcome page
     initWelcomePage();
     
+    // Initialize empty cart if not exists
+    initEmptyCart();
+    
     console.log('Welcome page loaded successfully');
     
     // Log authentication state (without exposing sensitive information)
@@ -23,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Initialize the welcome page
  */
-function initWelcomePage() {
+async function initWelcomePage() {
     // Check if hero image is loading correctly
     const heroSection = document.querySelector('.hero');
     if (heroSection) {
@@ -52,9 +55,45 @@ function initWelcomePage() {
         console.warn('Mobile menu toggle elements not found');
     }
     
-    // Check if user is already logged in, redirect if necessary
-    const userData = localStorage.getItem('campus_cafe_user');
-    if (userData) {
+    // Check if user is already logged in using Supabase or localStorage fallback
+    let isLoggedIn = false;
+    let userData = null;
+    
+    // Try to get user from Supabase
+    if (typeof supabaseManager !== 'undefined') {
+        try {
+            const { user, error } = await supabaseManager.getCurrentUser();
+            if (user && !error) {
+                isLoggedIn = true;
+                userData = user;
+                console.log('User authenticated via Supabase:', user.email);
+            } else {
+                console.log('No Supabase user session found');
+            }
+        } catch (error) {
+            console.warn('Error checking Supabase authentication status:', error);
+        }
+    } else {
+        console.warn('Supabase manager not loaded, falling back to localStorage');
+    }
+    
+    // Fallback to localStorage check if Supabase didn't find a user
+    if (!isLoggedIn) {
+        const userDataStr = localStorage.getItem('campus_cafe_user');
+        if (userDataStr) {
+            try {
+                userData = JSON.parse(userDataStr);
+                isLoggedIn = true;
+                console.log('User authenticated via localStorage:', userData.email);
+            } catch (e) {
+                console.error('Error parsing user data from localStorage:', e);
+                localStorage.removeItem('campus_cafe_user'); // Remove invalid data
+            }
+        }
+    }
+    
+    // Update UI based on authentication status
+    if (isLoggedIn && userData) {
         console.log('User already logged in, should redirect to index.html');
         
         // If user is already logged in but still on welcome page, add a button to go to index
@@ -74,8 +113,20 @@ function initWelcomePage() {
             const logoutButton = document.createElement('button');
             logoutButton.className = 'btn btn-secondary';
             logoutButton.textContent = 'Logout';
-            logoutButton.addEventListener('click', function() {
-                localStorage.removeItem('campus_cafe_user');
+            logoutButton.addEventListener('click', async function() {
+                // Use Supabase for logout if available
+                if (typeof supabaseManager !== 'undefined') {
+                    try {
+                        await supabaseManager.signOut();
+                        console.log('User signed out via Supabase');
+                    } catch (error) {
+                        console.error('Error signing out via Supabase:', error);
+                    }
+                } else {
+                    // Fallback to localStorage removal
+                    localStorage.removeItem('campus_cafe_user');
+                    console.log('User signed out via localStorage removal');
+                }
                 location.reload();
             });
             heroButtons.appendChild(logoutButton);
@@ -84,9 +135,27 @@ function initWelcomePage() {
 }
 
 /**
+ * Initialize empty cart if it doesn't exist
+ */
+function initEmptyCart() {
+    const CART_STORAGE_KEY = 'campus_cafe_cart';
+    if (!localStorage.getItem(CART_STORAGE_KEY)) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([]));
+        console.log('Initialized empty cart for new user');
+    }
+    
+    // Ensure orders are initialized as empty if they don't exist
+    const ORDERS_KEY = 'campus_cafe_orders';
+    if (!localStorage.getItem(ORDERS_KEY)) {
+        localStorage.setItem(ORDERS_KEY, JSON.stringify([]));
+        console.log('Initialized empty orders for new user');
+    }
+}
+
+/**
  * Check authentication state and log for debugging
  */
-function checkAndLogAuthState() {
+async function checkAndLogAuthState() {
     // Check if the database is initialized
     if (!localStorage.getItem('campus_cafe_users')) {
         console.warn('Users database not initialized. This should be handled by initialize-db.js');
@@ -103,17 +172,40 @@ function checkAndLogAuthState() {
         }
     }
     
-    // Check current authentication state without exposing sensitive details
-    const userData = localStorage.getItem('campus_cafe_user');
-    if (userData) {
-        const user = JSON.parse(userData);
-        console.log('Current logged in user:', {
-            email: user.email,
-            name: user.user_metadata?.name,
-            role: user.role
-        });
+    // Check if Supabase is initialized
+    if (typeof supabaseManager !== 'undefined') {
+        console.log('Supabase manager loaded');
+        
+        // Try to get current user from Supabase
+        try {
+            const { user, error } = await supabaseManager.getCurrentUser();
+            if (user && !error) {
+                console.log('Current logged in user (via Supabase):', {
+                    email: user.email,
+                    name: user.user_metadata?.name,
+                    role: user.role || 'user'
+                });
+            } else {
+                console.log('No user currently logged in (via Supabase)');
+            }
+        } catch (error) {
+            console.error('Error getting user from Supabase:', error);
+        }
     } else {
-        console.log('No user currently logged in');
+        console.warn('Supabase manager not available');
+        
+        // Check current authentication state without exposing sensitive details
+        const userData = localStorage.getItem('campus_cafe_user');
+        if (userData) {
+            const user = JSON.parse(userData);
+            console.log('Current logged in user (via localStorage):', {
+                email: user.email,
+                name: user.user_metadata?.name,
+                role: user.role || 'user'
+            });
+        } else {
+            console.log('No user currently logged in (via localStorage)');
+        }
     }
 }
 

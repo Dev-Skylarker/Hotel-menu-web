@@ -48,6 +48,7 @@ The **Campus Cafe System** is a web-based platform designed to streamline food o
 - **Kenyan Currency Support** – Prices displayed in KSh.  
 - **Payment Integration** – Clear payment instructions for transactions.  
 - **Offline Support** – Works without an internet connection for browsing and order tracking.  
+- **Supabase Integration** – Cloud database and authentication for seamless experience
 
 ---
 
@@ -127,6 +128,8 @@ campus-cafe-system/
 │       ├── currency.js      # Currency formatting
 │       ├── stats.js         # Live statistics tracking  
 │       └── theme.js         # Theme switching  
+│   └── admin/               # Admin scripts  
+│       └── supabase.js      # Supabase integration  
 └── assets/                  # Media files  
     ├── logo.png             # Application logo  
     └── images/              # Food menu images  
@@ -260,6 +263,18 @@ A significant update has been made to the My Orders page, enhancing the user exp
 
 These updates make the ordering process more streamlined and user-friendly, with clear instructions at each step of the process.
 
+### **Supabase Integration**
+
+The system now integrates with Supabase for cloud database and authentication, providing a seamless experience even when offline.
+
+### **Offline Mode**
+
+The application supports offline functionality through:
+
+- **localStorage Fallback**: All data is mirrored to localStorage
+- **Automatic Syncing**: Changes are synchronized when connection is restored
+- **Seamless Experience**: Users can continue using the app without interruption
+
 ---
 
 ## **Customization**  
@@ -324,7 +339,18 @@ const envConfig = {
     apiEndpoint: 'https://your-api-endpoint.com',
     
     // If you're using external payment processing
-    mpesaBusinessCode: '247247'
+    mpesaBusinessCode: '247247',
+
+    // Supabase integration
+    supabase: {
+        url: "YOUR_SUPABASE_URL",
+        anonKey: "YOUR_SUPABASE_ANON_KEY"
+    },
+
+    // Offline mode
+    features: {
+        offlineMode: true
+    }
 };
 ```
 
@@ -392,3 +418,22 @@ To access the admin panel:
      - Password: `********` (Provided separately to authorized administrators)
 
 **Note:** The superadmin can add additional admin users from the admin dashboard. All admin accounts are stored securely and are not tracked in version control.
+
+## **Authentication**
+
+The application supports two authentication methods:
+
+1. **Supabase Authentication**: Primary authentication method when online
+2. **localStorage Fallback**: Secondary authentication method for offline use
+
+## **Offline Mode**
+
+The application supports offline functionality through:
+
+- **localStorage Fallback**: All data is mirrored to localStorage
+- **Automatic Syncing**: Changes are synchronized when connection is restored
+- **Seamless Experience**: Users can continue using the app without interruption
+
+## **Demo**
+
+A live demo is available at: [Campus Cafe Demo](https://campus-cafe-system.vercel.app)

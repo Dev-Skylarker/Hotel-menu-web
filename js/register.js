@@ -191,9 +191,9 @@ async function handleRegister(e) {
                 showToast('Account created successfully!', 'success');
             }
             
-            // Redirect to login page after a short delay
+            // Redirect to welcome page after a short delay
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'welcome.html';
             }, 2000);
         }
     } catch (error) {
