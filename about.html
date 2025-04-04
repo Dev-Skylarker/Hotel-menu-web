@@ -27,6 +27,7 @@
                     <li><a href="about.html" class="active">About</a></li>
                     <li><a href="contact.html">Contact</a></li>
                     <li><a href="my-orders.html">My Orders</a></li>
+                    <li><a href="account.html">Account</a></li>
                 </ul>
                 <div class="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -175,8 +176,9 @@
                     <div class="about-text">
                         <p>At Campus Cafe, we've simplified payment to make your experience as smooth as possible:</p>
                         <ul>
-                            <li><strong>M-Pesa Payment</strong>: We accept M-Pesa payments for all orders. After placing your order, you'll receive clear instructions on how to complete your payment.</li>
-                            <li><strong>Payment Verification</strong>: Bring your M-Pesa confirmation message when collecting your order. Our staff will verify your payment using your unique order code.</li>
+                            <li><strong>Online Ordering</strong>: Browse our menu online and place orders directly from your phone or computer. No more waiting in line!</li>
+                            <li><strong>Counter Payment</strong>: Simply pay when you collect your order. Just mention your order number and our staff will complete your transaction.</li>
+                            <li><strong>Payment Verification</strong>: Show your order number when collecting your food. Our staff will verify your payment on the spot.</li>
                             <li><strong>Collection Options</strong>: Choose between table service or counter pickup when placing your order:
                                 <ul>
                                     <li><strong>Table Service</strong>: Have your order delivered directly to your table. Simply select your table number during checkout.</li>
@@ -232,9 +234,10 @@
                 <ul>
                     <li><a href="index.html">Home</a></li>
                     <li><a href="menu.html">Menu</a></li>
-                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="about.html">About</a></li>
                     <li><a href="contact.html">Contact</a></li>
                     <li><a href="my-orders.html">My Orders</a></li>
+                    <li><a href="account.html">Account</a></li>
                 </ul>
             </div>
             
@@ -250,6 +253,8 @@
 
     <script src="js/utils/theme.js"></script>
     <script src="js/utils/storage.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/auth-redirect.js"></script>
     <script>
         // Update the cart badge on page load and periodically
         document.addEventListener('DOMContentLoaded', function() {

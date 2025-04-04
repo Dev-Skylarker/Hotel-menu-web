@@ -174,48 +174,128 @@ function handleCheckout(e) {
     const formattedTotal = totalOrderAmount.toFixed(2);
     console.log('Total amount:', formattedTotal);
     
-    // Create the order object
-        const order = {
-        id: mainOrderId,
-        orderCode: orderCode,
-        items: cart.map(cartItem => ({
-            item: cartItem.item,
-            quantity: cartItem.quantity,
-            price: cartItem.item.price
-        })),
-            status: 'pending',
-            orderTime: new Date().toISOString(),
-            estimatedPickupTime: new Date(Date.now() + 20 * 60000).toISOString(), // 20 minutes from now
-            notes: orderNotes || null,
-            customerName: customerName,
-        admissionNumber: admissionNumber, // Properly captured admission number
-            paymentMethod: 'mpesa', // Always use M-Pesa as payment method
-            paymentStatus: 'pending',
-        total: formattedTotal,
-        collectionMethod: collectionMethod,
-        collectionLocation: collectionLocation
-        };
-        
-    // Save the order
-    console.log('Saving order to storage...');
-        storageManager.saveOrder(order);
+    // Save admission number to localStorage for future use
+    localStorage.setItem('saved_admission_number', admissionNumber);
     
-    // Show success modal with the correct amount
-    console.log('Showing success modal...');
-    showSuccessModal([order], mainOrderId, formattedTotal, orderCode);
-    
-    // Clear cart
-    cartManager.clearCart();
-    
-    // Store order ID in localStorage to access it on the order status page
-    localStorage.setItem('last_order_id', mainOrderId);
-    localStorage.removeItem('temp_order_code'); // Clean up
-    
-    // Close checkout modal
-    console.log('Closing checkout modal...');
-    checkoutModal.classList.remove('show');
-    
-    console.log('Checkout complete!');
+    // Use the async/await pattern to get the current user if available
+    (async function() {
+        try {
+            // Check if user is logged in
+            let userId = null;
+            let userEmail = null;
+            let userName = null;
+            
+            // First check for user in localStorage (main source)
+            const userData = localStorage.getItem('campus_cafe_user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                userId = user.id;
+                userEmail = user.email;
+                userName = user.user_metadata?.name;
+                console.log('User is logged in from localStorage:', userEmail);
+            }
+            // Fallback to Supabase if available
+            else if (typeof supabaseManager !== 'undefined') {
+                const { user, error } = await supabaseManager.getCurrentUser();
+                if (!error && user) {
+                    userId = user.id;
+                    userEmail = user.email;
+                    userName = user.user_metadata?.name;
+                    console.log('User is logged in from Supabase:', userEmail);
+                }
+            }
+            
+            // Get user details from registered users if available
+            let userDetails = null;
+            if (userEmail) {
+                userDetails = getUserCompleteData(userEmail);
+            }
+            
+            // Create the order object
+            const order = {
+                id: mainOrderId,
+                orderCode: orderCode,
+                items: cart.map(cartItem => ({
+                    item: cartItem.item,
+                    quantity: cartItem.quantity,
+                    price: cartItem.item.price
+                })),
+                status: 'pending',
+                orderTime: new Date().toISOString(),
+                estimatedPickupTime: new Date(Date.now() + 20 * 60000).toISOString(), // 20 minutes from now
+                notes: orderNotes || null,
+                customerName: customerName,
+                admissionNumber: admissionNumber,
+                paymentMethod: 'counter_payment',
+                paymentStatus: 'pending',
+                total: formattedTotal,
+                collectionMethod: collectionMethod,
+                collectionLocation: collectionLocation,
+                // Add created_at for Supabase timestamp
+                created_at: new Date().toISOString(),
+                // Add user details
+                userId: userId,
+                userEmail: userEmail || null,
+                // Add user object for easier access
+                user: userDetails ? {
+                    id: userId,
+                    email: userEmail,
+                    name: userDetails.name || userName || customerName,
+                    admissionNumber: userDetails.admissionNumber || admissionNumber
+                } : null
+            };
+            
+            // Update customer stats
+            if (typeof storageManager !== 'undefined' && storageManager.updateCustomerStats) {
+                storageManager.updateCustomerStats();
+            }
+            
+            // Save the order to Supabase if available, otherwise fall back to localStorage
+            console.log('Saving order...');
+            
+            // Check if supabaseManager is available
+            if (typeof supabaseManager !== 'undefined') {
+                console.log('Using Supabase to save order...');
+                const { data, error, offlineOnly } = await supabaseManager.insertOrder(order);
+                
+                if (error) {
+                    console.error('Error saving order to Supabase:', error);
+                    // Fall back to localStorage only
+                    storageManager.saveOrder(order);
+                    console.log('Order saved to localStorage as fallback');
+                } else if (offlineOnly) {
+                    console.log('Order saved to localStorage only (offline mode)');
+                } else {
+                    console.log('Order successfully saved to Supabase:', data);
+                }
+            } else {
+                // Use localStorage if supabaseManager is not available
+                console.log('Supabase not available, using localStorage only');
+                storageManager.saveOrder(order);
+            }
+            
+            // Proceed with success flow regardless of storage method
+            // Show success modal with the correct amount
+            console.log('Showing success modal...');
+            showSuccessModal([order], mainOrderId, formattedTotal, orderCode);
+            
+            // Clear cart
+            cartManager.clearCart();
+            
+            // Store order ID in localStorage to access it on the order status page
+            localStorage.setItem('last_order_id', mainOrderId);
+            localStorage.removeItem('temp_order_code'); // Clean up
+            
+            // Close checkout modal
+            console.log('Closing checkout modal...');
+            checkoutModal.classList.remove('show');
+            
+            console.log('Checkout complete!');
+        } catch (error) {
+            console.error('Error during checkout process:', error);
+            alert('There was an error processing your order. Please try again.');
+        }
+    })();
 }
 
 function openCheckoutModal() {
@@ -244,10 +324,10 @@ function openCheckoutModal() {
             : `KSh ${formattedTotal}`;
     }
     
-    // Update M-Pesa amount in instructions
-    const mpesaAmountEl = document.getElementById('checkout-mpesa-amount');
-    if (mpesaAmountEl) {
-        mpesaAmountEl.textContent = window.formatters?.currency 
+    // Update payment amount in instructions
+    const checkoutAmountEl = document.getElementById('checkout-amount');
+    if (checkoutAmountEl) {
+        checkoutAmountEl.textContent = window.formatters?.currency 
             ? window.formatters.currency(totalPrice, true) 
             : `KSh ${formattedTotal}`;
     }
@@ -289,6 +369,9 @@ function initCart() {
     // Add event listeners
     addEventListeners();
     
+    // Check if user is logged in and pre-fill form
+    prefillCheckoutForm();
+    
     // Check if there's a checkout parameter in URL
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('checkout') === 'true') {
@@ -300,6 +383,82 @@ function initCart() {
     
     // Update cart badge
     updateCartBadge();
+}
+
+/**
+ * Pre-fill checkout form with user information if logged in
+ */
+async function prefillCheckoutForm() {
+    const nameInput = document.getElementById('customer-name');
+    const admissionInput = document.getElementById('admission-number');
+    
+    if (!nameInput || !admissionInput) return;
+    
+    // First try to pre-fill from localStorage for convenience
+    const savedAdmissionNumber = localStorage.getItem('saved_admission_number');
+    if (savedAdmissionNumber) {
+        admissionInput.value = savedAdmissionNumber;
+    }
+    
+    // Try to get user data from stored user session
+    const userData = localStorage.getItem('campus_cafe_user');
+    if (userData) {
+        const user = JSON.parse(userData);
+        console.log('User is logged in, pre-filling checkout form from stored user data');
+        
+        // Get the complete user data from users collection which contains all registration info
+        const completeUser = getUserCompleteData(user.email);
+        
+        if (completeUser) {
+            // Use the complete user data from registration
+            nameInput.value = completeUser.name || '';
+            admissionInput.value = completeUser.admissionNumber || savedAdmissionNumber || '';
+        } else {
+            // Fallback to user session data
+            nameInput.value = user.user_metadata?.name || '';
+            admissionInput.value = user.user_metadata?.admissionNumber || savedAdmissionNumber || '';
+        }
+        
+        return; // We've filled the form, no need to continue
+    }
+    
+    // Try to get user data from Supabase if available
+    if (typeof supabaseManager !== 'undefined') {
+        try {
+            const { user, error } = await supabaseManager.getCurrentUser();
+            if (!error && user) {
+                console.log('User is logged in, pre-filling checkout form from Supabase');
+                
+                // Try to get user metadata that contains name
+                if (user.user_metadata) {
+                    nameInput.value = user.user_metadata.name || '';
+                }
+                
+                // Try to get admission number from profile
+                const { data: profile, error: profileError } = await supabaseManager.getProfile();
+                if (!profileError && profile) {
+                    admissionInput.value = profile.admission_number || savedAdmissionNumber || '';
+                }
+            }
+        } catch (error) {
+            console.error('Error getting user data:', error);
+        }
+    }
+}
+
+/**
+ * Get complete user data from users collection
+ * @param {string} email - User email to find
+ * @returns {Object} Complete user data
+ */
+function getUserCompleteData(email) {
+    if (!email) return null;
+    
+    const usersData = localStorage.getItem('campus_cafe_users');
+    if (!usersData) return null;
+    
+    const users = JSON.parse(usersData);
+    return users.find(user => user.email.toLowerCase() === email.toLowerCase()) || null;
 }
 
 /**
@@ -361,16 +520,10 @@ function updateCartSummary() {
         checkoutTotalPrice.textContent = `KSh ${totalPrice.toFixed(2)}`;
     }
     
-    // Update checkout amount in M-Pesa instructions if visible
+    // Update checkout amount in payment instructions if visible
     const checkoutAmount = document.getElementById('checkout-amount');
     if (checkoutAmount) {
         checkoutAmount.textContent = `KSh ${totalPrice.toFixed(2)}`;
-    }
-    
-    // Update M-Pesa amount in instructions if visible
-    const mpesaAmountEl = document.getElementById('checkout-mpesa-amount');
-    if (mpesaAmountEl) {
-        mpesaAmountEl.textContent = `KSh ${totalPrice.toFixed(2)}`;
     }
 }
 

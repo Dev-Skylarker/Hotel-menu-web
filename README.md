@@ -1,7 +1,3 @@
-Here’s your improved **README** with a cleaner and more professional structure while maintaining clarity and impact:  
-
----
-
 # **Campus Cafe System**  
 
 ## **Table of Contents**  
@@ -15,6 +11,7 @@ Here’s your improved **README** with a cleaner and more professional structure
 - [Key Components](#key-components)  
 - [Usage Guide](#usage-guide)  
 - [Customization](#customization)  
+- [Recent Updates](#recent-updates)
 - [Future Development](#future-development)  
 - [License](#license)  
 
@@ -22,7 +19,7 @@ Here’s your improved **README** with a cleaner and more professional structure
 
 ## **Overview**  
 
-The **Campus Cafe System** is a web-based platform designed to streamline food ordering and management for university cafeterias. It features an interactive digital menu, online ordering, real-time tracking, and an admin dashboard for efficient operations. The system enhances the dining experience by providing seamless order processing, data-driven insights, and theme customization options.  
+The **Campus Cafe System** is a web-based platform designed to streamline food ordering and management for modern cafeteria. It features an interactive digital menu, online ordering, real-time tracking, and an admin dashboard for efficient operations. The system enhances the dining experience by providing seamless order processing, data-driven insights, and theme customization options.  
 
 ---
 
@@ -43,6 +40,8 @@ The **Campus Cafe System** is a web-based platform designed to streamline food o
 - **Responsive Design** – Optimized for desktops, tablets, and mobile devices.  
 - **Interactive Menu** – Browse and filter menu items by category.  
 - **Online Ordering** – Add items to cart and place orders with tracking.  
+- **User Accounts** – Registration, login, and personalized profiles.
+- **Order Statistics** – Track order history and spending patterns.
 - **Real-time Statistics** – Provides customer and order insights.  
 - **Multi-Admin Access** – Supports multiple administrator accounts.  
 - **Theme Customization** – Offers light and dark mode switching.  
@@ -73,6 +72,8 @@ The **Campus Cafe System** is a web-based platform designed to streamline food o
          │               │  
          ↓               ↓  
       [Item Details]   [Order Tracking]  
+                          ↓
+                      [My Account]
 ```
 
 ---
@@ -97,7 +98,10 @@ campus-cafe-system/
 ├── menu.html                # Menu listings  
 ├── cart.html                # Shopping cart  
 ├── my-orders.html           # Order tracking  
-├── order-details.html       # Order view  
+├── account.html             # User profile
+├── login.html               # User login
+├── register.html            # User registration
+├── welcome.html             # Welcome page
 ├── admin/                   # Admin interface  
 │   ├── login.html           # Admin login  
 │   ├── dashboard.html       # Admin dashboard  
@@ -110,11 +114,17 @@ campus-cafe-system/
 │   ├── menu.js              # Menu handling  
 │   ├── cart.js              # Cart operations  
 │   ├── my-orders.js         # Order tracking  
-│   ├── order-details.js     # Order details management  
+│   ├── account.js           # User profile management
+│   ├── login.js             # Authentication handling
+│   ├── register.js          # User registration
+│   ├── welcome.js           # Welcome page functionality
 │   ├── utils/               # Utility scripts  
 │       ├── storage.js       # Data persistence  
 │       ├── auth.js          # Authentication handling  
-│       ├── config.js        # Configuration settings  
+│       ├── initialize-db.js # Database initialization
+│       ├── env.js           # Environment variables
+│       ├── notifications.js # Toast notifications
+│       ├── currency.js      # Currency formatting
 │       ├── stats.js         # Live statistics tracking  
 │       └── theme.js         # Theme switching  
 └── assets/                  # Media files  
@@ -143,21 +153,34 @@ campus-cafe-system/
    ```  
 
 3. **Open the application**  
-   - Open `index.html` in your browser  
+   - Open `welcome.html` in your browser  
    - OR start a local server:  
      ```bash
      python -m http.server  # Using Python  
      npx serve              # Using Node.js  
      ```  
 
-4. **Admin Access**  
-   - Open `admin/login.html`  
-   - Default credentials are provided to authorized administrators only.  
-   - Contact the system administrator for access details.
+4. **Default User Accounts**
+   - Regular User:
+     - Email: user@test.gmail.com
+     - Password: password
+   
+   - Admin User:
+     - Email: erickaris0521@gmail.com
+     - Password: Project123
 
 ---
 
 ## **Key Components**  
+
+### **User Account System**
+
+| Feature               | Functionality                                       | File Location               |  
+|----------------------|---------------------------------------------------|----------------------------|  
+| User Registration    | Create new accounts with email, password, and admission number | `register.html`, `js/register.js` |
+| User Login           | Authenticate with email and password                | `login.html`, `js/login.js` |
+| User Profile         | View and manage account information                 | `account.html`, `js/account.js` |
+| Order Statistics     | Track total orders, completed orders, total spent, and favorite food category | `js/account.js` |
 
 ### **Order Management System**
 
@@ -192,6 +215,9 @@ campus-cafe-system/
 
 | Task                 | Action                                   | System Response                        |  
 |---------------------|--------------------------------------|--------------------------------------|  
+| Create Account      | Click "Register" on welcome page     | Creates a new user account           |
+| Login               | Enter credentials on login page      | Authenticates and redirects to home  |
+| View Profile        | Click on account page               | Displays user info and statistics    |
 | Browse Menu         | Click "Menu" on the homepage         | Displays all available food items    |  
 | Add to Cart         | Click "Add to Cart" on an item       | Item is added, cart count updates    |  
 | Place Order         | Click "Checkout" and confirm order   | Order is processed for tracking      |  
@@ -199,10 +225,25 @@ campus-cafe-system/
 | Mark as Collected   | Click "Mark as Collected" button     | Updates order status to completed    |  
 | View Past Orders    | Click "View Past Orders" button      | Shows history of completed orders    |  
 | Change Theme        | Click the theme toggle button        | Switches between light and dark mode |  
+| Logout              | Click "Logout" button in account     | Ends session and returns to welcome  |
 
 ---
 
 ## **Recent Updates**
+
+### **User Profile Enhancement (June 2024)**
+
+A comprehensive user profile system has been implemented, featuring:
+
+- **User Registration**: New users can create accounts with full name, email, admission number, and secure password
+- **Profile Dashboard**: Users can view their account information including registration date
+- **Order Statistics**: The profile page displays statistics including:
+  - Total number of orders placed
+  - Number of completed orders
+  - Total amount spent at the cafe
+  - Favorite food category based on order history
+- **Enhanced Order Association**: Orders are now properly linked to user accounts for better tracking
+- **Personalized Experience**: The system remembers user details for checkout
 
 ### **My Orders Page Enhancement (May 2024)**
 
@@ -217,7 +258,7 @@ A significant update has been made to the My Orders page, enhancing the user exp
 - **Collection Instructions**: Clear messaging about bringing payment confirmation when collecting orders
 - **Enhanced Error Handling**: Better validation of inputs and improved error messages
 
-These updates make the ordering process more streamlined and user-friendly, with clear instructions at each step of the process. The changes primarily affect `my-orders.html`, `js/my-orders.js`, and related cart functionality in `js/cart.js`.
+These updates make the ordering process more streamlined and user-friendly, with clear instructions at each step of the process.
 
 ---
 
@@ -226,6 +267,7 @@ These updates make the ordering process more streamlined and user-friendly, with
 | Element       | Customization Method                 | File Location         |  
 |--------------|--------------------------------------|----------------------|  
 | Menu Items   | Modify `getDefaultMenuItems()` function | `js/utils/storage.js` |  
+| User Accounts | Edit values in `initialize-db.js`    | `js/utils/initialize-db.js` |
 | Order Limits | Adjust values in `config.js`        | `js/utils/config.js`  |  
 | Theme Colors | Edit CSS variables                  | `css/styles.css`      |  
 
@@ -233,10 +275,11 @@ These updates make the ordering process more streamlined and user-friendly, with
 
 ## **Future Development**  
 
-- **User Accounts** – Secure logins for customers  
-- **Order History** – Persistent order records  
+- **Enhanced User Profiles** – More customization options and favorites
+- **Reward System** – Points and loyalty for regular customers
 - **Discounts & Coupons** – Promotional offers  
 - **M-Pesa Payment Integration** – Seamless mobile payments  
+- **Kitchen Management** – Real-time order preparation interface
 
 ---
 
@@ -249,7 +292,6 @@ This project is licensed under [MIT License](LICENSE).
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/campus-cafe-system.git
-cd campus-cafe-system
 ```
 
 2. Create the credential files (these are git-ignored for security):

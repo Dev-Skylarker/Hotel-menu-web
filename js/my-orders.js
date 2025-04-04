@@ -1,6 +1,6 @@
 /**
  * My Orders Page Script
- * Handles displaying the user's orders from localStorage
+ * Handles displaying the user's orders from localStorage and Supabase
  */
 
 // DOM Elements
@@ -8,10 +8,26 @@ const ordersContainer = document.getElementById('orders-container');
 const cartBadge = document.getElementById('cart-badge');
 const clearCompletedBtn = document.getElementById('clear-completed-btn');
 const clearAllOrdersBtn = document.getElementById('clear-all-orders-btn');
+const admissionNumberFilter = document.getElementById('admission-number-filter');
+const applyFilterBtn = document.getElementById('apply-filter-btn');
+const clearFilterBtn = document.getElementById('clear-filter-btn');
 
 // Auto-refresh interval (in milliseconds)
 const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
 let autoRefreshTimer = null;
+
+// Create a currency formatter
+const currencyFormatter = {
+    format: function(amount) {
+        // Use the global formatters if available
+        if (window.formatters && window.formatters.currency) {
+            return window.formatters.currency(amount, true);
+        }
+        
+        // Fallback formatting
+        return `KSh ${parseFloat(amount).toFixed(2)}`;
+    }
+};
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', initMyOrdersPage);
@@ -46,6 +62,21 @@ function initMyOrdersPage() {
         }
         // Clean up URL after processing
         window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Check if there's an admission number in localStorage
+    const savedAdmissionNumber = localStorage.getItem('saved_admission_number');
+    if (savedAdmissionNumber && admissionNumberFilter) {
+        admissionNumberFilter.value = savedAdmissionNumber;
+    }
+    
+    // Add event listeners for filter buttons
+    if (applyFilterBtn) {
+        applyFilterBtn.addEventListener('click', applyAdmissionFilter);
+    }
+    
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', clearAdmissionFilter);
     }
     
     // Load orders
@@ -83,6 +114,47 @@ function initMyOrdersPage() {
     
     // Handle storage changes (for updates from other tabs)
     window.addEventListener('storage', handleStorageChange);
+}
+
+/**
+ * Apply admission number filter
+ */
+function applyAdmissionFilter() {
+    if (!admissionNumberFilter) return;
+    
+    const admissionNumber = admissionNumberFilter.value.trim();
+    
+    // Validate the admission number format
+    if (admissionNumber && !/^\d{5}$/.test(admissionNumber)) {
+        alert('Please enter exactly 5 digits for your admission number');
+        admissionNumberFilter.focus();
+        return;
+    }
+    
+    // Save the admission number to localStorage
+    if (admissionNumber) {
+        localStorage.setItem('saved_admission_number', admissionNumber);
+    } else {
+        localStorage.removeItem('saved_admission_number');
+    }
+    
+    // Reload orders with the filter
+    loadOrders();
+}
+
+/**
+ * Clear admission number filter
+ */
+function clearAdmissionFilter() {
+    if (admissionNumberFilter) {
+        admissionNumberFilter.value = '';
+    }
+    
+    // Remove from localStorage
+    localStorage.removeItem('saved_admission_number');
+    
+    // Reload orders without filter
+    loadOrders();
 }
 
 /**
@@ -147,27 +219,114 @@ function handleStorageChange(e) {
 /**
  * Load and display all orders
  */
-function loadOrders() {
-    // Get orders from localStorage
-    const orders = storageManager.getOrders();
+async function loadOrders() {
+    if (!ordersContainer) return;
     
-    // Sort orders by date (newest first)
-    const sortedOrders = [...orders].sort((a, b) => 
-        new Date(b.orderTime) - new Date(a.orderTime)
-    );
+    // Show loading state
+    ordersContainer.innerHTML = '<div class="loader"></div>';
     
-    // Filter active orders (pending or ready)
-    const activeOrders = sortedOrders.filter(order => 
-        order.status === 'pending' || order.status === 'ready');
+    // Check if user is logged in via Supabase
+    let currentUser = null;
+    let userAdmissionNumber = null;
     
-    // Check if there are any active orders
-    if (activeOrders.length === 0) {
-        displayEmptyState();
-        return;
+    if (typeof supabaseManager !== 'undefined') {
+        try {
+            const { user, error } = await supabaseManager.getCurrentUser();
+            if (!error && user) {
+                currentUser = user;
+                
+                // Try to get user profile with admission number
+                const { data: profile, error: profileError } = await supabaseManager.getUserProfile(user.id);
+                if (!profileError && profile && profile.admission_number) {
+                    userAdmissionNumber = profile.admission_number;
+                    console.log(`User is logged in with admission number: ${userAdmissionNumber}`);
+                }
+            }
+        } catch (err) {
+            console.error('Error checking user login status:', err);
+        }
     }
     
-    // Display active orders
-    displayOrders(activeOrders);
+    // Get the saved admission number filter - prioritize user selection over logged in user
+    let admissionNumber = admissionNumberFilter ? 
+                        admissionNumberFilter.value.trim() : 
+                        localStorage.getItem('saved_admission_number');
+    
+    // If no filter is set but user is logged in with admission number, use that
+    if (!admissionNumber && userAdmissionNumber) {
+        admissionNumber = userAdmissionNumber;
+        
+        // Update the filter input if it exists
+        if (admissionNumberFilter) {
+            admissionNumberFilter.value = userAdmissionNumber;
+        }
+    }
+    
+    try {
+        let orders = [];
+        
+        // Try to get orders from Supabase if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Attempting to load orders from Supabase...');
+            
+            const options = {
+                orderBy: 'created_at',
+                ascending: false
+            };
+            
+            // Add admission number filter if provided
+            if (admissionNumber) {
+                options.admissionNumber = admissionNumber;
+            } else if (currentUser) {
+                // If user is logged in but no admission number, filter by user ID
+                options.userId = currentUser.id;
+            }
+            
+            const { data, error, offlineOnly } = await supabaseManager.getOrders(options);
+            
+            if (!error && data) {
+                orders = data;
+                console.log(`Found ${orders.length} orders in Supabase`);
+            } else if (error) {
+                console.error('Error loading orders from Supabase:', error);
+            } else if (offlineOnly) {
+                console.log('Operating in offline mode');
+            }
+        }
+        
+        // Fall back to localStorage if needed or if Supabase is not available
+        if (orders.length === 0) {
+            console.log('Falling back to localStorage...');
+            orders = storageManager.getOrders();
+            
+            // Apply admission number filter if provided
+            if (admissionNumber) {
+                orders = orders.filter(order => order.admissionNumber === admissionNumber);
+            }
+            
+            // Sort orders by date (newest first)
+            orders = orders.sort((a, b) => new Date(b.orderTime) - new Date(a.orderTime));
+            
+            console.log(`Found ${orders.length} orders in localStorage`);
+        }
+        
+        // Filter active orders (pending or ready)
+        const activeOrders = orders.filter(order => 
+            order.status === 'pending' || order.status === 'ready');
+        
+        // Check if there are any active orders
+        if (activeOrders.length === 0) {
+            displayEmptyState();
+            return;
+        }
+        
+        // Display active orders
+        displayOrders(activeOrders);
+        
+    } catch (error) {
+        console.error('Error loading orders:', error);
+        displayEmptyState('An error occurred while loading your orders. Please try again later.');
+    }
 }
 
 /**
@@ -189,140 +348,73 @@ function displayOrders(orders) {
 
 /**
  * Create an order card element
- * @param {Object} order - Order object
+ * @param {Object} order - Order data
  * @returns {HTMLElement} - Order card element
  */
 function createOrderCard(order) {
-    const orderCard = document.createElement('div');
-    orderCard.className = 'order-card';
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    card.id = `order-${order.id}`;
     
-    // Format dates
+    // Get formatted date/time
     const orderDate = new Date(order.orderTime);
-    const formattedOrderDate = orderDate.toLocaleString([], { 
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+    const formattedTime = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formattedDate = orderDate.toLocaleDateString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
     });
     
-    const pickupTime = new Date(order.estimatedPickupTime);
-    const formattedPickupTime = pickupTime.toLocaleTimeString([], { 
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    // Format total amount
+    const formattedTotal = currencyFormatter.format(order.totalAmount);
     
-    // Determine status class
-    let statusClass = '';
-    switch (order.status) {
-        case 'pending':
-            statusClass = 'status-pending';
-            break;
-        case 'ready':
-            statusClass = 'status-ready';
-            break;
-        case 'completed':
-            statusClass = 'status-completed';
-            break;
-        case 'cancelled':
-            statusClass = 'status-cancelled';
-            break;
-    }
+    // Get status class
+    const statusClass = `status-${order.status.toLowerCase()}`;
     
-    // Check if order can be cancelled (only pending orders)
-    const canCancel = order.status === 'pending';
-    
-    // Check if order can be restored (only cancelled orders)
-    const canRestore = order.status === 'cancelled';
-    
-    // Check if order can be marked as collected (only ready orders)
-    const canMarkCollected = order.status === 'ready';
-    
-    // Format payment method
-    let paymentMethod = order.paymentMethod || 'cash';
-    let formattedPaymentMethod = '';
-    
-    switch (paymentMethod) {
-        case 'cash':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'mpesa':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'card':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'paypal':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        case 'bitcoin':
-            formattedPaymentMethod = 'On Pickup';
-            break;
-        default:
-            formattedPaymentMethod = 'On Pickup';
-    }
-    
-    // Create HTML
-    orderCard.innerHTML = `
+    // Build card HTML
+    card.innerHTML = `
         <div class="order-header">
-            <h3>Order #${order.id}</h3>
+            <h3>Order #${order.orderNumber || order.id.substring(0, 8)}</h3>
             <span class="order-status ${statusClass}">${order.status}</span>
         </div>
         <div class="order-details">
-            <p><strong>${order.item.name}</strong></p>
-            <p>Quantity: ${order.quantity}</p>
-            <p>Price: ${window.formatters?.currency ? window.formatters.currency(order.item.price * order.quantity, true) : `KSh ${(order.item.price * order.quantity).toFixed(2)}`}</p>
-            <p><strong>Payment:</strong> ${formattedPaymentMethod}</p>
-            <p><strong>Customer:</strong> ${order.customerName || 'Guest'}</p>
-            ${order.admissionNumber ? `<p><strong>Admission:</strong> ${order.admissionNumber}</p>` : ''}
-            <p><strong>Ordered:</strong> ${formattedOrderDate}</p>
-            <p><strong>Est. Pickup:</strong> ${formattedPickupTime}</p>
-            ${order.collectionMethod ? `
-            <p><strong>Collection:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>
-            <p><strong>Location:</strong> ${order.collectionLocation || 'Not specified'}</p>
+            <p><strong>Date & Time:</strong> ${formattedDate} at ${formattedTime}</p>
+            <p><strong>Admission #:</strong> ${order.admissionNumber || 'Not provided'}</p>
+            <p><strong>Total:</strong> ${formattedTotal}</p>
+            <p><strong>Items:</strong></p>
+            <ul class="order-items">
+                ${order.items.map(item => `
+                    <li>${item.quantity}x ${item.name} - ${currencyFormatter.format(item.price * item.quantity)}</li>
+                `).join('')}
+            </ul>
+            ${order.paymentInstructions ? `
+                <p><strong>Payment Instructions:</strong> ${order.paymentInstructions}</p>
             ` : ''}
         </div>
         <div class="order-footer">
-            <a href="order-details.html?id=${order.id}" class="btn btn-small btn-primary">View Details</a>
-            ${canCancel ? `<button class="btn btn-small btn-danger cancel-order-btn" data-id="${order.id}">Cancel</button>` : ''}
-            ${canRestore ? `<button class="btn btn-small btn-success restore-order-btn" data-id="${order.id}">Undo Cancel</button>` : ''}
-            ${canMarkCollected ? `<button class="btn btn-small btn-success mark-collected-btn" data-id="${order.id}">Mark as Collected</button>` : ''}
+            <div class="action-buttons">
+                ${order.status === 'ready' ? `
+                    <button class="btn btn-sm mark-collected-btn" data-order-id="${order.id}">
+                        Mark as Collected
+                    </button>
+                ` : ''}
+                <a href="order-details.html?id=${order.id}" class="btn btn-sm btn-primary">
+                    View Details
+                </a>
+            </div>
+            <span class="order-time">${formattedTime}</span>
         </div>
     `;
     
-    // Add event listener for cancel button
-    if (canCancel) {
-        const cancelBtn = orderCard.querySelector('.cancel-order-btn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to cancel this order?')) {
-                    cancelOrder(order.id);
-                }
-            });
-        }
+    // Add event listener for "Mark as Collected" button
+    const collectButton = card.querySelector('.mark-collected-btn');
+    if (collectButton) {
+        collectButton.addEventListener('click', () => {
+            markOrderAsCompleted(order.id);
+        });
     }
     
-    // Add event listener for restore button
-    if (canRestore) {
-        const restoreBtn = orderCard.querySelector('.restore-order-btn');
-        if (restoreBtn) {
-            restoreBtn.addEventListener('click', () => {
-                restoreOrder(order.id);
-            });
-        }
-    }
-    
-    // Add event listener for mark as collected button
-    if (canMarkCollected) {
-        const collectBtn = orderCard.querySelector('.mark-collected-btn');
-        if (collectBtn) {
-            collectBtn.addEventListener('click', () => {
-                markAsCollected(order.id);
-            });
-        }
-    }
-    
-    return orderCard;
+    return card;
 }
 
 /**
@@ -505,44 +597,106 @@ function updateCartBadge() {
 }
 
 /**
- * Clear all completed and cancelled orders
+ * Clear completed orders
  */
-function clearCompletedOrders() {
-    if (confirm('Are you sure you want to clear all completed and cancelled orders? This cannot be undone.')) {
-        // Get all orders
-        const orders = storageManager.getOrders();
+async function clearCompletedOrders() {
+    if (!confirm('Are you sure you want to clear all completed and cancelled orders?')) {
+        return;
+    }
+    
+    try {
+        let success = false;
         
-        // Filter out completed and cancelled orders
-        const remainingOrders = orders.filter(order => 
-            order.status !== 'completed' && order.status !== 'cancelled');
+        // Try to delete from Supabase if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Attempting to clear completed orders from Supabase...');
+            
+            // For Supabase, we'll just update the visibility flag rather than delete
+            const { data, error } = await supabaseManager.updateOrdersVisibility({
+                statuses: ['completed', 'cancelled'],
+                visible: false
+            });
+            
+            if (!error) {
+                success = true;
+                console.log('Successfully hidden completed/cancelled orders in Supabase');
+            } else {
+                console.error('Error clearing orders in Supabase:', error);
+            }
+        }
         
-        // Save remaining orders
-        localStorage.setItem('campus_cafe_orders', JSON.stringify(remainingOrders));
+        // Fall back to localStorage or if Supabase is not available
+        if (!success) {
+            console.log('Falling back to localStorage...');
+            
+            // Get all orders
+            const orders = storageManager.getOrders();
+            
+            // Filter out completed and cancelled orders
+            const remainingOrders = orders.filter(order => 
+                order.status !== 'completed' && order.status !== 'cancelled');
+            
+            // Save remaining orders
+            localStorage.setItem(storageManager.ORDERS_KEY, JSON.stringify(remainingOrders));
+            
+            console.log(`Cleared ${orders.length - remainingOrders.length} orders from localStorage`);
+        }
         
-        // Refresh orders
+        // Reload orders
         refreshOrders();
         
         // Show success message
-        showMessage('Completed and cancelled orders have been cleared.');
+        showAlert('Completed and cancelled orders have been cleared');
+        
+    } catch (error) {
+        console.error('Error clearing completed orders:', error);
+        showAlert('Failed to clear orders. Please try again.', 'error');
     }
 }
 
 /**
- * Clear all orders and empty cart
+ * Clear all orders
  */
-function clearAllOrders() {
-    if (confirm('Are you sure you want to clear all orders and empty your cart? This cannot be undone.')) {
-        // Clear all orders from localStorage
-        localStorage.setItem('campus_cafe_orders', JSON.stringify([]));
+async function clearAllOrders() {
+    if (!confirm('Are you sure you want to clear ALL orders? This cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        let success = false;
         
-        // Clear the cart
-        cartManager.clearCart();
+        // Try to clear from Supabase if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Attempting to clear all orders from Supabase...');
+            
+            // For Supabase, we'll just update the visibility flag rather than delete
+            const { data, error } = await supabaseManager.updateOrdersVisibility({
+                visible: false
+            });
+            
+            if (!error) {
+                success = true;
+                console.log('Successfully hidden all orders in Supabase');
+            } else {
+                console.error('Error clearing orders in Supabase:', error);
+            }
+        }
         
-        // Refresh orders
+        // Fall back to localStorage or if Supabase is not available
+        if (!success) {
+            console.log('Clearing all orders from localStorage...');
+            localStorage.setItem(storageManager.ORDERS_KEY, '[]');
+        }
+        
+        // Reload orders
         refreshOrders();
         
         // Show success message
-        showMessage('All orders have been cleared and cart has been emptied.');
+        showAlert('All orders have been cleared');
+        
+    } catch (error) {
+        console.error('Error clearing all orders:', error);
+        showAlert('Failed to clear orders. Please try again.', 'error');
     }
 }
 
@@ -715,63 +869,49 @@ function removeExampleOrder() {
  * @param {string} orderId - Order ID to highlight
  */
 function highlightLastOrder(orderId) {
-    // Get all orders with the same main ID
-    const mainOrderId = orderId.split('-').slice(0, 3).join('-'); // Extract main order ID part
-    const orderCards = findOrderCardsByMainId(mainOrderId);
+    const orderCard = document.getElementById(`order-${orderId}`);
+    if (!orderCard) return;
     
-    if (orderCards.length > 0) {
-        // Apply highlight effect to all related order cards
-        orderCards.forEach(card => {
-            card.style.transition = 'all 0.5s ease';
-            card.style.boxShadow = '0 0 15px rgba(255, 127, 80, 0.7)';
-            card.style.background = 'rgba(255, 250, 240, 0.15)';
-            card.style.transform = 'translateY(-5px)';
-        });
-        
-        // Scroll to the first order card
-        orderCards[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Show a success message
-        showMessage('Order placed successfully! You can track your order status here.');
-        
-        // Remove highlight after 5 seconds
-        setTimeout(() => {
-            orderCards.forEach(card => {
-                card.style.boxShadow = '';
-                card.style.background = '';
-                card.style.transform = '';
-            });
-        }, 5000);
-    } else {
-        // If we can't find the order cards, refresh the orders to make sure they're loaded
-        refreshOrders();
-        
-        // Try again after a short delay
-        setTimeout(() => {
-            const newOrderCards = findOrderCardsByMainId(mainOrderId);
-            if (newOrderCards.length > 0) {
-                highlightLastOrder(orderId); // Call self with the fresh cards
-            } else {
-                showMessage('Your order has been placed. You can track its status here.');
-            }
-        }, 500);
-    }
+    // Add highlight class to the order card
+    orderCard.classList.add('highlight-order');
+    
+    // Scroll to the order card
+    orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Remove highlight after a delay
+    setTimeout(() => {
+        orderCard.classList.remove('highlight-order');
+    }, 5000);
 }
 
 /**
- * Find order cards based on the main order ID
- * @param {string} mainOrderId - The main part of the order ID
- * @returns {Array} - Array of matching order card elements
+ * Show alert message
+ * @param {string} message - Message to display
+ * @param {string} type - Alert type ('success' or 'error')
  */
-function findOrderCardsByMainId(mainOrderId) {
-    // This will match both the exact ID and IDs that start with mainOrderId followed by a hyphen
-    const orderCards = Array.from(document.querySelectorAll('.order-card'))
-        .filter(card => {
-            const idLink = card.querySelector(`a[href*="${mainOrderId}"]`);
-            return idLink !== null;
-        });
+function showAlert(message, type = 'success') {
+    // Create alert element
+    const alert = document.createElement('div');
+    alert.className = `message-alert ${type === 'error' ? 'error' : 'success'}`;
+    alert.textContent = message;
     
-    return orderCards;
+    // Add to body
+    document.body.appendChild(alert);
+    
+    // Show alert
+    setTimeout(() => {
+        alert.classList.add('show');
+    }, 10);
+    
+    // Hide alert after delay
+    setTimeout(() => {
+        alert.classList.remove('show');
+        
+        // Remove from DOM after animation
+        setTimeout(() => {
+            document.body.removeChild(alert);
+        }, 300);
+    }, 3000);
 }
 
 /**

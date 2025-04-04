@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="campus cafe, university restaurant, student dining, college food, cafe menu">
+    <meta name="author" content="Campus Cafe">
     <title>Shopping Cart - Campus Cafe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="icon1.png" type="image/png">
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Cart Page Styles */
         .cart-section {
@@ -252,6 +256,7 @@
                     <li><a href="about.html">About</a></li>
                     <li><a href="contact.html">Contact</a></li>
                     <li><a href="my-orders.html">My Orders</a></li>
+                    <li><a href="account.html">Account</a></li>
                 </ul>
                 <div class="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -343,6 +348,7 @@
                         <li><a href="about.html">About</a></li>
                         <li><a href="contact.html">Contact</a></li>
                         <li><a href="my-orders.html">My Orders</a></li>
+                        <li><a href="account.html">Account</a></li>
                     </ul>
                 </div>
                 <div class="footer-social">
@@ -382,32 +388,14 @@
                 <form id="checkout-form">
                     <div class="payment-instructions">
                         <h3>Payment Instructions</h3>
-                        <p>Please pay using M-Pesa:</p>
+                        <p>Your order will be ready for pickup shortly:</p>
                         
-                        <div class="mpesa-steps">
-                            <div class="mpesa-step">
-                                <span class="step-number">1</span>
-                                <p>Go to M-Pesa on your phone</p>
-                            </div>
-                            <div class="mpesa-step">
-                                <span class="step-number">2</span>
-                                <p>Select "Pay Bill"</p>
-                            </div>
-                            <div class="mpesa-step">
-                                <span class="step-number">3</span>
-                                <p>Enter Business Number: <strong>247 247</strong></p>
-                            </div>
-                            <div class="mpesa-step">
-                                <span class="step-number">4</span>
-                                <p>Enter Account Number: <strong id="checkout-account-number">Your order code will appear here</strong></p>
-                                <p class="form-help">This is your unique order code for identification</p>
-                            </div>
-                            <div class="mpesa-step">
-                                <span class="step-number">5</span>
-                                <p>Enter Amount: <strong id="checkout-mpesa-amount">KSh 0.00</strong></p>
-                            </div>
+                        <div class="simple-payment-info">
+                            <p><i class="fas fa-info-circle"></i> Please pay at the counter when collecting your order.</p>
+                            <p><i class="fas fa-receipt"></i> Your unique order number: <strong id="checkout-account-number">Will be generated</strong></p>
+                            <p><i class="fas fa-money-bill-wave"></i> Total amount to pay: <strong id="checkout-amount">KSh 0.00</strong></p>
                         </div>
-                        <p class="payment-note">Your unique order code serves as your account number for all transactions. Please note this number for future reference.</p>
+                        <p class="payment-note">Keep your order number handy - you will need to show it when collecting your order.</p>
                     </div>
                     
                     <div class="customer-details">
@@ -473,7 +461,7 @@
                             <label>Pickup Location:</label>
                             <div class="pickup-info">
                                 <strong>Counter 3 (Outgoing Orders)</strong>
-                                <p class="form-help">Please collect your order from Counter 3 after completing payment. Bring your payment confirmation message for verification.</p>
+                                <p class="form-help">Please collect your order from Counter 3 after completing payment. Bring your order number for verification.</p>
                             </div>
                         </div>
                     </div>
@@ -513,15 +501,14 @@
                 <div id="collection-info" class="collection-info">
                     <!-- Collection details will be displayed here -->
                 </div>
-                <div class="mpesa-payment-reminder">
-                    <h3>Payment Instructions</h3>
-                    <p>Please complete your payment using M-Pesa:</p>
+                <div class="order-information">
+                    <h3>Order Information</h3>
+                    <p>Your order has been placed successfully:</p>
                     <ul>
-                        <li>Paybill Number: <strong>247 247</strong></li>
-                        <li>Account Number: <strong id="success-account-number">Account number will appear here</strong></li>
-                        <li>Amount: <strong id="checkout-amount">KSh 0.00</strong></li>
+                        <li>Order Number: <strong id="success-account-number">Your order number will appear here</strong></li>
+                        <li>Total Amount: <strong id="checkout-amount">KSh 0.00</strong></li>
                     </ul>
-                    <p class="payment-note">After completing payment, please collect your order at Counter 3. You MUST bring your M-Pesa payment confirmation message when picking up your order.</p>
+                    <p class="payment-note">Please pay at the counter when collecting your order. Remember to mention your order number.</p>
                 </div>
                 <button id="close-success-modal" class="btn btn-primary">View Order Status</button>
             </div>
@@ -529,8 +516,13 @@
     </div>
 
     <script src="js/utils/theme.js"></script>
+    <script src="js/utils/env.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/currency.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="js/utils/cart-manager.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/auth-redirect.js"></script>
     <script src="js/cart.js"></script>
     <script>
         // Update the cart badge on page load and periodically

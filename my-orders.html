@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="campus cafe, university restaurant, student dining, college food, cafe menu">
+    <meta name="author" content="Campus Cafe">
     <title>My Orders - Campus Cafe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="icon1.png" type="image/png">
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* My Orders specific styles */
         :root {
@@ -350,6 +354,79 @@
         #clear-all-orders-btn:hover {
             background-color: #b71c1c;
         }
+        
+        /* Filter section styles */
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-container {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .filter-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        #admission-number-filter {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-input);
+            color: var(--text-color);
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Loading indicator */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(var(--primary-color-rgb), 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 2rem auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Highlight effect for new orders */
+        .highlight-order {
+            animation: pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.7) !important;
+            border: 1px solid var(--primary-color);
+            background-color: rgba(var(--primary-color-rgb), 0.1);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5); }
+            50% { box-shadow: 0 0 25px rgba(var(--primary-color-rgb), 0.8); }
+            100% { box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.5); }
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -368,6 +445,7 @@
                     <li><a href="about.html">About</a></li>
                     <li><a href="contact.html">Contact</a></li>
                     <li><a href="my-orders.html" class="active">My Orders</a></li>
+                    <li><a href="account.html">Account</a></li>
                 </ul>
                 <div class="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -404,6 +482,20 @@
                         <button id="clear-completed-btn" class="btn btn-secondary">Clear Completed/Cancelled</button>
                     </div>
                 </div>
+                
+                <div class="filter-section">
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <label for="admission-number-filter">Filter by Admission Number:</label>
+                            <div class="filter-input-group">
+                                <input type="text" id="admission-number-filter" placeholder="Enter your 5-digit admission number" maxlength="5" pattern="\d{5}">
+                                <button id="apply-filter-btn" class="btn btn-sm btn-primary">Apply</button>
+                                <button id="clear-filter-btn" class="btn btn-sm btn-secondary">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="orders-container" class="orders-container">
                     <!-- Orders will be loaded here dynamically -->
                     <div class="loader"></div>
@@ -427,6 +519,7 @@
                         <li><a href="about.html">About</a></li>
                         <li><a href="contact.html">Contact</a></li>
                         <li><a href="my-orders.html">My Orders</a></li>
+                        <li><a href="account.html">Account</a></li>
                     </ul>
                 </div>
                 <div class="footer-hours">
@@ -469,8 +562,15 @@
     </footer>
 
     <script src="js/utils/theme.js"></script>
+    <script src="js/utils/env.js"></script>
     <script src="js/utils/storage.js"></script>
     <script src="js/utils/currency.js"></script>
+    <script src="js/utils/stats.js"></script>
+    <script src="js/utils/cart-manager.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/utils/notifications.js"></script>
+    <script src="js/utils/user-notifications.js"></script>
+    <script src="js/auth-redirect.js"></script>
     <script>
         // Update the cart badge on page load and periodically
         document.addEventListener('DOMContentLoaded', function() {
@@ -509,6 +609,8 @@
     </script>
     <script src="js/theme.js"></script>
     <script src="js/nav.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/auth-redirect.js"></script>
     <script src="js/my-orders.js"></script>
 </body>
 </html> 

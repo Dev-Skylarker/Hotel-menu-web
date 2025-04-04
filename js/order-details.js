@@ -62,23 +62,77 @@ function initOrderDetails() {
 }
 
 /**
- * Load order details from localStorage
+ * Load order details from Supabase or localStorage
  * @param {string} orderId - Order ID to load
  */
-function loadOrderDetails(orderId) {
-    // Get orders from storage
-    const orders = storageManager.getOrders();
+async function loadOrderDetails(orderId) {
+    // Show loading indicator
+    if (orderDetailsContainer) {
+        orderDetailsContainer.innerHTML = '<div class="loader"></div>';
+    }
     
-    // Find order by ID
-    const order = orders.find(o => o.id === orderId);
-    
-    // If order not found, show error
-    if (!order) {
+    try {
+        let order = null;
+        
+        // Try to get the order from Supabase first if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Attempting to load order from Supabase...');
+            
+            const { data, error, offlineOnly } = await supabaseManager.getOrders({
+                // Filter by the specific order ID
+                orderId: orderId
+            });
+            
+            if (!error && data && data.length > 0) {
+                order = data[0];
+                console.log('Order found in Supabase:', order);
+            } else if (error) {
+                console.error('Error loading order from Supabase:', error);
+            } else if (offlineOnly) {
+                console.log('Operating in offline mode');
+            }
+        }
+        
+        // Fall back to localStorage if needed
+        if (!order) {
+            console.log('Falling back to localStorage...');
+            const orders = storageManager.getOrders();
+            order = orders.find(o => o.id === orderId);
+            console.log('Order from localStorage:', order);
+        }
+        
+        // If order not found, show error
+        if (!order) {
+            if (orderDetailsContainer) {
+                orderDetailsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Order not found. The order may have been deleted or the ID is invalid.</p>
+                        <button id="back-to-menu-error" class="btn btn-primary">Back to Menu</button>
+                    </div>
+                `;
+                
+                const backToMenuBtn = document.getElementById('back-to-menu-error');
+                if (backToMenuBtn) {
+                    backToMenuBtn.addEventListener('click', () => {
+                        window.location.href = 'menu.html';
+                    });
+                }
+            }
+            return;
+        }
+        
+        // Display order details
+        displayOrderDetails(order);
+        
+    } catch (error) {
+        console.error('Error loading order details:', error);
+        
         if (orderDetailsContainer) {
             orderDetailsContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Order not found. The order may have been deleted or the ID is invalid.</p>
+                    <p>An error occurred while loading order details. Please try again later.</p>
                     <button id="back-to-menu-error" class="btn btn-primary">Back to Menu</button>
                 </div>
             `;
@@ -90,11 +144,7 @@ function loadOrderDetails(orderId) {
                 });
             }
         }
-        return;
     }
-    
-    // Display order details
-    displayOrderDetails(order);
 }
 
 /**
@@ -119,13 +169,53 @@ function displayOrderDetails(order) {
         case 'cancelled':
             statusClass = 'status-cancelled';
             break;
+        default:
+            statusClass = 'status-pending';
     }
     
     // Calculate when buttons should be shown (only show for pending or ready orders)
     const showButtons = order.status === 'pending' || order.status === 'ready';
     
-    // Get the total amount or calculate it
-    const totalAmount = order.totalAmount || (order.item.price * order.quantity);
+    // Handle both single item orders and multi-item orders
+    let orderItemsHtml = '';
+    let totalAmount = 0;
+    
+    if (order.items && Array.isArray(order.items)) {
+        // Multiple items
+        orderItemsHtml = order.items.map(item => {
+            const itemTotal = item.price * (item.quantity || 1);
+            totalAmount += itemTotal;
+            
+            return `
+                <div class="order-item">
+                    <img src="${item.item.imageUrl}" alt="${item.item.name}" class="order-item-image">
+                    <div class="order-item-details">
+                        <h3>${item.item.name}</h3>
+                        <p>Quantity: ${item.quantity}</p>
+                        <p>Price: ${window.formatters?.currency ? window.formatters.currency(itemTotal, true) : `KSh ${itemTotal.toFixed(2)}`}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else if (order.item) {
+        // Single item
+        const itemTotal = order.item.price * (order.quantity || 1);
+        totalAmount = itemTotal;
+        
+        orderItemsHtml = `
+            <div class="order-item">
+                <img src="${order.item.imageUrl}" alt="${order.item.name}" class="order-item-image">
+                <div class="order-item-details">
+                    <h3>${order.item.name}</h3>
+                    <p>Quantity: ${order.quantity || 1}</p>
+                    <p>Price: ${window.formatters?.currency ? window.formatters.currency(itemTotal, true) : `KSh ${itemTotal.toFixed(2)}`}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Use provided total if available, otherwise use calculated total
+    totalAmount = order.total ? parseFloat(order.total) : totalAmount;
     
     orderDetailsContainer.innerHTML = `
         <div class="order-details-card">
@@ -135,13 +225,10 @@ function displayOrderDetails(order) {
             </div>
             
             <div class="order-info">
-                <div class="order-item">
-                    <img src="${order.item.imageUrl}" alt="${order.item.name}" class="order-item-image">
-                    <div class="order-item-details">
-                        <h3>${order.item.name}</h3>
-                        <p>Quantity: ${order.quantity}</p>
-                        <p>Price: ${window.formatters?.currency ? window.formatters.currency(order.item.price * order.quantity, true) : `KSh ${(order.item.price * order.quantity).toFixed(2)}`}</p>
-                    </div>
+                ${orderItemsHtml}
+                
+                <div class="order-total">
+                    <p><strong>Total Amount:</strong> ${window.formatters?.currency ? window.formatters.currency(totalAmount, true) : `KSh ${totalAmount.toFixed(2)}`}</p>
                 </div>
                 
                 <div class="order-meta">
@@ -170,12 +257,6 @@ function displayOrderDetails(order) {
                         <p class="text-center" style="margin-top: 15px;">
                             <a href="menu.html" class="btn btn-primary">Explore Our Menu</a>
                         </p>
-                    </div>
-                    
-                    <div class="quick-service" style="border-left-color: #4CAF50; margin-top: 15px;">
-                        <h3>Express Service</h3>
-                        <p><i class="fas fa-clock"></i> <strong>Quick Processing:</strong> All orders are processed within 2 minutes!</p>
-                        <p><i class="fas fa-thumbs-up"></i> <strong>Quality Guaranteed:</strong> Fresh ingredients, amazing taste</p>
                     </div>
                     
                     ${order.notes ? `
@@ -220,14 +301,32 @@ function displayOrderDetails(order) {
  * Cancel an order
  * @param {string} orderId - Order ID to cancel
  */
-function cancelOrder(orderId) {
+async function cancelOrder(orderId) {
     try {
-        // Update order status using storage manager
-        const updatedOrder = storageManager.updateOrderStatus(orderId, 'cancelled');
+        let updated = false;
         
-        if (!updatedOrder) {
-            alert('Order not found. Please refresh the page and try again.');
-            return;
+        // Try to update in Supabase first if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Updating order status in Supabase...');
+            const { data, error } = await supabaseManager.updateOrderStatus(orderId, 'cancelled');
+            
+            if (!error) {
+                updated = true;
+                console.log('Order status updated in Supabase:', data);
+            } else {
+                console.error('Error updating order in Supabase:', error);
+            }
+        }
+        
+        // Update in localStorage as fallback or if Supabase update failed
+        if (!updated) {
+            console.log('Updating order status in localStorage...');
+            const updatedOrder = storageManager.updateOrderStatus(orderId, 'cancelled');
+            
+            if (!updatedOrder) {
+                alert('Order not found. Please refresh the page and try again.');
+                return;
+            }
         }
         
         // Reload order details
@@ -245,25 +344,39 @@ function cancelOrder(orderId) {
  * Confirm order pickup
  * @param {string} orderId - Order ID
  */
-function confirmPickup(orderId) {
-    // Confirm with user
-    if (!confirm('Confirm that you have picked up this order?')) {
-        return;
-    }
-    
-    // Update order status in storage
-    const updatedOrder = storageManager.updateOrderStatus(orderId, 'completed');
-    
-    if (updatedOrder) {
-        // The stats are now handled by the storage manager and stats manager
+async function confirmPickup(orderId) {
+    try {
+        let updated = false;
         
-        // Reload order details
-        loadOrderDetails();
+        // Try to update in Supabase first if available
+        if (typeof supabaseManager !== 'undefined') {
+            console.log('Updating order status in Supabase...');
+            const { data, error } = await supabaseManager.updateOrderStatus(orderId, 'completed');
+            
+            if (!error) {
+                updated = true;
+                console.log('Order status updated in Supabase:', data);
+            } else {
+                console.error('Error updating order in Supabase:', error);
+            }
+        }
+        
+        // Update in localStorage as fallback or if Supabase update failed
+        if (!updated) {
+            console.log('Updating order status in localStorage...');
+            const updatedOrder = storageManager.updateOrderStatus(orderId, 'completed');
+            
+            if (!updatedOrder) {
+                alert('Order not found. Please refresh the page and try again.');
+                return;
+            }
+        }
         
         // Show thank you modal
         showThankYouModal();
-    } else {
-        showMessage('Failed to update order status');
+    } catch (error) {
+        console.error('Error completing order:', error);
+        alert('An error occurred while completing the order.');
     }
 }
 

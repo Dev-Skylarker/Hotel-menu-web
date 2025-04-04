@@ -1307,7 +1307,7 @@ footer {
     margin-top: 1.5rem;
 }
 
-/* M-Pesa Payment Instructions */
+/* Payment Instructions */
 .payment-instructions {
     margin: 1.5rem 0;
     padding: 1.5rem;
@@ -1322,11 +1322,11 @@ footer {
     color: #4CD964;
 }
 
-.mpesa-steps {
+.payment-steps {
     margin: 1.5rem 0;
 }
 
-.mpesa-step {
+.payment-step {
     display: flex;
     align-items: center;
     margin-bottom: 0.75rem;
@@ -1360,8 +1360,8 @@ footer {
     border-left: 3px solid var(--primary-color);
 }
 
-/* M-Pesa Payment Reminder in Success Modal */
-.mpesa-payment-reminder {
+/* Order Information in Success Modal */
+.order-information {
     margin: 1.5rem 0;
     padding: 1.25rem;
     background-color: var(--background-secondary);
@@ -1370,35 +1370,35 @@ footer {
     text-align: left;
 }
 
-.mpesa-payment-reminder h3 {
+.order-information h3 {
     color: #4CD964;
     margin-top: 0;
     margin-bottom: 0.75rem;
 }
 
-.mpesa-payment-reminder ul {
+.order-information ul {
     list-style-type: none;
     padding-left: 0;
     margin: 1rem 0;
 }
 
-.mpesa-payment-reminder li {
+.order-information li {
     padding: 0.5rem 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.mpesa-payment-reminder li:last-child {
+.order-information li:last-child {
     border-bottom: none;
 }
 
-.mpesa-payment-reminder p {
+.order-information p {
     margin-top: 1rem;
     font-style: italic;
     font-size: 0.9rem;
 }
 
 /* Payment Instruction Highlights */
-.mpesa-payment-reminder .highlight {
+.order-information .highlight {
     font-weight: bold;
     background-color: rgba(76, 217, 100, 0.1);
     padding: 2px 6px;
@@ -1406,7 +1406,7 @@ footer {
     color: #2a8c3a;
 }
 
-.dark-mode .mpesa-payment-reminder .highlight {
+.dark-mode .order-information .highlight {
     background-color: rgba(76, 217, 100, 0.2);
     color: #4CD964;
 }

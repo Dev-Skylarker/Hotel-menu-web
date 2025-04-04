@@ -293,7 +293,7 @@
                     
                     <div class="metric-card">
                         <div class="metric-label">Completed Orders</div>
-                        <div id="completed-orders" class="metric-value">0</div>
+                        <div id="completed-orders-count" class="metric-value">0</div>
                         <div class="metric-trend">
                             <span id="completed-trend">No previous data</span>
                         </div>
@@ -301,371 +301,351 @@
                     
                     <div class="metric-card">
                         <div class="metric-label">Pending Orders</div>
-                        <div id="pending-orders" class="metric-value">0</div>
+                        <div id="pending-orders-count" class="metric-value">0</div>
                         <div class="metric-trend">
                             Need attention
                         </div>
                     </div>
                     
                     <div class="metric-card">
-                        <div class="metric-label">Average Order Value</div>
-                        <div id="avg-order-value" class="metric-value">KSh 0.00</div>
+                        <div class="metric-label">Total Users</div>
+                        <div id="total-users" class="metric-value">0</div>
                         <div class="metric-trend">
-                            <span id="avg-value-trend">Calculate from orders</span>
+                            <span id="users-trend">Registered users</span>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Sales & Order Trends Chart -->
-                <div class="chart-container">
-                    <h2>Sales & Order Trends</h2>
-                    <canvas id="sales-chart"></canvas>
-                </div>
-                
-                <!-- Order Management Section -->
+                <!-- Tabs Navigation -->
                 <div class="dashboard-section">
-                    <h2>Order Management</h2>
-                    
-                    <div class="tab-nav">
-                        <div class="tab-item active" data-tab="all-orders">All Orders</div>
-                        <div class="tab-item" data-tab="pending-orders">Pending</div>
-                        <div class="tab-item" data-tab="completed-orders">Completed</div>
-                        <div class="tab-item" data-tab="cancelled-orders">Cancelled</div>
-                    </div>
-                    
-                    <div class="order-filters">
-                        <div class="filter-group">
-                            <label for="date-filter">Date:</label>
-                            <select id="date-filter">
-                                <option value="all">All Time</option>
-                                <option value="today" selected>Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                            </select>
+                    <div class="tabs-container">
+                        <div class="tab-buttons">
+                            <button class="tab-button active" data-tab="orders-tab">
+                                <i class="fas fa-shopping-bag"></i> Orders
+                                <span class="badge badge-danger" id="pending-orders-badge">0</span>
+                            </button>
+                            <button class="tab-button" data-tab="users-tab">
+                                <i class="fas fa-users"></i> Users
+                                <span class="badge badge-primary" id="users-badge">0</span>
+                            </button>
+                            <button class="tab-button" data-tab="metrics-tab">
+                                <i class="fas fa-chart-line"></i> Metrics
+                            </button>
                         </div>
                         
-                        <div class="filter-group">
-                            <label for="search-orders">Search:</label>
-                            <input type="text" id="search-orders" placeholder="Order ID, customer name...">
-                        </div>
-                        
-                        <button id="apply-filters" class="btn btn-primary btn-small">
-                            <i class="fas fa-filter"></i> Apply Filters
-                        </button>
-                        
-                        <button id="clear-filters" class="btn btn-secondary btn-small">
-                            <i class="fas fa-times"></i> Clear
-                        </button>
-                    </div>
-                    
-                    <!-- All Orders Tab -->
-                    <div class="tab-content active" id="all-orders">
-                        <div class="table-actions">
-                            <div class="results-count">
-                                <span id="all-count">0</span> orders found
-                            </div>
-                            <div class="batch-actions">
-                                <button id="export-orders" class="btn btn-secondary btn-small">
-                                    <i class="fas fa-file-export"></i> Export
-                                </button>
-                                <button id="delete-selected" class="btn btn-danger btn-small admin-restricted" disabled>
-                                    <i class="fas fa-trash"></i> Delete Selected
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="orders-table-container">
-                            <table class="admin-table" id="all-orders-table">
-                                <thead>
-                                    <tr>
-                                        <th class="checkbox-cell">
-                                            <input type="checkbox" id="select-all">
-                                        </th>
-                                        <th>Order ID</th>
-                                        <th>Customer</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="all-orders-body">
-                                    <!-- Orders will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                            <div id="no-orders-message" class="empty-state">
-                                <i class="fas fa-shopping-cart"></i>
-                                <p>No orders found for the selected criteria</p>
-                                <button id="reset-filters" class="btn btn-primary btn-small">
-                                    Reset Filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Pending Orders Tab -->
-                    <div class="tab-content" id="pending-orders">
-                        <div class="table-actions">
-                            <div class="results-count">
-                                <span id="pending-count">0</span> pending orders
-                            </div>
-                            <div class="batch-actions">
-                                <button id="complete-all-pending" class="btn btn-success btn-small admin-restricted" disabled>
-                                    <i class="fas fa-check"></i> Mark All as Ready
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="orders-table-container">
-                            <table class="admin-table" id="pending-orders-table">
-                                <thead>
-                                    <tr>
-                                        <th class="checkbox-cell">
-                                            <input type="checkbox" id="select-all-pending">
-                                        </th>
-                                        <th>Order ID</th>
-                                        <th>Customer</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Time Elapsed</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pending-orders-body">
-                                    <!-- Pending orders will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                            <div id="no-pending-orders" class="empty-state">
-                                <i class="fas fa-check-circle"></i>
-                                <p>No pending orders at the moment!</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Completed Orders Tab -->
-                    <div class="tab-content" id="completed-orders">
-                        <div class="table-actions">
-                            <div class="results-count">
-                                <span id="completed-count">0</span> completed orders
-                            </div>
-                            <div class="batch-actions">
-                                <button id="export-completed" class="btn btn-secondary btn-small">
-                                    <i class="fas fa-file-export"></i> Export
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="orders-table-container">
-                            <table class="admin-table" id="completed-orders-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Customer</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Completion Time</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="completed-orders-body">
-                                    <!-- Completed orders will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                            <div id="no-completed-orders" class="empty-state">
-                                <i class="fas fa-clipboard-check"></i>
-                                <p>No completed orders yet</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Cancelled Orders Tab -->
-                    <div class="tab-content" id="cancelled-orders">
-                        <div class="table-actions">
-                            <div class="results-count">
-                                <span id="cancelled-count">0</span> cancelled orders
-                            </div>
-                            <div class="batch-actions">
-                                <button id="clear-cancelled" class="btn btn-danger btn-small superadmin-only" disabled>
-                                    <i class="fas fa-trash"></i> Clear All
-                                </button>
+                        <!-- Orders Tab Content -->
+                        <div class="tab-content" id="orders-tab">
+                            <div class="dashboard-section">
+                                <h2>Order Management</h2>
+                                
+                                <div class="tab-nav">
+                                    <div class="tab-item active" data-tab="all-orders">All Orders</div>
+                                    <div class="tab-item" data-tab="pending-orders">Pending</div>
+                                    <div class="tab-item" data-tab="completed-orders">Completed</div>
+                                    <div class="tab-item" data-tab="cancelled-orders">Cancelled</div>
+                                </div>
+                                
+                                <div class="order-filters">
+                                    <div class="filter-group">
+                                        <label for="date-filter">Date:</label>
+                                        <select id="date-filter">
+                                            <option value="all">All Time</option>
+                                            <option value="today" selected>Today</option>
+                                            <option value="yesterday">Yesterday</option>
+                                            <option value="week">Last 7 Days</option>
+                                            <option value="month">Last 30 Days</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <label for="status-filter">Status:</label>
+                                        <select id="status-filter">
+                                            <option value="all">All Statuses</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="ready">Ready</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <input type="text" id="search-orders" placeholder="Search orders...">
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <button id="apply-filters" class="btn btn-primary btn-small">
+                                            <i class="fas fa-filter"></i> Apply Filters
+                                        </button>
+                                        <button id="clear-filters" class="btn btn-secondary btn-small">
+                                            <i class="fas fa-times"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- All Orders Table -->
+                                <div class="orders-table-container">
+                                    <table class="admin-table" id="all-orders-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="all-orders-table-body">
+                                            <!-- Orders will be loaded dynamically -->
+                                            <tr>
+                                                <td colspan="6" class="text-center">Loading orders...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Pending Orders Table -->
+                                <div class="orders-table-container" style="display: none;">
+                                    <table class="admin-table" id="pending-orders-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pending-orders-table-body">
+                                            <!-- Pending orders will be loaded dynamically -->
+                                            <tr>
+                                                <td colspan="6" class="text-center">Loading pending orders...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Completed Orders Table -->
+                                <div class="orders-table-container" style="display: none;">
+                                    <table class="admin-table" id="completed-orders-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="completed-orders-table-body">
+                                            <!-- Completed orders will be loaded dynamically -->
+                                            <tr>
+                                                <td colspan="6" class="text-center">Loading completed orders...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Cancelled Orders Table -->
+                                <div class="orders-table-container" style="display: none;">
+                                    <table class="admin-table" id="cancelled-orders-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cancelled-orders-table-body">
+                                            <!-- Cancelled orders will be loaded dynamically -->
+                                            <tr>
+                                                <td colspan="6" class="text-center">Loading cancelled orders...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="orders-table-container">
-                            <table class="admin-table" id="cancelled-orders-table">
-                                <thead>
-                                    <tr>
-                                        <th class="checkbox-cell">
-                                            <input type="checkbox" id="select-all-cancelled">
-                                        </th>
-                                        <th>Order ID</th>
-                                        <th>Customer</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                        <th>Cancelled On</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cancelled-orders-body">
-                                    <!-- Cancelled orders will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                            <div id="no-cancelled-orders" class="empty-state">
-                                <i class="fas fa-ban"></i>
-                                <p>No cancelled orders</p>
+                        <!-- Users Tab Content -->
+                        <div class="tab-content" id="users-tab" style="display: none;">
+                            <div class="dashboard-section">
+                                <div class="section-header">
+                                    <h2>User Management</h2>
+                                    <div class="section-actions">
+                                        <div class="search-container">
+                                            <input type="text" id="user-search" placeholder="Search users...">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-container">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Admission No.</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="users-table-body">
+                                            <!-- Users will be loaded dynamically -->
+                                            <tr>
+                                                <td colspan="5" class="text-center">Loading users...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Pending Orders Table -->
-                <div class="dashboard-section">
-                    <h2>Pending Orders</h2>
-                    <div class="orders-table-container">
-                        <table class="admin-table" id="pending-orders-table">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Items</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pending-orders-body">
-                                <!-- Pending orders will be loaded dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Pending Orders Table -->
-                <div class="dashboard-section">
-                    <h2>Pending Orders</h2>
-                    <div class="orders-table-container">
-                        <table class="admin-table" id="pending-orders-table">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Items</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pending-orders-body">
-                                <!-- Pending orders will be loaded dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Category Performance -->
-                <div class="dashboard-section">
-                    <h2>Menu Performance</h2>
-                    <div class="chart-container">
-                        <canvas id="category-chart"></canvas>
-                    </div>
-                    
-                    <div class="dashboard-actions">
-                        <a href="manage-menu.html" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add New Menu Item
-                        </a>
+                        
+                        <!-- Metrics Tab Content -->
+                        <div class="tab-content" id="metrics-tab" style="display: none;">
+                            <div class="dashboard-section">
+                                <h2>Sales & Order Metrics</h2>
+                                
+                                <!-- Sales & Order Trends Chart -->
+                                <div class="chart-container">
+                                    <canvas id="sales-chart"></canvas>
+                                </div>
+                                
+                                <!-- Category Performance -->
+                                <div class="chart-container">
+                                    <h3>Menu Performance</h3>
+                                    <canvas id="category-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
     
-    <!-- Order View Modal -->
-    <div class="modal" id="order-details-modal">
+    <!-- Order Details Modal -->
+    <div id="order-details-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Order Details</h2>
-                <button class="close-modal">&times;</button>
+                <h2 id="order-details-title">Order Details</h2>
+                <span class="close-modal">&times;</span>
             </div>
-            <div class="modal-body" id="order-details-content">
-                <!-- Order details will be loaded dynamically -->
+            <div class="modal-body">
+                <div class="order-details">
+                    <div class="detail-item">
+                        <label>Order Date:</label>
+                        <span id="order-details-date">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Customer:</label>
+                        <span id="order-details-customer">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <span id="order-details-status" class="status-badge">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Total:</label>
+                        <span id="order-details-total">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Notes:</label>
+                        <span id="order-details-notes">-</span>
+                    </div>
+                </div>
+                
+                <h3>Order Items</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-items-table-body">
+                        <!-- Order items will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer" id="order-details-actions">
+                <!-- Action buttons will be added dynamically based on order status -->
+                <button class="btn btn-secondary close-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="user-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Details</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="user-details">
+                    <div class="detail-item">
+                        <label>Name:</label>
+                        <span id="user-details-name">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Email:</label>
+                        <span id="user-details-email">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Admission Number:</label>
+                        <span id="user-details-admission">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Orders:</label>
+                        <span id="user-details-orders">0</span>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary close-modal">Close</button>
-                <button class="btn btn-success" id="mark-ready-btn">Mark as Ready</button>
-                <button class="btn btn-danger" id="cancel-order-btn">Cancel Order</button>
             </div>
         </div>
     </div>
-    
+
     <!-- Confirmation Modal -->
-    <div class="modal" id="confirm-modal">
+    <div id="confirmation-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Confirm Action</h2>
-                <button class="close-modal">&times;</button>
+                <h2 id="confirmation-title">Confirm Action</h2>
+                <span class="close-modal">&times;</span>
             </div>
-            <div class="modal-body" id="confirm-message">
-                Are you sure you want to proceed with this action?
+            <div class="modal-body">
+                <p id="confirmation-message">Are you sure you want to proceed with this action?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary close-modal">Cancel</button>
-                <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
+                <button id="cancel-action-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-action-btn" class="btn btn-primary">Confirm</button>
             </div>
         </div>
     </div>
 
-    <script src="../js/utils/theme.js"></script>
-    <script>
-        function loadPendingOrders() {
-            const orders = storageManager.getOrders();
-            const pendingOrders = orders.filter(order => order.status === 'pending');
-            const pendingOrdersBody = document.getElementById('pending-orders-body');
-
-            if (pendingOrdersBody) {
-                pendingOrdersBody.innerHTML = ''; // Clear existing content
-
-                if (pendingOrders.length === 0) {
-                    pendingOrdersBody.innerHTML = '<tr><td colspan="6">No pending orders</td></tr>';
-                } else {
-                    pendingOrders.forEach(order => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${order.id}</td>
-                            <td>${order.customerName}</td>
-                            <td>${order.item.name}</td>
-                            <td>${order.totalPrice}</td>
-                            <td>${order.status}</td>
-                            <td>
-                                <button class="btn btn-success btn-small" onclick="markOrderReady('${order.id}')">Mark Ready</button>
-                                <button class="btn btn-danger btn-small" onclick="cancelOrder('${order.id}')">Cancel</button>
-                            </td>
-                        `;
-                        pendingOrdersBody.appendChild(row);
-                    });
-                }
-            }
-        }
-
-        function markOrderReady(orderId) {
-            storageManager.updateOrderStatus(orderId, 'ready');
-            loadPendingOrders(); // Refresh the table
-        }
-
-        function cancelOrder(orderId) {
-            storageManager.updateOrderStatus(orderId, 'cancelled');
-            loadPendingOrders(); // Refresh the table
-        }
-
-        // Load pending orders on dashboard load
-        document.addEventListener('DOMContentLoaded', loadPendingOrders);
-    </script>
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+    
+    <!-- Scripts -->
     <script src="../js/utils/env.js"></script>
-    <script src="../js/utils/credentials.js"></script>
-    <script src="../js/utils/config.js"></script>
+    <script src="../js/utils/storage.js"></script>
     <script src="../js/utils/auth.js"></script>
+    <script src="../js/utils/supabase.js"></script>
     <script src="../js/utils/currency.js"></script>
-    <script src="../js/admin/dashboard.js"></script>
+    <script src="../js/utils/notifications.js"></script>
+    <script src="../js/utils/theme.js"></script>
+    <script src="../js/utils/initialize-db.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="campus cafe, university restaurant, student dining, college food, cafe menu">
+    <meta name="author" content="Campus Cafe">
+    <title>My Account - Campus Cafe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="icon1.png" type="image/png">
+    <style>
+        /* Account page styles */
+        .account-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+                
+        /* User account section */
+        .account-section {
+            display: block;
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .account-info {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .account-info h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .account-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .account-details {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .account-detail-item {
+            margin-bottom: 1rem;
+        }
+        
+        .account-detail-item label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        
+        .account-detail-item .value {
+            font-weight: 500;
+        }
+        
+        /* Order history section */
+        .order-history {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .order-history h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .order-history-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .order-history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .order-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-ready {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-completed {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .order-history-details {
+            margin-bottom: 1rem;
+        }
+        
+        .order-history-actions {
+            text-align: right;
+        }
+        
+        /* Loader */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(var(--primary-color-rgb), 0.2);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* Not logged in message */
+        .not-logged-in {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .not-logged-in i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .not-logged-in .btn {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </a>
+            </div>
+            <nav>
+                <ul class="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="my-orders.html">My Orders</a></li>
+                    <li><a href="login.html">Login</a></li>
+                </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+            <div class="nav-actions">
+                <a href="cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-badge" class="cart-badge">0</span>
+                </a>
+                <button class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-header small">
+            <div class="container">
+                <h1>My Account</h1>
+                <div class="breadcrumbs">
+                    <a href="index.html">Home</a> / 
+                    <span>My Account</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="account-container">
+            <!-- User Account Section (shown after login) -->
+            <div id="account-section" class="account-section">
+                <div class="account-header">
+                    <h2>Welcome, <span id="user-name-display">User</span>!</h2>
+                    <button id="logout-btn" class="btn btn-danger">Logout</button>
+                </div>
+                
+                <div class="account-info">
+                    <h3>Account Information</h3>
+                    <div id="account-details" class="account-details">
+                        <!-- Account details will be loaded dynamically -->
+                        <div class="account-detail-item">
+                            <label>Full Name</label>
+                            <div class="value" id="account-name">loading...</div>
+                        </div>
+                        <div class="account-detail-item">
+                            <label>Email</label>
+                            <div class="value" id="account-email">loading...</div>
+                        </div>
+                        <div class="account-detail-item">
+                            <label>Admission Number</label>
+                            <div class="value" id="account-admission">loading...</div>
+                        </div>
+                        <div class="account-detail-item">
+                            <label>Registration Date</label>
+                            <div class="value" id="account-registered">loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="account-info">
+                    <h3>Your Statistics</h3>
+                    <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="stat-card" style="background-color: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius); text-align: center;">
+                            <i class="fas fa-receipt" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 0.5rem;"></i>
+                            <h4>Total Orders</h4>
+                            <div class="stat-value" id="user-total-orders">0</div>
+                        </div>
+                        <div class="stat-card" style="background-color: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius); text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 2rem; color: #2ecc71; margin-bottom: 0.5rem;"></i>
+                            <h4>Completed Orders</h4>
+                            <div class="stat-value" id="user-completed-orders">0</div>
+                        </div>
+                        <div class="stat-card" style="background-color: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius); text-align: center;">
+                            <i class="fas fa-money-bill-wave" style="font-size: 2rem; color: #f39c12; margin-bottom: 0.5rem;"></i>
+                            <h4>Total Spent</h4>
+                            <div class="stat-value" id="user-total-spent">KSh 0.00</div>
+                        </div>
+                        <div class="stat-card" style="background-color: var(--bg-secondary); padding: 1.5rem; border-radius: var(--border-radius); text-align: center;">
+                            <i class="fas fa-utensils" style="font-size: 2rem; color: #9b59b6; margin-bottom: 0.5rem;"></i>
+                            <h4>Favorite Category</h4>
+                            <div class="stat-value" id="user-favorite-category">N/A</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="order-history">
+                    <h3>Order History</h3>
+                    <div id="order-history-container">
+                        <!-- Order history will be loaded dynamically -->
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Not logged in message -->
+            <div id="not-logged-in" class="not-logged-in" style="display: none;">
+                <i class="fas fa-user-lock"></i>
+                <h2>Please Log In</h2>
+                <p>You need to be logged in to view your account information.</p>
+                <a href="login.html" class="btn btn-primary">Go to Login</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="my-orders.html">My Orders</a></li>
+                        <li><a href="login.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h3>Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-stats">
+                    <h3>Our Impact</h3>
+                    <ul class="stats-list">
+                        <li><span id="customers-today">0</span> customers served today</li>
+                        <li><span id="customers-total">0</span> happy customers since 2021</li>
+                        <li><span id="orders-count">0</span> orders submitted</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Campus Cafe. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/utils/theme.js"></script>
+    <script src="js/utils/env.js"></script>
+    <script src="js/utils/storage.js"></script>
+    <script src="js/utils/currency.js"></script>
+    <script src="js/utils/stats.js"></script>
+    <script src="js/utils/cart-manager.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/utils/notifications.js"></script>
+    <script src="js/utils/user-notifications.js"></script>
+    <script src="js/utils/initialize-db.js"></script>
+    <script src="js/account.js"></script>
+</body>
+</html> 

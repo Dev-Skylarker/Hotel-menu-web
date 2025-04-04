@@ -43,6 +43,10 @@ const noCancelledOrders = document.getElementById('no-cancelled-orders');
 const orderDetailsModal = document.getElementById('order-details-modal');
 const orderDetailsContent = document.getElementById('order-details-content');
 const markReadyBtn = document.getElementById('mark-ready-btn');
+const markCompletedBtn = document.createElement('button'); // Will be added to DOM later
+markCompletedBtn.className = 'btn btn-primary';
+markCompletedBtn.id = 'mark-completed-btn';
+markCompletedBtn.innerText = 'Mark as Completed';
 const cancelOrderBtn = document.getElementById('cancel-order-btn');
 const confirmModal = document.getElementById('confirm-modal');
 const confirmMessage = document.getElementById('confirm-message');
@@ -70,6 +74,13 @@ let allOrders = [];
 let filteredOrders = [];
 let currentOrder = null;
 let currentAction = null;
+
+// User management
+const userManagementTab = document.querySelector('.tab-item[data-tab="users"]');
+const userManagementContent = document.getElementById('users-tab');
+const userListBody = document.getElementById('users-list-body');
+const noUsersMessage = document.getElementById('no-users-message');
+const userCountEl = document.getElementById('user-count');
 
 /**
  * Initialize the dashboard page
@@ -125,17 +136,37 @@ function initDashboard() {
     // Add event listeners
     attachEventListeners();
     
+    // Attach modal event listeners
+    attachModalEventListeners();
+    
     // Initialize tabs
     initTabs();
     
     // Load dashboard data
     loadDashboardData();
     
+    // Load user data if admin has access
+    loadUserData();
+    
     // Initialize charts
     initCharts();
     
     // Setup regular auth status check
     setupAuthCheck();
+    
+    // Start real-time sync if available
+    if (typeof realtimeManager !== 'undefined') {
+        // Register listeners for real-time updates
+        realtimeManager.on('onOrdersUpdate', handleRealtimeOrdersUpdate);
+        realtimeManager.on('onOrderStatusChange', handleOrderStatusChange);
+        
+        // Start real-time sync
+        realtimeManager.startSync(5000); // 5 second interval
+        
+        console.log('Real-time sync initialized for dashboard');
+    } else {
+        console.warn('Real-time sync not available');
+    }
 }
 
 /**
@@ -401,42 +432,86 @@ function refreshData() {
 /**
  * Show a toast notification
  * @param {string} message - Message to display
- * @param {string} type - Type of notification (success, error, info)
+ * @param {string} type - Type of notification (success, error, info, warning)
+ * @param {number} duration - Duration in ms to show the toast (default: 5000ms)
  */
-function showToast(message, type = 'info') {
-    // Check if toast container exists, create if not
-    let toastContainer = document.querySelector('.toast-container');
+function showToast(message, type = 'info', duration = 5000) {
+    // Check if toast container exists
+    let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
-        document.body.appendChild(toastContainer);
+        console.error('Toast container not found');
+        return;
     }
     
     // Create toast element
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
+    toast.className = `toast ${type}`;
     
     // Set icon based on type
     let icon = 'info-circle';
-    if (type === 'success') icon = 'check-circle';
-    if (type === 'error') icon = 'exclamation-circle';
+    switch (type) {
+        case 'success':
+            icon = 'check-circle';
+            break;
+        case 'warning':
+            icon = 'exclamation-triangle';
+            break;
+        case 'error':
+            icon = 'times-circle';
+            break;
+        default:
+            icon = 'info-circle';
+    }
     
-    // Set toast content
+    // Create toast content
     toast.innerHTML = `
-        <i class="fas fa-${icon}"></i>
-        <span>${message}</span>
+        <div class="toast-icon">
+            <i class="fas fa-${icon}"></i>
+        </div>
+        <div class="toast-content">
+            <p class="toast-message">${message}</p>
+        </div>
+        <button class="toast-close">&times;</button>
     `;
     
-    // Add toast to container
+    // Add to container
     toastContainer.appendChild(toast);
     
-    // Automatically remove toast after 3 seconds
-    setTimeout(() => {
-        toast.classList.add('toast-hide');
+    // Add event listener to close button
+    const closeBtn = toast.querySelector('.toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeToast(toast);
+        });
+    }
+    
+    // Auto-close after duration
+    if (duration) {
         setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 3000);
+            closeToast(toast);
+        }, duration);
+    }
+    
+    // Return the toast element for potential further manipulation
+    return toast;
+}
+
+/**
+ * Close a toast notification
+ * @param {HTMLElement} toast - Toast element to close
+ */
+function closeToast(toast) {
+    if (!toast) return;
+    
+    // Add fade-out animation
+    toast.style.animation = 'fade-out 0.3s forwards';
+    
+    // Remove after animation completes
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
 }
 
 /**
@@ -724,76 +799,98 @@ function updateCategoryChart() {
  * Apply filters to orders
  */
 function applyFilters() {
-    const dateValue = dateFilter ? dateFilter.value : 'all';
-    const searchValue = searchOrders ? searchOrders.value.toLowerCase() : '';
+    const dateFilterEl = document.getElementById('date-filter');
+    const statusFilterEl = document.getElementById('status-filter');
+    const searchOrdersEl = document.getElementById('search-orders');
+    
+    if (!dateFilterEl || !searchOrdersEl || !statusFilterEl) return;
+    
+    const dateFilter = dateFilterEl.value;
+    const statusFilter = statusFilterEl.value;
+    const searchQuery = searchOrdersEl.value.trim().toLowerCase();
+    
+    console.log('Applying filters:', { dateFilter, statusFilter, searchQuery });
     
     // Start with all orders
     filteredOrders = [...allOrders];
     
     // Apply date filter
-    if (dateValue !== 'all') {
+    if (dateFilter !== 'all') {
+        const now = new Date();
+        let filterDate = new Date();
+        
+        switch (dateFilter) {
+            case 'today':
+                // Already set to today
+                break;
+            case 'yesterday':
+                filterDate.setDate(now.getDate() - 1);
+                break;
+            case 'week':
+                filterDate.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                filterDate.setDate(now.getDate() - 30);
+                break;
+            default:
+                break;
+        }
+        
+        filterDate.setHours(0, 0, 0, 0);
+        
         filteredOrders = filteredOrders.filter(order => {
-            const orderDate = new Date(order.orderTime || order.date);
-            const now = new Date();
-            
-            switch (dateValue) {
-                case 'today':
-                    return isSameDay(orderDate, now);
-                case 'yesterday':
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    return isSameDay(orderDate, yesterday);
-                case 'week':
-                    const weekStart = new Date();
-                    weekStart.setDate(weekStart.getDate() - 7);
-                    return orderDate >= weekStart;
-                case 'month':
-                    const monthStart = new Date();
-                    monthStart.setMonth(monthStart.getMonth() - 1);
-                    return orderDate >= monthStart;
-                default:
-                    return true;
-            }
+            const orderDate = new Date(order.orderTime);
+            return orderDate >= filterDate;
         });
+    }
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
     }
     
     // Apply search filter
-    if (searchValue) {
+    if (searchQuery) {
         filteredOrders = filteredOrders.filter(order => {
-            // Search by order ID
-            if (order.id && order.id.toLowerCase().includes(searchValue)) {
-                return true;
-            }
-            
-            // Search by order code
-            if (order.orderCode && order.orderCode.toLowerCase().includes(searchValue)) {
-                return true;
-            }
-            
-            // Search by customer name
-            if (order.customerName && order.customerName.toLowerCase().includes(searchValue)) {
-                return true;
-            }
-            
-            // Search by admission number
-            if (order.admissionNumber && order.admissionNumber.toLowerCase().includes(searchValue)) {
-                return true;
-            }
-            
-            // Search by item name
-            if (order.item && order.item.name && order.item.name.toLowerCase().includes(searchValue)) {
-                return true;
-            }
-            
-            return false;
+            return (
+                order.id.toLowerCase().includes(searchQuery) ||
+                (order.customerName && order.customerName.toLowerCase().includes(searchQuery)) ||
+                (order.admissionNumber && order.admissionNumber.toLowerCase().includes(searchQuery)) ||
+                (order.orderCode && order.orderCode.toLowerCase().includes(searchQuery))
+            );
         });
     }
     
-    // Update all tables
+    // Update order tables with filtered orders
     updateOrdersTable();
-    updatePendingOrdersTable();
-    updateCompletedOrdersTable();
-    updateCancelledOrdersTable();
+    
+    // Show message if no orders match filters
+    const noOrdersMessage = document.getElementById('no-orders-message');
+    const ordersTable = document.getElementById('all-orders-table');
+    
+    if (noOrdersMessage && ordersTable) {
+        if (filteredOrders.length === 0) {
+            noOrdersMessage.style.display = 'block';
+            ordersTable.style.display = 'none';
+        } else {
+            noOrdersMessage.style.display = 'none';
+            ordersTable.style.display = 'table';
+        }
+    }
+    
+    // Update filter count
+    if (allCountEl) {
+        allCountEl.textContent = filteredOrders.length;
+    }
+    
+    // Update URL with filters for bookmarking/sharing
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('date', dateFilter);
+    if (statusFilter !== 'all') urlParams.set('status', statusFilter);
+    if (searchQuery) urlParams.set('q', searchQuery);
+    
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
 }
 
 /**
@@ -1150,162 +1247,254 @@ function attachOrderActionListeners(type) {
 
 /**
  * View order details
- * @param {string} orderId - Order ID
+ * @param {string} orderId - Order ID to view
  */
 function viewOrderDetails(orderId) {
-    // Find order
+    // Find the order
     const order = allOrders.find(o => o.id === orderId);
-    if (!order) return;
-    
-    // Save current order
-    currentOrder = order;
-    
-    // Format date
-    const orderDate = new Date(order.orderTime || order.date);
-    const formattedDate = formatDate(orderDate, true);
-    
-    // Get customer information
-    const customerName = order.customerName || 'Guest';
-    const admissionNumber = order.admissionNumber || 'N/A';
-    const phoneNumber = order.phoneNumber || 'N/A';
-    
-    // Get items information
-    let itemsHtml = '';
-    let orderTotal = 0;
-    
-    if (order.items && Array.isArray(order.items)) {
-        // Multi-item order
-        itemsHtml = `<ul class="order-items-list">`;
-        
-        order.items.forEach(item => {
-            const itemTotal = item.price * (item.quantity || 1);
-            orderTotal += itemTotal;
-            
-            itemsHtml += `
-                <li>
-                    <div class="order-item-name">${escapeHtml(item.name)}</div>
-                    <div class="order-item-qty">x${item.quantity || 1}</div>
-                    <div class="order-item-price">${formatCurrency(item.price, true)}</div>
-                    <div class="order-item-total">${formatCurrency(itemTotal, true)}</div>
-                </li>
-            `;
-        });
-        
-        itemsHtml += `</ul>`;
-        
-        // Use totalAmount if available
-        orderTotal = parseFloat(order.totalAmount || order.totalPrice || orderTotal);
-    } else if (order.item) {
-        // Single item order
-        const item = order.item;
-        const quantity = order.quantity || 1;
-        const itemTotal = item.price * quantity;
-        orderTotal = itemTotal;
-        
-        itemsHtml = `
-            <ul class="order-items-list">
-                <li>
-                    <div class="order-item-name">${escapeHtml(item.name)}</div>
-                    <div class="order-item-qty">x${quantity}</div>
-                    <div class="order-item-price">${formatCurrency(item.price, true)}</div>
-                    <div class="order-item-total">${formatCurrency(itemTotal, true)}</div>
-                </li>
-            </ul>
-        `;
-        
-        // Use totalAmount if available
-        orderTotal = parseFloat(order.totalAmount || order.totalPrice || orderTotal);
+    if (!order) {
+        console.error(`Order not found with ID: ${orderId}`);
+        return;
     }
     
-    // Set modal content
-    const modalContent = `
+    // Store current order reference
+    currentOrder = order;
+    
+    // Clear the modal content
+    if (orderDetailsContent) {
+        orderDetailsContent.innerHTML = '';
+    }
+    
+    // Format order date
+    const orderDate = new Date(order.orderTime);
+    const formattedDate = formatDate(orderDate, true);
+    
+    // Calculate time elapsed
+    const timeElapsed = getTimeElapsed(orderDate);
+    
+    // Create order details HTML
+    const orderDetailsHTML = `
         <div class="order-details">
             <div class="order-header">
                 <div class="order-id">
-                    <strong>Order ID:</strong> #${order.id}
-                    ${order.orderCode ? `<span class="order-code">(${order.orderCode})</span>` : ''}
+                    <h3>Order #${order.id}</h3>
+                    <span class="status-badge status-${order.status}">${order.status}</span>
                 </div>
-                <div class="order-status">
-                    <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span>
-                </div>
-            </div>
-            
-            <div class="order-section">
-                <h3>Customer Information</h3>
-                <div class="customer-info">
-                    <p><strong>Name:</strong> ${escapeHtml(customerName)}</p>
-                    <p><strong>Admission #:</strong> ${escapeHtml(admissionNumber)}</p>
-                    <p><strong>Phone:</strong> ${escapeHtml(phoneNumber)}</p>
+                <div class="order-timestamp">
+                    <p>${formattedDate}</p>
+                    <p>${timeElapsed}</p>
                 </div>
             </div>
             
-            ${order.collectionMethod ? `
-            <div class="order-section">
-                <h3>Collection Information</h3>
-                <div class="collection-info">
-                    <p><strong>Method:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>
-                    <p><strong>Location:</strong> <span class="highlight">${order.collectionLocation || 'Not specified'}</span></p>
-                    ${order.collectionMethod === 'table' 
-                        ? `<p><i class="fas fa-info-circle"></i> Order to be served at the table.</p>` 
-                        : `<p><i class="fas fa-info-circle"></i> Customer will collect from Counter 3 (Outgoing Orders).</p>`
-                    }
-                </div>
+            <div class="customer-info">
+                <h4>Customer Information</h4>
+                <p><strong>Name:</strong> ${escapeHtml(order.customerName || 'Not provided')}</p>
+                ${order.admissionNumber ? `<p><strong>Admission #:</strong> ${escapeHtml(order.admissionNumber)}</p>` : ''}
+                ${order.collectionMethod ? `<p><strong>Collection:</strong> ${order.collectionMethod === 'table' ? 'Serve at Table' : 'Pickup at Counter'}</p>` : ''}
+                ${order.collectionLocation ? `<p><strong>Location:</strong> ${escapeHtml(order.collectionLocation)}</p>` : ''}
             </div>
+            
+            <div class="order-items">
+                <h4>Order Items</h4>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items ? 
+                            order.items.map(entry => `
+                                <tr>
+                                    <td>${escapeHtml(entry.item.name)}</td>
+                                    <td>${entry.quantity}</td>
+                                    <td>${formatCurrency(entry.item.price)}</td>
+                                    <td>${formatCurrency(entry.item.price * entry.quantity)}</td>
+                                </tr>
+                            `).join('') :
+                            `<tr>
+                                <td>${escapeHtml(order.item.name)}</td>
+                                <td>${order.quantity || 1}</td>
+                                <td>${formatCurrency(order.item.price)}</td>
+                                <td>${formatCurrency(order.item.price * (order.quantity || 1))}</td>
+                            </tr>`
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                            <td>${formatCurrency(order.total || calculateOrderTotal(order))}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="payment-info">
+                <h4>Payment Information</h4>
+                <p><strong>Method:</strong> ${order.paymentMethod || 'Not specified'}</p>
+                <p><strong>Status:</strong> ${order.paymentStatus || 'Not specified'}</p>
+                ${order.orderCode ? `<p><strong>Order Code:</strong> <span class="order-code">${order.orderCode}</span></p>` : ''}
+            </div>
+            
+            ${order.notes ? `
+                <div class="order-notes">
+                    <h4>Notes</h4>
+                    <p>${escapeHtml(order.notes)}</p>
+                </div>
             ` : ''}
-            
-            <div class="order-section">
-                <h3>Order Items</h3>
-                ${itemsHtml}
-                
-                <div class="order-summary">
-                    <div class="order-total">
-                        <strong>Total:</strong> ${formatCurrency(orderTotal, true)}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="order-section">
-                <h3>Order Information</h3>
-                <p><strong>Date:</strong> ${formattedDate}</p>
-                ${order.notes ? `<p><strong>Notes:</strong> ${escapeHtml(order.notes)}</p>` : ''}
-            </div>
         </div>
     `;
     
-    // Set modal content
+    // Set the HTML content
     if (orderDetailsContent) {
-        orderDetailsContent.innerHTML = modalContent;
+        orderDetailsContent.innerHTML = orderDetailsHTML;
     }
     
-    // Show/hide action buttons based on status
-    if (markReadyBtn) {
-        markReadyBtn.style.display = order.status === 'pending' ? 'inline-block' : 'none';
+    // Add buttons based on order status
+    const modalFooter = orderDetailsModal.querySelector('.modal-footer');
+    
+    // Clear existing action buttons (keeping close button)
+    const actionButtons = modalFooter.querySelectorAll('.btn:not(.close-modal)');
+    actionButtons.forEach(btn => btn.remove());
+    
+    // Button configurations based on status
+    if (order.status === 'pending') {
+        // Add mark as ready button
+        modalFooter.appendChild(markReadyBtn);
+        
+        // Add cancel order button
+        modalFooter.appendChild(cancelOrderBtn);
+    } else if (order.status === 'ready') {
+        // Add mark as completed button
+        modalFooter.appendChild(markCompletedBtn);
+        
+        // Add cancel order button
+        modalFooter.appendChild(cancelOrderBtn);
+    } else if (order.status === 'completed') {
+        // No action buttons for completed orders
+    } else if (order.status === 'cancelled') {
+        // Create restore button for cancelled orders
+        const restoreBtn = document.createElement('button');
+        restoreBtn.className = 'btn btn-warning';
+        restoreBtn.id = 'restore-order-btn';
+        restoreBtn.innerText = 'Restore Order';
+        restoreBtn.addEventListener('click', () => promptRestoreOrder());
+        modalFooter.appendChild(restoreBtn);
     }
     
-    if (cancelOrderBtn) {
-        cancelOrderBtn.style.display = order.status === 'pending' ? 'inline-block' : 'none';
-    }
+    // Open the modal
+    orderDetailsModal.classList.add('show');
+}
+
+/**
+ * Mark current order as completed
+ */
+function markOrderCompleted() {
+    if (!currentOrder) return;
     
-    // Show modal
-    if (orderDetailsModal) {
-        orderDetailsModal.style.display = 'block';
+    // Use the notifications system if available
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to mark order #${currentOrder.id} as completed?`,
+            () => {
+                // Complete the order
+                completeOrder(currentOrder.id);
+                
+                // Close the modal
+                closeModals();
+                
+                // Show success message
+                showToast(`Order #${currentOrder.id} has been completed`, 'success');
+                
+                // Send notification to user
+                sendOrderNotification(currentOrder.id, 'completed');
+            },
+            null,
+            'Complete Order',
+            'Yes, Complete Order',
+            'Cancel'
+        );
+    } else {
+        // Original implementation
+        completeOrder(currentOrder.id);
+        closeModals();
     }
 }
 
 /**
- * Mark current order as ready
+ * Attach event listeners to buttons in the order details modal
+ */
+function attachModalEventListeners() {
+    // Close modal buttons
+    const closeModalBtns = document.querySelectorAll('.close-modal');
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', closeModals);
+    });
+    
+    // Mark as ready button
+    if (markReadyBtn) {
+        markReadyBtn.addEventListener('click', markOrderReady);
+    }
+    
+    // Mark as completed button
+    if (markCompletedBtn) {
+        markCompletedBtn.addEventListener('click', markOrderCompleted);
+    }
+    
+    // Cancel order button
+    if (cancelOrderBtn) {
+        cancelOrderBtn.addEventListener('click', promptCancelOrder);
+    }
+    
+    // Confirm action button
+    if (confirmActionBtn) {
+        confirmActionBtn.addEventListener('click', executeConfirmedAction);
+    }
+}
+
+/**
+ * Mark order as ready (change status from pending to ready)
  */
 function markOrderReady() {
     if (!currentOrder) return;
     
-    // Update order status
-    storageManager.updateOrderStatus(currentOrder.id, 'ready');
-    
-    // Close modal
-    closeModals();
-    
-    // Refresh data
-    refreshData();
+    // Use the notifications system if available
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to mark order #${currentOrder.id} as ready for pickup?`,
+            () => {
+                // Update order status
+                storageManager.updateOrderStatus(currentOrder.id, 'ready');
+                
+                // Close the modal
+                closeModals();
+                
+                // Refresh tables
+                updateOrdersTable();
+                updatePendingOrdersTable();
+                
+                // Show success message
+                showToast(`Order #${currentOrder.id} marked as ready for pickup`, 'success');
+                
+                // Send notification to user
+                sendOrderNotification(currentOrder.id, 'ready');
+            },
+            null,
+            'Mark Order Ready',
+            'Yes, Mark as Ready',
+            'Cancel'
+        );
+    } else {
+        // Original implementation
+        storageManager.updateOrderStatus(currentOrder.id, 'ready');
+        closeModals();
+        updateOrdersTable();
+        updatePendingOrdersTable();
+        showToast(`Order ${currentOrder.id} marked as ready`, 'success');
+    }
 }
 
 /**
@@ -1334,12 +1523,31 @@ function promptCancelOrderById(orderId) {
     currentOrder = allOrders.find(o => o.id === orderId);
     if (!currentOrder) return;
     
-    // Set up confirmation
-    confirmMessage.textContent = `Are you sure you want to cancel order #${currentOrder.id}?`;
-    currentAction = 'cancel';
-    
-    // Show confirmation modal
-    confirmModal.style.display = 'block';
+    // Use the notifications system if available
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to cancel order #${currentOrder.id}?`,
+            () => {
+                // Cancel order
+                storageManager.updateOrderStatus(currentOrder.id, 'cancelled');
+                
+                // Refresh data
+                refreshData();
+                
+                // Show success message
+                showToast(`Order #${currentOrder.id} has been cancelled`, 'success');
+            },
+            null,
+            'Cancel Order',
+            'Yes, Cancel Order',
+            'No, Keep Order'
+        );
+    } else {
+        // Fall back to old system
+        confirmMessage.textContent = `Are you sure you want to cancel order #${currentOrder.id}?`;
+        currentAction = 'cancel';
+        confirmModal.style.display = 'block';
+    }
 }
 
 /**
@@ -1351,12 +1559,28 @@ function promptDeleteOrderById(orderId) {
     currentOrder = allOrders.find(o => o.id === orderId);
     if (!currentOrder) return;
     
-    // Set up confirmation
-    confirmMessage.textContent = `Are you sure you want to delete order #${currentOrder.id}? This action cannot be undone.`;
-    currentAction = 'delete';
-    
-    // Show confirmation modal
-    confirmModal.style.display = 'block';
+    // Use the notifications system if available
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to delete order #${currentOrder.id}? This action cannot be undone.`,
+            () => {
+                // Delete order
+                deleteOrder(currentOrder.id);
+                
+                // Show success message
+                showToast(`Order #${currentOrder.id} has been deleted`, 'success');
+            },
+            null,
+            'Delete Order',
+            'Yes, Delete Order',
+            'No, Keep Order'
+        );
+    } else {
+        // Fall back to old system
+        confirmMessage.textContent = `Are you sure you want to delete order #${currentOrder.id}? This action cannot be undone.`;
+        currentAction = 'delete';
+        confirmModal.style.display = 'block';
+    }
 }
 
 /**
@@ -1403,15 +1627,29 @@ function closeModals() {
 }
 
 /**
- * Complete an order
- * @param {string} orderId - Order ID
+ * Complete an order (change status to completed)
+ * @param {string} orderId - Order ID to complete
  */
 function completeOrder(orderId) {
-        // Update order status
-    storageManager.updateOrderStatus(orderId, 'ready');
+    // If realtimeManager is available, use it to update order status
+    if (typeof realtimeManager !== 'undefined') {
+        realtimeManager.updateOrderStatus(orderId, 'completed');
+    } else {
+        // Fall back to storage manager
+        storageManager.updateOrderStatus(orderId, 'completed');
+    }
     
-    // Refresh data
-    refreshData();
+    // Refresh the orders tables
+    updateOrdersTable();
+    updatePendingOrdersTable();
+    updateCompletedOrdersTable();
+    
+    // Show success message
+    showToast(`Order ${orderId} marked as completed`, 'success');
+    
+    // Update metrics and charts
+    updateMetrics();
+    updateCharts();
 }
 
 /**
@@ -1536,25 +1774,51 @@ function deleteSelectedOrders() {
  * Complete all selected pending orders
  */
 function completeAllPendingOrders() {
-    const checkboxes = pendingOrdersBody.querySelectorAll('.order-checkbox:checked');
-    if (checkboxes.length === 0) return;
+    const pendingOrders = allOrders.filter(order => order.status === 'pending' || order.status === 'ready');
     
-    const orderIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
+    if (pendingOrders.length === 0) {
+        showToast('No pending orders to complete', 'info');
+        return;
+    }
     
-    // Update status for each order
-    orderIds.forEach(id => {
-        storageManager.updateOrderStatus(id, 'ready');
-    });
-    
-    // Refresh data
-    refreshData();
-    
-    // Check if there are any pending orders left
-    const pendingOrdersRemain = allOrders.some(order => order.status === 'pending');
-    
-    // Show empty state if no pending orders remain
-    if (!pendingOrdersRemain && noPendingOrders) {
-        noPendingOrders.style.display = 'block';
+    // Use the notifications system if available
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to mark all ${pendingOrders.length} pending orders as completed?`,
+            () => {
+                let completedCount = 0;
+                
+                // Complete each order
+                pendingOrders.forEach(order => {
+                    storageManager.updateOrderStatus(order.id, 'completed');
+                    completedCount++;
+                    
+                    // Send notification to user
+                    sendOrderNotification(order.id, 'completed');
+                });
+                
+                // Refresh data
+                refreshData();
+                
+                // Show success message
+                showToast(`${completedCount} orders marked as completed`, 'success');
+            },
+            null,
+            'Complete All Pending Orders',
+            'Yes, Complete All',
+            'Cancel'
+        );
+    } else {
+        // Original implementation
+        let completedCount = 0;
+        
+        pendingOrders.forEach(order => {
+            storageManager.updateOrderStatus(order.id, 'completed');
+            completedCount++;
+        });
+        
+        refreshData();
+        showToast(`${completedCount} orders marked as completed`, 'success');
     }
 }
 
@@ -1733,6 +1997,399 @@ function formatCurrency(value, includeSymbol = true) {
     });
     
     return includeSymbol ? formattedValue : formattedValue.replace(/[^0-9.,]/g, '');
+}
+
+/**
+ * Handle real-time order updates
+ * @param {Array} orders - Updated orders array
+ */
+function handleRealtimeOrdersUpdate(orders) {
+    console.log('Real-time order update received', orders.length);
+    
+    // Update allOrders reference
+    allOrders = orders;
+    
+    // Update UI
+    updateOrdersTable();
+    updatePendingOrdersTable();
+    updateCompletedOrdersTable();
+    updateCancelledOrdersTable();
+    
+    // Update metrics
+    updateMetrics();
+    
+    // Update charts if needed
+    updateCharts();
+    
+    // Show toast notification
+    showToast('Orders updated in real-time', 'info');
+}
+
+/**
+ * Handle order status change
+ * @param {Object} data - Status change data {orderId, status, order}
+ */
+function handleOrderStatusChange(data) {
+    console.log('Order status changed:', data.orderId, 'to', data.status);
+    
+    // Show toast notification
+    showToast(`Order ${data.orderId} marked as ${data.status}`, 'success');
+    
+    // Refresh order view if this is the currently viewed order
+    if (currentOrder && currentOrder.id === data.orderId) {
+        viewOrderDetails(data.orderId);
+    }
+}
+
+/**
+ * Load user data for admin dashboard
+ */
+function loadUserData() {
+    // Check if user tab exists
+    if (!userManagementTab || !userManagementContent || !userListBody) {
+        console.log('User management UI elements not found');
+        return;
+    }
+    
+    // Ensure user tab is visible for superadmins
+    const isSuperAdmin = authManager.isSuperAdmin();
+    if (isSuperAdmin) {
+        userManagementTab.style.display = '';
+    } else {
+        userManagementTab.style.display = 'none';
+        return;
+    }
+    
+    // Get users from storage
+    let users = [];
+    try {
+        // First try to get from local storage
+        const usersData = localStorage.getItem('campus_cafe_users');
+        if (usersData) {
+            users = JSON.parse(usersData);
+        }
+        
+        // If Supabase is available, try to get from there too
+        if (typeof supabaseManager !== 'undefined') {
+            supabaseManager.getAllUsers()
+                .then(result => {
+                    if (!result.error && result.data && result.data.length > 0) {
+                        // Merge users, prioritizing Supabase data
+                        const existingEmails = users.map(u => u.email.toLowerCase());
+                        result.data.forEach(supabaseUser => {
+                            const email = supabaseUser.email.toLowerCase();
+                            if (!existingEmails.includes(email)) {
+                                users.push(supabaseUser);
+                            }
+                        });
+                        
+                        populateUserTable(users);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching Supabase users:', err);
+                });
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        users = [];
+    }
+    
+    // Populate user table
+    populateUserTable(users);
+}
+
+/**
+ * Populate user table with data
+ * @param {Array} users - Array of user objects
+ */
+function populateUserTable(users) {
+    if (!userListBody) return;
+    
+    // Clear existing content
+    userListBody.innerHTML = '';
+    
+    // Update user count
+    if (userCountEl) {
+        userCountEl.textContent = users.length;
+    }
+    
+    // Check if users exist
+    if (!users || users.length === 0) {
+        if (noUsersMessage) {
+            noUsersMessage.style.display = 'block';
+        }
+        return;
+    }
+    
+    // Hide empty message
+    if (noUsersMessage) {
+        noUsersMessage.style.display = 'none';
+    }
+    
+    // Sort users by role (superadmin first, then admin, then regular)
+    users.sort((a, b) => {
+        const roleA = a.role || '';
+        const roleB = b.role || '';
+        
+        if (roleA === 'superadmin' && roleB !== 'superadmin') return -1;
+        if (roleA !== 'superadmin' && roleB === 'superadmin') return 1;
+        if (roleA === 'admin' && roleB !== 'admin') return -1;
+        if (roleA !== 'admin' && roleB === 'admin') return 1;
+        
+        // Sort by email if roles are the same
+        return a.email.localeCompare(b.email);
+    });
+    
+    // Add each user to table
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        
+        // Get user properties
+        const email = user.email || '';
+        const name = user.name || user.user_metadata?.name || email.split('@')[0];
+        const role = user.role || 'user';
+        const admissionNumber = user.admissionNumber || user.user_metadata?.admissionNumber || 'N/A';
+        const ordersCount = getUserOrdersCount(user);
+        
+        // Create row content
+        row.innerHTML = `
+            <td>${name}</td>
+            <td>${email}</td>
+            <td>${admissionNumber}</td>
+            <td>
+                <span class="badge ${getRoleBadgeClass(role)}">${role}</span>
+            </td>
+            <td>${ordersCount}</td>
+            <td>
+                <div class="actions">
+                    <button class="action-btn view-btn" title="View User Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn edit-btn" title="Edit User" ${role === 'superadmin' ? 'disabled' : ''}>
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn delete-btn" title="Delete User" ${role === 'superadmin' ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        // Add to table
+        userListBody.appendChild(row);
+        
+        // Add event listeners
+        const viewBtn = row.querySelector('.view-btn');
+        const editBtn = row.querySelector('.edit-btn');
+        const deleteBtn = row.querySelector('.delete-btn');
+        
+        if (viewBtn) {
+            viewBtn.addEventListener('click', () => viewUserDetails(user));
+        }
+        
+        if (editBtn && role !== 'superadmin') {
+            editBtn.addEventListener('click', () => editUser(user));
+        }
+        
+        if (deleteBtn && role !== 'superadmin') {
+            deleteBtn.addEventListener('click', () => promptDeleteUser(user));
+        }
+    });
+}
+
+/**
+ * Get CSS class for role badge
+ * @param {string} role - User role
+ * @returns {string} - CSS class
+ */
+function getRoleBadgeClass(role) {
+    switch (role) {
+        case 'superadmin':
+            return 'badge-danger';
+        case 'admin':
+            return 'badge-warning';
+        default:
+            return 'badge-info';
+    }
+}
+
+/**
+ * Get count of orders for a user
+ * @param {Object} user - User object
+ * @returns {number} - Order count
+ */
+function getUserOrdersCount(user) {
+    if (!user || !allOrders || allOrders.length === 0) return 0;
+    
+    const email = user.email?.toLowerCase();
+    const admissionNumber = user.admissionNumber || user.user_metadata?.admissionNumber;
+    
+    if (!email && !admissionNumber) return 0;
+    
+    return allOrders.filter(order => {
+        // Match by email
+        if (email && order.userEmail?.toLowerCase() === email) {
+            return true;
+        }
+        
+        // Match by admission number
+        if (admissionNumber && order.admissionNumber === admissionNumber) {
+            return true;
+        }
+        
+        return false;
+    }).length;
+}
+
+/**
+ * View user details
+ * @param {Object} user - User object
+ */
+function viewUserDetails(user) {
+    // Implementation will depend on UI design
+    console.log('View user details:', user);
+    
+    // Show toast for now
+    showToast(`Viewing details for ${user.name || user.email}`, 'info');
+}
+
+/**
+ * Edit user
+ * @param {Object} user - User object
+ */
+function editUser(user) {
+    // Implementation will depend on UI design
+    console.log('Edit user:', user);
+    
+    // Show toast for now
+    showToast(`Editing ${user.name || user.email}`, 'info');
+}
+
+/**
+ * Prompt to delete user
+ * @param {Object} user - User object
+ */
+function promptDeleteUser(user) {
+    if (typeof notificationsManager !== 'undefined') {
+        notificationsManager.confirm(
+            `Are you sure you want to delete user ${user.name || user.email}? This action cannot be undone.`,
+            () => deleteUser(user),
+            null,
+            'Delete User',
+            'Yes, Delete User',
+            'Cancel'
+        );
+    } else {
+        // Fallback to alert
+        if (confirm(`Are you sure you want to delete user ${user.name || user.email}? This action cannot be undone.`)) {
+            deleteUser(user);
+        }
+    }
+}
+
+/**
+ * Delete user
+ * @param {Object} user - User object
+ */
+function deleteUser(user) {
+    try {
+        // Get users from localStorage
+        const usersData = localStorage.getItem('campus_cafe_users');
+        let users = usersData ? JSON.parse(usersData) : [];
+        
+        // Filter out the user to delete
+        users = users.filter(u => u.email.toLowerCase() !== user.email.toLowerCase());
+        
+        // Save back to localStorage
+        localStorage.setItem('campus_cafe_users', JSON.stringify(users));
+        
+        // If Supabase is available, try to delete there too
+        if (typeof supabaseManager !== 'undefined') {
+            supabaseManager.deleteUser(user.id || user.email)
+                .catch(err => {
+                    console.error('Error deleting Supabase user:', err);
+                });
+        }
+        
+        // Refresh user table
+        loadUserData();
+        
+        // Show success message
+        showToast(`User ${user.name || user.email} has been deleted`, 'success');
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Error deleting user', 'error');
+    }
+}
+
+/**
+ * Send a notification to the user about their order
+ * @param {string} orderId - Order ID
+ * @param {string} status - New status of the order
+ */
+function sendOrderNotification(orderId, status) {
+    // Find the order
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+    
+    // Get user email
+    const userEmail = order.userEmail;
+    const admissionNumber = order.admissionNumber;
+    
+    if (!userEmail && !admissionNumber) {
+        console.log('No user identifier found for order:', orderId);
+        return;
+    }
+    
+    console.log(`Sending ${status} notification for order ${orderId} to user ${userEmail || admissionNumber}`);
+    
+    // Store notification in localStorage for demo
+    const notificationsData = localStorage.getItem('campus_cafe_notifications') || '[]';
+    const notifications = JSON.parse(notificationsData);
+    
+    // Create notification
+    const notification = {
+        id: Date.now().toString(),
+        orderId: orderId,
+        userEmail: userEmail,
+        admissionNumber: admissionNumber,
+        status: status,
+        timestamp: new Date().toISOString(),
+        message: getNotificationMessage(order, status),
+        read: false
+    };
+    
+    // Add to notifications
+    notifications.push(notification);
+    
+    // Save back to localStorage
+    localStorage.setItem('campus_cafe_notifications', JSON.stringify(notifications));
+    
+    console.log('Notification saved:', notification);
+}
+
+/**
+ * Get notification message based on order status
+ * @param {Object} order - Order object
+ * @param {string} status - Order status
+ * @returns {string} - Notification message
+ */
+function getNotificationMessage(order, status) {
+    const orderNumber = order.id;
+    
+    switch (status) {
+        case 'pending':
+            return `Your order #${orderNumber} has been received and is pending processing.`;
+        case 'ready':
+            return `Good news! Your order #${orderNumber} is now ready for pickup.`;
+        case 'completed':
+            return `Your order #${orderNumber} has been completed. Thank you for your business!`;
+        case 'cancelled':
+            return `Your order #${orderNumber} has been cancelled.`;
+        default:
+            return `Your order #${orderNumber} status has been updated to: ${status}`;
+    }
 }
 
 // Initialize dashboard when DOM is ready

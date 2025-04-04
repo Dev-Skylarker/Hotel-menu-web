@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="campus cafe, university restaurant, student dining, college food, cafe menu">
+    <meta name="author" content="Campus Cafe">
+    <title>Register - Campus Cafe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="icon1.png" type="image/png">
+    <style>
+        /* Registration page styles */
+        .register-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .auth-forms {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-input);
+            color: var(--text-color);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(190, 0, 39, 0.1);
+        }
+        
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            background-color: rgba(255, 0, 0, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .success-message {
+            color: var(--success-color);
+            background-color: rgba(0, 255, 0, 0.1);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .login-link {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        
+        .toggle-password {
+            cursor: pointer;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .required {
+            color: var(--error-color);
+        }
+        
+        .form-help {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </a>
+            </div>
+            <nav>
+                <ul class="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="my-orders.html">My Orders</a></li>
+                    <li><a href="login.html">Login</a></li>
+                </ul>
+                <div class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+            <div class="nav-actions">
+                <a href="cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-badge" class="cart-badge">0</span>
+                </a>
+                <button class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-header small">
+            <div class="container">
+                <h1>Create an Account</h1>
+                <div class="breadcrumbs">
+                    <a href="index.html">Home</a> / 
+                    <span>Register</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="register-container">
+            <!-- Registration Form -->
+            <div class="auth-forms">
+                <h2>Create an Account</h2>
+                <p>Register to track your orders and get personalized service.</p>
+                
+                <div class="error-message" id="register-error"></div>
+                <div class="success-message" id="register-success"></div>
+                
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="register-name" required placeholder="Your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">Email <span class="required">*</span></label>
+                        <input type="email" id="register-email" required placeholder="Your email address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-admission">Admission Number <span class="required">*</span></label>
+                        <input type="text" id="register-admission" required placeholder="Your 5-digit admission number" pattern="[0-9]{5}">
+                        <div class="form-help">Enter the 5 middle digits of your admission number.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">Password <span class="required">*</span></label>
+                        <div class="password-container">
+                            <input type="password" id="register-password" required placeholder="Choose a password">
+                            <i class="fas fa-eye toggle-password" data-target="register-password"></i>
+                        </div>
+                        <div class="form-help">Password must be at least 8 characters long.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-confirm-password">Confirm Password <span class="required">*</span></label>
+                        <div class="password-container">
+                            <input type="password" id="register-confirm-password" required placeholder="Confirm your password">
+                            <i class="fas fa-eye toggle-password" data-target="register-confirm-password"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                        <button type="reset" class="btn btn-outline">Reset</button>
+                    </div>
+                </form>
+                
+                <div class="login-link">
+                    <p>Already have an account? <a href="login.html">Login here</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/logo.png" alt="Campus Cafe Logo">
+                    <span>Campus Cafe</span>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="menu.html">Menu</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="my-orders.html">My Orders</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h3>Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-stats">
+                    <h3>Our Impact</h3>
+                    <ul class="stats-list">
+                        <li><span id="customers-today">0</span> customers served today</li>
+                        <li><span id="customers-total">0</span> happy customers since 2021</li>
+                        <li><span id="orders-count">0</span> orders submitted</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Campus Cafe. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/utils/theme.js"></script>
+    <script src="js/utils/env.js"></script>
+    <script src="js/utils/storage.js"></script>
+    <script src="js/utils/currency.js"></script>
+    <script src="js/utils/stats.js"></script>
+    <script src="js/utils/cart-manager.js"></script>
+    <script src="js/utils/supabase.js"></script>
+    <script src="js/utils/notifications.js"></script>
+    <script src="js/utils/user-notifications.js"></script>
+    <script src="js/utils/initialize-db.js"></script>
+    <script src="js/register.js"></script>
+</body>
+</html> 

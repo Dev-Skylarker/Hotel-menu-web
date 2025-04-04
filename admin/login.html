@@ -154,9 +154,6 @@
                 
                 <div class="login-info">
                     <p><i class="fas fa-info-circle"></i> Login with your admin credentials</p>
-                    <div id="debug-hint" style="display: none; margin-top: 10px; font-size: 0.85rem; background-color: rgba(0,0,0,0.2); padding: 5px; border-radius: 3px;">
-                        <p><i class="fas fa-bug"></i> <strong>Debug info:</strong> Email: Erickaris0521@gmail.com / Password: Contact ICT support</p>
-                    </div>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-full">
@@ -181,14 +178,8 @@
     <!-- Load main configuration that uses the above files -->
     <script src="../js/utils/config.js"></script>
     <script src="../js/utils/auth.js"></script>
+    <script src="../js/utils/notifications.js"></script>
+    <script src="../js/utils/initialize-db.js"></script>
     <script src="../js/admin/login.js"></script>
-    <script>
-        // Show debug hint in development mode
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.envConfig && window.envConfig.development) {
-                document.getElementById('debug-hint').style.display = 'block';
-            }
-        });
-    </script>
 </body>
 </html>
